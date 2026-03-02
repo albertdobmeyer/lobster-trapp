@@ -1,0 +1,6 @@
+[submodule "components/openclaw-vault"]
+	path = components/openclaw-vault
+	url = https://github.com/gitgoodordietrying/openclaw-vault.git
+[submodule "components/clawhub-forge"]
+	path = components/clawhub-forge
+	url = https://github.com/gitgoodordietrying/clawhub-lab.git

@@ -1,0 +1,32 @@
+# Lobster-Trapp — service orchestration
+# Composes all component layers into a unified local stack.
+#
+# Usage:
+#   docker compose up
+#
+# Runtime security model (onion/concentric):
+#   Lobster-TrApp (GUI + orchestration, outermost)
+#     └── OpenClaw-Vault (hardened container = passive defense)
+#           └── ClawHub-Forge (skill scanning = active defense)
+#                 └── MoltBook-Pioneer (agent in the wild, innermost)
+#
+# Each inner layer is progressively more isolated.
+# Services will be added here as components are containerized.
+
+services:
+  # openclaw-vault:
+  #   build: ./components/openclaw-vault
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   read_only: true
+
+  # clawhub-forge:
+  #   build: ./components/clawhub-forge
+  #   depends_on:
+  #     - openclaw-vault
+
+  # moltbook-pioneer:
+  #   build: ./components/moltbook-pioneer
+  #   depends_on:
+  #     - openclaw-vault
+  #   network_mode: "service:openclaw-vault"
