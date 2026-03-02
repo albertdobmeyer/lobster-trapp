@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicknisi/tauri-config-schema/main/schema.json",
+  "productName": "Lobster-TrApp",
+  "version": "0.1.0",
+  "identifier": "dev.lobster-trapp.app",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Lobster-TrApp",
+        "width": 1280,
+        "height": 800,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    }
+  }
+}

@@ -1,0 +1,453 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Lobster-TrApp Orchestration Health Check
+# =============================================================================
+# Comprehensive validation of the monorepo orchestration layer:
+#   - Schema validity
+#   - Manifest parsing & cross-reference integrity
+#   - Submodule synchronization
+#   - Build verification
+#   - Component contract compliance
+#
+# Usage: bash tests/orchestrator-check.sh [--fix]
+#   --fix  Attempt to auto-fix detected issues (e.g., submodule sync)
+# =============================================================================
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+FIX_MODE="${1:-}"
+PASS=0
+FAIL=0
+WARN=0
+
+# Colors (safe for no-color terminals)
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+pass() { PASS=$((PASS+1)); echo -e "  ${GREEN}[PASS]${NC} $1"; }
+fail() { FAIL=$((FAIL+1)); echo -e "  ${RED}[FAIL]${NC} $1"; }
+warn() { WARN=$((WARN+1)); echo -e "  ${YELLOW}[WARN]${NC} $1"; }
+section() { echo -e "\n${BLUE}=== $1 ===${NC}"; }
+
+# All Python calls use relative paths from REPO_ROOT to avoid Git Bash path issues on Windows
+cd "$REPO_ROOT"
+
+# =============================================================================
+section "1. Repository Structure"
+# =============================================================================
+
+# Check essential directories exist
+for dir in components schemas app app/src app/src-tauri; do
+  if [ -d "$dir" ]; then
+    pass "Directory exists: $dir"
+  else
+    fail "Missing directory: $dir"
+  fi
+done
+
+# Check essential files exist
+for file in schemas/component.schema.json docker-compose.yml README.md; do
+  if [ -f "$file" ]; then
+    pass "File exists: $file"
+  else
+    fail "Missing file: $file"
+  fi
+done
+
+# =============================================================================
+section "2. JSON Schema Validation"
+# =============================================================================
+
+if python -c "import json; json.load(open('schemas/component.schema.json'))" 2>/dev/null; then
+  pass "Schema is valid JSON"
+else
+  fail "Schema is not valid JSON"
+fi
+
+# Verify schema has all required sections
+python -c "
+import json, sys
+schema = json.load(open('schemas/component.schema.json'))
+props = schema.get('properties', {})
+required_sections = ['identity', 'status', 'commands', 'configs', 'health']
+missing = [s for s in required_sections if s not in props]
+if missing:
+    print('Missing sections: ' + ', '.join(missing))
+    sys.exit(1)
+" 2>/dev/null && pass "Schema has all 5 sections" || fail "Schema missing sections"
+
+# =============================================================================
+section "3. Component Manifests"
+# =============================================================================
+
+MANIFEST_COUNT=0
+MANIFEST_ERRORS=0
+
+for manifest in components/*/component.yml; do
+  if [ ! -f "$manifest" ]; then
+    continue
+  fi
+  component_dir="$(dirname "$manifest")"
+  component_name="$(basename "$component_dir")"
+  MANIFEST_COUNT=$((MANIFEST_COUNT+1))
+
+  # Parse YAML
+  if python -c "
+import sys
+try:
+    import yaml
+except ImportError:
+    sys.exit(2)
+yaml.safe_load(open('$manifest'))
+" 2>/dev/null; then
+    pass "Manifest parses: $component_name"
+  else
+    fail "Manifest parse error: $component_name"
+    MANIFEST_ERRORS=$((MANIFEST_ERRORS+1))
+    continue
+  fi
+
+  # Validate identity fields
+  python -c "
+import yaml, sys
+m = yaml.safe_load(open('$manifest'))
+identity = m.get('identity', {})
+errors = []
+for field in ['id', 'name', 'version', 'role']:
+    if not identity.get(field):
+        errors.append(field)
+if errors:
+    print('Missing: ' + ', '.join(errors))
+    sys.exit(1)
+role = identity['role']
+if role not in ['runtime', 'toolchain', 'network', 'placeholder']:
+    print(f'Invalid role: {role}')
+    sys.exit(1)
+" 2>/dev/null && pass "Identity valid: $component_name" || fail "Identity invalid: $component_name"
+
+  # Cross-reference validation
+  python -c "
+import yaml, sys
+m = yaml.safe_load(open('$manifest'))
+errors = []
+
+# Collect state IDs
+state_ids = [s['id'] for s in m.get('status', {}).get('states', [])]
+cmd_ids = [c['id'] for c in m.get('commands', [])]
+
+# Check available_when references valid states
+for cmd in m.get('commands', []):
+    for aw in cmd.get('available_when', []):
+        if aw not in state_ids:
+            errors.append(f'Command \"{cmd[\"id\"]}\" references unknown state \"{aw}\"')
+
+# Check restart_command references valid command
+for cfg in m.get('configs', []):
+    rc = cfg.get('restart_command')
+    if rc and rc not in cmd_ids:
+        errors.append(f'Config \"{cfg[\"path\"]}\" restart_command \"{rc}\" not in commands')
+
+# Check command IDs are unique
+seen = set()
+for cid in cmd_ids:
+    if cid in seen:
+        errors.append(f'Duplicate command ID: \"{cid}\"')
+    seen.add(cid)
+
+# Check health probe IDs are unique
+health_ids = set()
+for h in m.get('health', []):
+    if h['id'] in health_ids:
+        errors.append(f'Duplicate health probe ID: \"{h[\"id\"]}\"')
+    health_ids.add(h['id'])
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+" 2>/dev/null && pass "Cross-references valid: $component_name" || fail "Cross-reference errors: $component_name"
+
+  # Validate command groups and danger levels
+  python -c "
+import yaml, sys
+m = yaml.safe_load(open('$manifest'))
+valid_groups = {'lifecycle', 'operations', 'monitoring', 'maintenance'}
+valid_danger = {'safe', 'caution', 'destructive'}
+valid_types = {'action', 'query', 'stream'}
+errors = []
+for cmd in m.get('commands', []):
+    g = cmd.get('group', 'operations')
+    if g not in valid_groups:
+        errors.append(f'Command \"{cmd[\"id\"]}\": invalid group \"{g}\"')
+    d = cmd.get('danger', 'safe')
+    if d not in valid_danger:
+        errors.append(f'Command \"{cmd[\"id\"]}\": invalid danger \"{d}\"')
+    t = cmd.get('type', 'action')
+    if t not in valid_types:
+        errors.append(f'Command \"{cmd[\"id\"]}\": invalid type \"{t}\"')
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+" 2>/dev/null && pass "Command enums valid: $component_name" || fail "Command enum errors: $component_name"
+done
+
+if [ "$MANIFEST_COUNT" -eq 0 ]; then
+  fail "No component manifests found"
+else
+  pass "Found $MANIFEST_COUNT component manifests"
+fi
+
+# Check for placeholder components
+python -c "
+import yaml, sys, os, glob
+manifests = glob.glob('components/*/component.yml')
+for m_path in manifests:
+    m = yaml.safe_load(open(m_path))
+    role = m.get('identity', {}).get('role')
+    name = m.get('identity', {}).get('name', os.path.basename(os.path.dirname(m_path)))
+    if role == 'placeholder':
+        cmds = m.get('commands', [])
+        if cmds:
+            print(f'{name}: placeholder should have no commands (has {len(cmds)})')
+            sys.exit(1)
+" 2>/dev/null && pass "Placeholder components have no commands" || fail "Placeholder component has commands"
+
+# =============================================================================
+section "4. Submodule Synchronization"
+# =============================================================================
+
+# Check .gitmodules exists
+if [ -f ".gitmodules" ]; then
+  pass ".gitmodules exists"
+else
+  fail ".gitmodules missing"
+fi
+
+# Check submodule status
+SUBMODULE_ISSUES=0
+while IFS= read -r line; do
+  status_char="${line:0:1}"
+  submodule_path="$(echo "$line" | awk '{print $2}')"
+
+  case "$status_char" in
+    " ")
+      pass "Submodule in sync: $submodule_path"
+      ;;
+    "+")
+      warn "Submodule has new commits (not staged): $submodule_path"
+      if [ "$FIX_MODE" = "--fix" ]; then
+        echo "  -> Auto-fix: updating submodule reference"
+        git add "$submodule_path"
+      fi
+      SUBMODULE_ISSUES=$((SUBMODULE_ISSUES+1))
+      ;;
+    "-")
+      warn "Submodule not initialized: $submodule_path"
+      if [ "$FIX_MODE" = "--fix" ]; then
+        echo "  -> Auto-fix: initializing submodule"
+        git submodule update --init "$submodule_path"
+      fi
+      SUBMODULE_ISSUES=$((SUBMODULE_ISSUES+1))
+      ;;
+    "U")
+      fail "Submodule merge conflict: $submodule_path"
+      SUBMODULE_ISSUES=$((SUBMODULE_ISSUES+1))
+      ;;
+    *)
+      warn "Unknown submodule status '$status_char': $submodule_path"
+      SUBMODULE_ISSUES=$((SUBMODULE_ISSUES+1))
+      ;;
+  esac
+done < <(git submodule status 2>/dev/null || echo "")
+
+# Verify each submodule with a manifest has it accessible
+for manifest in components/*/component.yml; do
+  component_dir="$(dirname "$manifest")"
+  component_name="$(basename "$component_dir")"
+
+  # Check if this is a submodule
+  if [ -f "$component_dir/.git" ] || [ -d "$component_dir/.git" ]; then
+    pass "Component is git-tracked: $component_name"
+  elif [ -f "$component_dir/.gitkeep" ]; then
+    pass "Component is placeholder (gitkeep): $component_name"
+  else
+    warn "Component has no git tracking: $component_name"
+  fi
+done
+
+# Check for orphaned submodules (in .gitmodules but no manifest)
+if [ -f ".gitmodules" ]; then
+  while IFS= read -r sub_path; do
+    if [ -n "$sub_path" ] && [ ! -f "$sub_path/component.yml" ]; then
+      warn "Submodule '$sub_path' has no component.yml manifest"
+    fi
+  done < <(git config -f .gitmodules --get-regexp 'submodule\..*\.path' 2>/dev/null | awk '{print $2}')
+fi
+
+# =============================================================================
+section "5. Build Verification"
+# =============================================================================
+
+# Check Rust compilation
+if [ -d "app/src-tauri" ]; then
+  if [ -d "app/src-tauri/target" ]; then
+    pass "Rust target directory exists (previously built)"
+  fi
+
+  # Check Cargo.toml is valid
+  if [ -f "app/src-tauri/Cargo.toml" ]; then
+    pass "Cargo.toml exists"
+  else
+    fail "Cargo.toml missing"
+  fi
+
+  # Check tauri.conf.json is valid JSON
+  if python -c "import json; json.load(open('app/src-tauri/tauri.conf.json'))" 2>/dev/null; then
+    pass "tauri.conf.json is valid JSON"
+  else
+    fail "tauri.conf.json is not valid JSON"
+  fi
+fi
+
+# Check Node.js project
+if [ -f "app/package.json" ]; then
+  pass "package.json exists"
+
+  # Verify required dependencies
+  python -c "
+import json, sys
+pkg = json.load(open('app/package.json'))
+deps = {**pkg.get('dependencies', {}), **pkg.get('devDependencies', {})}
+required = ['react', 'react-dom', 'react-router-dom', '@tauri-apps/api', 'tailwindcss', 'lucide-react', 'typescript']
+missing = [d for d in required if d not in deps]
+if missing:
+    print('Missing deps: ' + ', '.join(missing))
+    sys.exit(1)
+" 2>/dev/null && pass "Required npm dependencies present" || fail "Missing npm dependencies"
+else
+  fail "package.json missing"
+fi
+
+# Check TypeScript config
+if [ -f "app/tsconfig.json" ]; then
+  pass "tsconfig.json exists"
+else
+  fail "tsconfig.json missing"
+fi
+
+# =============================================================================
+section "6. Frontend-Backend Contract"
+# =============================================================================
+
+# Verify Rust command handlers match frontend invoke() calls
+python -c "
+import re, os, sys, glob
+
+# Extract Rust #[tauri::command] function names
+rust_commands = set()
+for rs_file in glob.glob('app/src-tauri/src/commands/*.rs'):
+    with open(rs_file) as f:
+        content = f.read()
+    # Find pub async fn NAME after #[tauri::command]
+    for match in re.finditer(r'#\[tauri::command\]\s*pub\s+(?:async\s+)?fn\s+(\w+)', content):
+        rust_commands.add(match.group(1))
+
+# Extract frontend invoke() calls
+frontend_commands = set()
+for ts_file in glob.glob('app/src/lib/tauri.ts'):
+    with open(ts_file) as f:
+        content = f.read()
+    for match in re.finditer(r'invoke[<(].*?\"(\w+)\"', content):
+        frontend_commands.add(match.group(1))
+
+# Check registered in lib.rs
+with open('app/src-tauri/src/lib.rs') as f:
+    lib_content = f.read()
+registered = set(re.findall(r'(\w+)::\w+', lib_content.split('generate_handler!')[1].split(']')[0])) if 'generate_handler!' in lib_content else set()
+
+# Compare
+errors = []
+
+# Frontend calls not in Rust
+for cmd in frontend_commands:
+    if cmd not in rust_commands:
+        errors.append(f'Frontend invokes \"{cmd}\" but no Rust handler exists')
+
+# Rust handlers not in frontend (info only)
+for cmd in rust_commands:
+    if cmd not in frontend_commands:
+        errors.append(f'Rust handler \"{cmd}\" has no frontend invoke (may be unused)')
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+" 2>/dev/null && pass "Frontend-backend command contract matches" || warn "Frontend-backend contract mismatch (see output above)"
+
+# =============================================================================
+section "7. Manifest-Schema Alignment"
+# =============================================================================
+
+# Check that manifest field names match what Rust serde expects
+python -c "
+import yaml, sys, glob
+
+manifests = glob.glob('components/*/component.yml')
+valid_output_displays = ['log', 'table', 'badge', 'checklist', 'card-grid', 'terminal', 'report']
+valid_config_formats = ['yaml', 'json', 'env', 'line-list']
+valid_parse_types = ['regex', 'json_path', 'line_count', 'exit_code']
+
+errors = []
+for m_path in manifests:
+    m = yaml.safe_load(open(m_path))
+    name = m.get('identity', {}).get('id', 'unknown')
+
+    # Check output.display values
+    for cmd in m.get('commands', []):
+        output = cmd.get('output', {})
+        display = output.get('display')
+        if display and display not in valid_output_displays:
+            errors.append(f'{name}: command \"{cmd[\"id\"]}\" has invalid output.display \"{display}\"')
+
+    # Check config.format values
+    for cfg in m.get('configs', []):
+        fmt = cfg.get('format')
+        if fmt and fmt not in valid_config_formats:
+            errors.append(f'{name}: config \"{cfg[\"path\"]}\" has invalid format \"{fmt}\"')
+
+    # Check health parse types
+    for h in m.get('health', []):
+        pt = h.get('parse', {}).get('type')
+        if pt and pt not in valid_parse_types:
+            errors.append(f'{name}: health \"{h[\"id\"]}\" has invalid parse type \"{pt}\"')
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+" 2>/dev/null && pass "All manifest enum values are valid" || fail "Invalid enum values in manifests"
+
+# =============================================================================
+section "Summary"
+# =============================================================================
+
+TOTAL=$((PASS + FAIL + WARN))
+echo ""
+echo -e "Results: ${GREEN}$PASS passed${NC}, ${RED}$FAIL failed${NC}, ${YELLOW}$WARN warnings${NC} (total: $TOTAL checks)"
+
+if [ "$FAIL" -gt 0 ]; then
+  echo -e "\n${RED}ORCHESTRATION CHECK FAILED${NC}"
+  echo "Fix the failures above before proceeding."
+  exit 1
+elif [ "$WARN" -gt 0 ]; then
+  echo -e "\n${YELLOW}ORCHESTRATION CHECK PASSED WITH WARNINGS${NC}"
+  exit 0
+else
+  echo -e "\n${GREEN}ORCHESTRATION CHECK PASSED${NC}"
+  exit 0
+fi

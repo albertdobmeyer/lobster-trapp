@@ -1,0 +1,401 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://lobster-trapp.dev/schemas/component.schema.json",
+  "title": "Component Manifest",
+  "description": "Self-describing manifest for Lobster-TrApp components. Each sub-repo publishes a component.yml that the GUI discovers and renders generically.",
+  "type": "object",
+  "required": ["identity"],
+  "additionalProperties": false,
+  "properties": {
+    "identity": {
+      "type": "object",
+      "description": "Who is this component?",
+      "required": ["id", "name", "version", "description", "role"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "URL-safe slug identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable display name"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+",
+          "description": "Semantic version"
+        },
+        "description": {
+          "type": "string",
+          "description": "One-line summary"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["runtime", "toolchain", "network", "placeholder"],
+          "description": "Component role in the ecosystem"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Lucide icon name (e.g. 'shield', 'hammer')"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "Hex accent color"
+        },
+        "repo": {
+          "type": "string",
+          "format": "uri",
+          "description": "Git repository URL"
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "description": "How to determine component state",
+      "additionalProperties": false,
+      "properties": {
+        "states": {
+          "type": "array",
+          "description": "Declared possible states",
+          "items": {
+            "type": "object",
+            "required": ["id", "label"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z_]+$"
+              },
+              "label": {
+                "type": "string"
+              },
+              "icon": {
+                "type": "string",
+                "description": "Lucide icon name"
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$"
+              }
+            }
+          }
+        },
+        "probes": {
+          "type": "array",
+          "description": "Commands the GUI polls to determine current state",
+          "items": {
+            "type": "object",
+            "required": ["command", "rules"],
+            "additionalProperties": false,
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "Shell command to execute"
+              },
+              "interval_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 10
+              },
+              "timeout_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 5
+              },
+              "rules": {
+                "type": "array",
+                "description": "Match rules evaluated in order; first match wins",
+                "items": {
+                  "type": "object",
+                  "required": ["state"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "exit_code": {
+                      "type": "integer",
+                      "description": "Match on process exit code"
+                    },
+                    "stdout_contains": {
+                      "type": "string",
+                      "description": "Match if stdout contains this string"
+                    },
+                    "stdout_regex": {
+                      "type": "string",
+                      "description": "Match if stdout matches this regex"
+                    },
+                    "state": {
+                      "type": "string",
+                      "description": "State ID to set when this rule matches"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "default_state": {
+          "type": "string",
+          "description": "Fallback state when no probe rule matches"
+        }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "description": "Actions the user can perform",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "command"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string",
+            "enum": ["lifecycle", "operations", "monitoring", "maintenance"],
+            "default": "operations"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["action", "query", "stream"],
+            "default": "action"
+          },
+          "danger": {
+            "type": "string",
+            "enum": ["safe", "caution", "destructive"],
+            "default": "safe"
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command with ${arg_id} interpolation"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "type"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9_]+$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["string", "enum", "boolean", "number"]
+                },
+                "required": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "default": {},
+                "options": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Static options for enum type"
+                },
+                "options_from": {
+                  "type": "object",
+                  "description": "Dynamic options loaded from command output",
+                  "additionalProperties": false,
+                  "properties": {
+                    "command": {
+                      "type": "string",
+                      "description": "Shell command that outputs one option per line"
+                    },
+                    "timeout_seconds": {
+                      "type": "integer",
+                      "default": 5
+                    }
+                  },
+                  "required": ["command"]
+                }
+              }
+            }
+          },
+          "output": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "format": {
+                "type": "string",
+                "enum": ["text", "ansi", "json", "jsonl", "sarif"],
+                "default": "text"
+              },
+              "display": {
+                "type": "string",
+                "enum": ["log", "table", "badge", "checklist", "card-grid", "terminal", "report"],
+                "default": "log"
+              }
+            }
+          },
+          "available_when": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "State IDs where this command is enabled. Empty = always available."
+          },
+          "sort_order": {
+            "type": "integer",
+            "default": 100
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "default": 60
+          }
+        }
+      }
+    },
+    "configs": {
+      "type": "array",
+      "description": "Editable configuration files",
+      "items": {
+        "type": "object",
+        "required": ["path", "format"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative path from component root"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "description": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["yaml", "json", "env", "line-list"]
+          },
+          "editable": {
+            "type": "boolean",
+            "default": true
+          },
+          "danger": {
+            "type": "string",
+            "enum": ["safe", "caution", "destructive"],
+            "default": "safe"
+          },
+          "schema": {
+            "type": "object",
+            "description": "JSON Schema for structured formats (drives form generation)"
+          },
+          "line_list": {
+            "type": "object",
+            "description": "Metadata for line-list format files",
+            "additionalProperties": false,
+            "properties": {
+              "item_label": {
+                "type": "string",
+                "description": "What each line represents (e.g. 'domain')"
+              },
+              "pattern": {
+                "type": "string",
+                "description": "Regex validation for each line"
+              },
+              "example": {
+                "type": "string",
+                "description": "Example entry"
+              }
+            }
+          },
+          "restart_required": {
+            "type": "boolean",
+            "default": false
+          },
+          "restart_command": {
+            "type": "string",
+            "description": "Command ID to offer after saving (must reference a commands[].id)"
+          }
+        }
+      }
+    },
+    "health": {
+      "type": "array",
+      "description": "Dashboard health badges — lightweight periodic probes for telemetry",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "command", "parse"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "interval_seconds": {
+            "type": "integer",
+            "minimum": 5,
+            "default": 30
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "default": 10
+          },
+          "parse": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["regex", "json_path", "line_count", "exit_code"]
+              },
+              "expression": {
+                "type": "string",
+                "description": "Regex capture group, JSON path, or unused for line_count/exit_code"
+              },
+              "format": {
+                "type": "string",
+                "description": "Display format string (e.g. '{value} skills')"
+              }
+            },
+            "required": ["type"]
+          },
+          "thresholds": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "green": {
+                "type": "string",
+                "description": "Condition for green (e.g. '>= 1', '== 0')"
+              },
+              "yellow": {
+                "type": "string",
+                "description": "Condition for yellow"
+              },
+              "red": {
+                "type": "string",
+                "description": "Condition for red"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

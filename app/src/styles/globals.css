@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #030712;
+    --color-surface: #111827;
+    --color-border: #1f2937;
+  }
+
+  body {
+    @apply bg-gray-950 text-gray-100 antialiased;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-900;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-gray-900 border border-gray-800 rounded-lg;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium text-sm transition-colors duration-150;
+  }
+  .btn-safe {
+    @apply bg-gray-700 hover:bg-gray-600 text-gray-100;
+  }
+  .btn-caution {
+    @apply bg-amber-600 hover:bg-amber-500 text-white;
+  }
+  .btn-destructive {
+    @apply bg-red-600 hover:bg-red-500 text-white;
+  }
+  .btn:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+}
