@@ -6,14 +6,24 @@ Lobster-TrApp is the **monorepo orchestrator** for the OpenClaw ecosystem. It bu
 
 **You are working in the parent orchestrator.** Changes here affect how all components are discovered, displayed, and controlled.
 
+## What the App Does (Exactly Three Things)
+
+1. **Detect and bootstrap prerequisites** — setup wizard (Podman/Docker present? Submodules cloned? Containers built?)
+2. **Start/stop/monitor via manifest-driven commands** — the dashboard (reads `component.yml`, runs declared commands, displays output)
+3. **Surface security state** — verify results, proxy logs, scan findings (the reason a non-technical user needs this instead of a terminal)
+
+## The Hard Constraint
+
+The Tauri backend must contain **zero knowledge** of what's inside any submodule. If you deleted openclaw-vault and dropped in a completely different component with a valid `component.yml`, the app must render it correctly. The moment vault-specific or forge-specific code appears in the Rust backend, the manifest-driven architecture is compromised.
+
 ## Architecture
 
 ```
 lobster-trapp/                    (this repo — public)
 ├── components/
 │   ├── openclaw-vault/           git submodule → gitgoodordietrying/openclaw-vault
-│   ├── clawhub-forge/            git submodule → gitgoodordietrying/clawhub-lab
-│   └── moltbook-pioneer/         PLACEHOLDER (.gitkeep) until repo has first commit
+│   ├── clawhub-forge/            git submodule → gitgoodordietrying/clawhub-forge
+│   └── moltbook-pioneer/         git submodule → gitgoodordietrying/moltbook-pioneer
 ├── app/                          Tauri 2 + React 18 desktop GUI
 │   ├── src/                      React frontend
 │   └── src-tauri/                Rust backend
@@ -21,16 +31,17 @@ lobster-trapp/                    (this repo — public)
 │   └── component.schema.json     THE CONTRACT — all manifests must conform
 ├── tests/
 │   └── orchestrator-check.sh     38-check validation suite
-├── docker-compose.yml            Runtime orchestration (services commented out)
+├── docker-compose.example.yml    Example only (NOT used at runtime)
 └── config/                       Shared configuration
 ```
+
 
 ### Component Roles
 | Component | Role | Status |
 |-----------|------|--------|
 | openclaw-vault | `runtime` — hardened container sandbox for OpenClaw agent | Active submodule |
 | clawhub-forge | `toolchain` — skill development workbench + security pipeline | Active submodule |
-| moltbook-pioneer | `placeholder` — agent social network (coming soon) | .gitkeep placeholder |
+| moltbook-pioneer | `network` — safe Moltbook reconnaissance + participation tools | Active submodule |
 
 ## The Manifest Contract
 
@@ -117,19 +128,19 @@ git commit -m "Update <component> submodule reference"
 # Then in standalone clone: git pull
 ```
 
-### moltbook-pioneer Conversion
-When moltbook-pioneer has its first commit:
-```bash
-rm -rf components/moltbook-pioneer
-git submodule add https://github.com/gitgoodordietrying/moltbook-pioneer.git components/moltbook-pioneer
-```
-
 ## Security Considerations
 
 - **Command injection prevention**: `runner.rs` wraps all interpolated args in single quotes with escaping
 - **Path traversal protection**: `config.rs` validates canonical paths stay within component directory
 - **Regex in probes**: `status.rs` uses the `regex` crate for `stdout_regex` rules (not string contains)
 - **Stream deduplication**: `stream.rs` kills old processes before starting new streams
+
+## What the App Must NEVER Do
+
+- Contain component-specific logic in Rust or React (the hard constraint)
+- Duplicate domain logic that belongs in a submodule
+- Run AI models or agent code directly
+- Expose network services (no remote access, no mobile browser mode)
 
 ## What NOT to Do
 

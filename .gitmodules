@@ -3,7 +3,7 @@
 	url = https://github.com/gitgoodordietrying/openclaw-vault.git
 [submodule "components/clawhub-forge"]
 	path = components/clawhub-forge
-	url = https://github.com/gitgoodordietrying/clawhub-lab.git
+	url = https://github.com/gitgoodordietrying/clawhub-forge.git
 [submodule "components/moltbook-pioneer"]
 	path = components/moltbook-pioneer
 	url = https://github.com/gitgoodordietrying/moltbook-pioneer.git

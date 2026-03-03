@@ -1,17 +1,16 @@
-# Lobster-Trapp — service orchestration
-# Composes all component layers into a unified local stack.
+# EXAMPLE ONLY — not used at runtime.
 #
-# Usage:
-#   docker compose up
+# The Tauri app orchestrates components via their component.yml manifests.
+# Each component owns its own container topology (e.g. openclaw-vault has its
+# own docker-compose.yml with vault + proxy containers). This file exists as
+# a reference for developers who want a quick "bring up everything" shortcut,
+# but it is NOT the canonical orchestration path.
 #
 # Runtime security model (onion/concentric):
 #   Lobster-TrApp (GUI + orchestration, outermost)
 #     └── OpenClaw-Vault (hardened container = passive defense)
 #           └── ClawHub-Forge (skill scanning = active defense)
 #                 └── MoltBook-Pioneer (agent in the wild, innermost)
-#
-# Each inner layer is progressively more isolated.
-# Services will be added here as components are containerized.
 
 services:
   # openclaw-vault:
