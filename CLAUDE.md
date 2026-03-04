@@ -30,7 +30,7 @@ lobster-trapp/                    (this repo — public)
 ├── schemas/
 │   └── component.schema.json     THE CONTRACT — all manifests must conform
 ├── tests/
-│   └── orchestrator-check.sh     38-check validation suite
+│   └── orchestrator-check.sh     39-check validation suite
 ├── docker-compose.example.yml    Example only (NOT used at runtime)
 └── config/                       Shared configuration
 ```
@@ -85,7 +85,7 @@ cd app/src-tauri && cargo test          # 14 unit tests
 cd app && npm install
 cd app && npm run dev                   # Dev server (Vite)
 
-# Full orchestration validation (38 checks)
+# Full orchestration validation (39 checks)
 bash tests/orchestrator-check.sh
 bash tests/orchestrator-check.sh --fix  # Auto-fix submodule issues
 ```

@@ -1,37 +1,24 @@
 # Lobster-TrApp
 
-A security-first desktop GUI for the OpenClaw ecosystem — the agent runtime, its skill supply chain, and the agent social network.
+[![CI](https://github.com/gitgoodordietrying/lobster-trapp/actions/workflows/ci.yml/badge.svg)](https://github.com/gitgoodordietrying/lobster-trapp/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Architecture
+A security-first desktop GUI that lets non-technical users safely run AI agents, scan skills for malware, and monitor an agentic social network — without touching a terminal. Everything is driven by manifest files; the app has zero knowledge of what's inside each component.
 
-```
-lobster-trapp/
-│
-├── components/
-│   ├── openclaw-vault/     Hardened container for the OpenClaw agent runtime
-│   ├── clawhub-forge/      Skill development workbench + security scanner
-│   └── moltbook-pioneer/   Safe reconnaissance of the Moltbook agent social network
-│
-├── app/                    Tauri 2 + React 18 desktop GUI
-├── schemas/                Manifest contract (JSON Schema)
-├── tests/                  Orchestration validation suite
-├── config/                 Shared configuration
-└── docker-compose.example.yml  Example compose (not used at runtime)
-```
+## What It Does
 
-### How the layers connect
+- **Detect and bootstrap prerequisites** — setup wizard checks for Podman/Docker, cloned submodules, and built containers
+- **Start/stop/monitor via manifest-driven commands** — reads `component.yml` from each component, renders dashboards generically
+- **Surface security state** — verification results, proxy logs, scan findings displayed in a GUI instead of raw terminal output
 
-```
-ClawHub (skills registry)        Moltbook (agent social network)
-        │                                  │
-        ▼                                  ▼
-   clawhub-forge ──skills──▶ openclaw-vault ──API──▶ moltbook-pioneer
-   build · scan · publish    run the agent safely    research · participate
-```
+## Screenshots
 
-- **openclaw-vault** — wraps the OpenClaw runtime in a hardened container. API keys never enter the container; a proxy sidecar injects them at the network layer. All capabilities dropped, read-only root, custom seccomp.
-- **clawhub-forge** — offline-first pipeline to build, lint, scan, test, and publish ClawHub skills. Includes 87 malicious pattern detections across 13 MITRE ATT&CK categories.
-- **moltbook-pioneer** — safe reconnaissance and participation tools for the Moltbook agentic social network. Feed scanner, agent census, identity safety checklist.
+<!-- TODO: Add screenshots after Phase 3 (Setup Wizard) -->
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) 20+
+- [Rust](https://rustup.rs/) stable toolchain
+- [Podman](https://podman.io/) or [Docker](https://www.docker.com/) (for running components)
 
 ## Getting Started
 
@@ -43,53 +30,60 @@ cd lobster-trapp
 # If you already cloned without --recurse-submodules:
 git submodule update --init --recursive
 
-# Check component status
-git submodule status
-```
-
-Each component can be developed independently:
-
-```bash
-cd components/openclaw-vault   # work on the vault
-cd components/clawhub-forge    # work on the skill workbench
-cd components/moltbook-pioneer # work on the social network tools
-```
-
-Or work on the standalone repos directly and pull updates:
-
-```bash
-git submodule update --remote components/openclaw-vault
-```
-
-## Component Repos
-
-All four repos are **public** — no authentication needed to clone or contribute.
-
-| Component | Repo | Description |
-|-----------|------|-------------|
-| openclaw-vault | [gitgoodordietrying/openclaw-vault](https://github.com/gitgoodordietrying/openclaw-vault) | Hardened container for OpenClaw |
-| clawhub-forge | [gitgoodordietrying/clawhub-forge](https://github.com/gitgoodordietrying/clawhub-forge) | Skill development workbench |
-| moltbook-pioneer | [gitgoodordietrying/moltbook-pioneer](https://github.com/gitgoodordietrying/moltbook-pioneer) | Agent social network tools |
-
-## The Tauri App
-
-The desktop GUI discovers components via their `component.yml` manifests and renders dashboards generically — no hardcoded component knowledge.
-
-```bash
-# Build & run
+# Install frontend dependencies
 cd app && npm install
-cd app && npm run dev           # Dev server (Vite on port 1420)
-cd app/src-tauri && cargo build # Rust backend
 
-# Tests
-cd app/src-tauri && cargo test          # 14 Rust unit tests
-cd app && npm test                      # Frontend tests
-bash tests/orchestrator-check.sh        # 38-check validation suite
+# Run the dev server
+npm run dev
+
+# In another terminal — build the Rust backend
+cd app/src-tauri && cargo build
 ```
 
-## Status
+## Components
 
-- **openclaw-vault**: Active — hardened container with proxy-based key isolation
-- **clawhub-forge**: Active — full skill pipeline with security scanning
-- **moltbook-pioneer**: Active — feed scanner, agent census, identity checklist
-- **app/**: Alpha (v0.1.0) — manifest-driven GUI framework complete
+All four repos are public — no authentication needed to clone or contribute.
+
+| Component | Role | Description |
+|-----------|------|-------------|
+| [openclaw-vault](https://github.com/gitgoodordietrying/openclaw-vault) | Runtime | Hardened container sandbox — API keys never enter the container |
+| [clawhub-forge](https://github.com/gitgoodordietrying/clawhub-forge) | Toolchain | Offline-first skill workbench with 87-pattern security scanner |
+| [moltbook-pioneer](https://github.com/gitgoodordietrying/moltbook-pioneer) | Network | Safe reconnaissance and participation for the Moltbook agent social network |
+
+## Architecture
+
+```
+lobster-trapp/
+├── components/
+│   ├── openclaw-vault/      git submodule → runtime
+│   ├── clawhub-forge/       git submodule → toolchain
+│   └── moltbook-pioneer/    git submodule → network
+├── app/                     Tauri 2 + React 18 desktop GUI
+│   ├── src/                 React frontend
+│   └── src-tauri/           Rust backend
+├── schemas/
+│   └── component.schema.json   THE CONTRACT — all manifests conform to this
+└── tests/
+    └── orchestrator-check.sh    39-check validation suite
+```
+
+The GUI discovers components via their `component.yml` manifests and renders dashboards generically — **no hardcoded component knowledge** in the Rust backend or React frontend. If you replaced any component with a different project that has a valid `component.yml`, the app would render it correctly.
+
+See [CLAUDE.md](CLAUDE.md) for the full architecture specification, manifest contract details, and contribution rules.
+
+## Testing
+
+```bash
+# Rust backend (14 unit tests)
+cd app/src-tauri && cargo test
+
+# Frontend (vitest — requires vitest in devDependencies, see TODO)
+cd app && npm test
+
+# Full orchestration validation (39 checks)
+bash tests/orchestrator-check.sh
+```
+
+## License
+
+[MIT](LICENSE)

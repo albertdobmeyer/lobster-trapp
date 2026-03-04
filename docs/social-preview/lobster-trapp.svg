@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <rect width="1280" height="640" fill="#0f172a"/>
+  <text x="640" y="260" font-family="monospace" font-size="64" font-weight="bold" fill="#f8fafc" text-anchor="middle">lobster-trapp</text>
+  <text x="640" y="340" font-family="sans-serif" font-size="28" fill="#94a3b8" text-anchor="middle">Manifest-driven desktop GUI for the OpenClaw ecosystem</text>
+  <text x="640" y="560" font-family="monospace" font-size="20" fill="#475569" text-anchor="middle">gitgoodordietrying</text>
+</svg>

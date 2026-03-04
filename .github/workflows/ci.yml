@@ -54,7 +54,7 @@ jobs:
       - run: cargo test
 
   check-orchestration:
-    name: Orchestration (38 checks)
+    name: Orchestration (39 checks)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

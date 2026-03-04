@@ -15,6 +15,8 @@
         "title": "Lobster-TrApp",
         "width": 1280,
         "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
         "resizable": true,
         "fullscreen": false
       }
@@ -22,6 +24,13 @@
     "security": {
       "csp": null
     }
+  },
+  "bundle": {
+    "active": true,
+    "category": "DeveloperTool",
+    "shortDescription": "Security-first desktop GUI for the OpenClaw ecosystem",
+    "copyright": "Copyright (c) 2026 gitgoodordietrying",
+    "icon": ["icons/icon.ico"]
   },
   "plugins": {
     "shell": {

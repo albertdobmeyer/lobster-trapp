@@ -2,6 +2,11 @@
 name = "lobster-trapp"
 version = "0.1.0"
 edition = "2021"
+description = "Security-first desktop GUI for the OpenClaw ecosystem"
+authors = ["gitgoodordietrying"]
+license = "MIT"
+repository = "https://github.com/gitgoodordietrying/lobster-trapp"
+homepage = "https://github.com/gitgoodordietrying/lobster-trapp#readme"
 
 [dependencies]
 tauri = { version = "2", features = [] }

@@ -15,10 +15,14 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+Desktop.ini
 
 # Environment
 .env
 .env.local
+
+# Claude Code local settings
+.claude/
 
 # Logs
 *.log
