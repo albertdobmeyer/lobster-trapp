@@ -287,8 +287,99 @@ commands:
         let content = std::fs::read_to_string(manifest_path).unwrap();
         let manifest: Manifest = serde_yaml::from_str(&content).unwrap();
         assert_eq!(manifest.identity.id, "moltbook-pioneer");
-        assert_eq!(manifest.identity.role, Role::Placeholder);
-        assert!(manifest.commands.is_empty(), "Placeholder should have no commands");
+        assert_eq!(manifest.identity.role, Role::Network);
+        assert!(!manifest.commands.is_empty());
+    }
+
+    // =========================================================================
+    // Prerequisites parsing tests
+    // =========================================================================
+
+    #[test]
+    fn test_parse_manifest_without_prerequisites() {
+        let yaml = r##"
+identity:
+  id: no-prereqs
+  name: No Prerequisites
+  version: "0.1.0"
+  description: A component with no prerequisites section
+  role: runtime
+"##;
+        let manifest: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert!(manifest.prerequisites.is_none());
+    }
+
+    #[test]
+    fn test_parse_manifest_with_prerequisites() {
+        let yaml = r##"
+identity:
+  id: with-prereqs
+  name: With Prerequisites
+  version: "0.1.0"
+  description: A component with prerequisites
+  role: runtime
+
+prerequisites:
+  container_runtime: true
+  setup_command: setup
+  config_files:
+    - path: .env
+      template: .env.example
+      description: Environment configuration
+    - path: config.yml
+  check_command: docker ps
+"##;
+        let manifest: Manifest = serde_yaml::from_str(yaml).unwrap();
+        let prereqs = manifest.prerequisites.unwrap();
+        assert!(prereqs.container_runtime);
+        assert_eq!(prereqs.setup_command.as_deref(), Some("setup"));
+        assert_eq!(prereqs.check_command.as_deref(), Some("docker ps"));
+        assert_eq!(prereqs.config_files.len(), 2);
+
+        let cf0 = &prereqs.config_files[0];
+        assert_eq!(cf0.path, ".env");
+        assert_eq!(cf0.template.as_deref(), Some(".env.example"));
+        assert_eq!(cf0.description.as_deref(), Some("Environment configuration"));
+
+        let cf1 = &prereqs.config_files[1];
+        assert_eq!(cf1.path, "config.yml");
+        assert!(cf1.template.is_none());
+        assert!(cf1.description.is_none());
+    }
+
+    #[test]
+    fn test_real_manifests_have_prerequisites() {
+        for (component, expect_container) in [
+            ("openclaw-vault", true),
+            ("clawhub-forge", false),
+            ("moltbook-pioneer", false),
+        ] {
+            let manifest_path = format!(
+                "{}/../../components/{}/component.yml",
+                env!("CARGO_MANIFEST_DIR"),
+                component
+            );
+            if !std::path::Path::new(&manifest_path).exists() {
+                continue;
+            }
+            let content = std::fs::read_to_string(&manifest_path).unwrap();
+            let manifest: Manifest = serde_yaml::from_str(&content).unwrap();
+            let prereqs = manifest.prerequisites.expect(
+                &format!("{} should have prerequisites section", component),
+            );
+            assert_eq!(
+                prereqs.container_runtime, expect_container,
+                "{} container_runtime mismatch", component
+            );
+            assert!(
+                prereqs.setup_command.is_some(),
+                "{} should have setup_command", component
+            );
+            assert!(
+                prereqs.check_command.is_some(),
+                "{} should have check_command", component
+            );
+        }
     }
 
     // =========================================================================

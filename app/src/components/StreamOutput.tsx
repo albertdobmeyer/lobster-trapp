@@ -1,6 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCommandStream } from "@/hooks/useCommandStream";
 import AnsiLine from "./renderers/AnsiLine";
+
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
 
 interface StreamOutputProps {
   componentId: string;
@@ -21,6 +27,19 @@ export default function StreamOutput({
   );
   const containerRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval>>();
+
+  // Elapsed timer
+  useEffect(() => {
+    if (streaming) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((e) => e + 1), 1000);
+    } else if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [streaming]);
 
   // Start the stream on mount
   useEffect(() => {
@@ -50,10 +69,10 @@ export default function StreamOutput({
           {streaming ? (
             <span className="inline-flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Streaming
+              Streaming &middot; {formatElapsed(elapsed)}
             </span>
           ) : (
-            "Stream ended"
+            <>Stream ended &middot; {formatElapsed(elapsed)}</>
           )}
         </h3>
         <div className="flex items-center gap-3">

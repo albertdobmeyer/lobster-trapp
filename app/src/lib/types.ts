@@ -131,12 +131,26 @@ export interface HealthProbe {
   thresholds?: HealthThresholds;
 }
 
+export interface PrereqConfigFile {
+  path: string;
+  template?: string;
+  description?: string;
+}
+
+export interface Prerequisites {
+  container_runtime: boolean;
+  setup_command?: string;
+  config_files: PrereqConfigFile[];
+  check_command?: string;
+}
+
 export interface Manifest {
   identity: Identity;
   status?: StatusConfig;
   commands: Command[];
   configs: Config[];
   health: HealthProbe[];
+  prerequisites?: Prerequisites;
 }
 
 export interface DiscoveredComponent {

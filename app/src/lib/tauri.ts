@@ -9,6 +9,12 @@ export async function listComponents(): Promise<DiscoveredComponent[]> {
   return invoke<DiscoveredComponent[]>("list_components");
 }
 
+export async function setMonorepoRoot(
+  path: string,
+): Promise<DiscoveredComponent[]> {
+  return invoke<DiscoveredComponent[]>("set_monorepo_root", { path });
+}
+
 export async function getComponent(
   componentId: string,
 ): Promise<DiscoveredComponent> {
@@ -102,5 +108,50 @@ export async function getStatus(
 ): Promise<ComponentStatus> {
   return invoke<ComponentStatus>("get_status", {
     componentId,
+  });
+}
+
+export interface PrerequisiteReport {
+  container_runtime: {
+    found: boolean;
+    name: string | null;
+    version: string | null;
+  };
+  submodules: Array<{
+    id: string;
+    name: string;
+    cloned: boolean;
+    has_manifest: boolean;
+  }>;
+  components: Array<{
+    component_id: string;
+    component_name: string;
+    needs_container_runtime: boolean;
+    missing_config_files: Array<{
+      path: string;
+      template: string | null;
+      description: string | null;
+    }>;
+    check_passed: boolean | null;
+  }>;
+}
+
+export async function checkPrerequisites(): Promise<PrerequisiteReport> {
+  return invoke<PrerequisiteReport>("check_prerequisites");
+}
+
+export async function initSubmodules(): Promise<string> {
+  return invoke<string>("init_submodules");
+}
+
+export async function createConfigFromTemplate(
+  componentId: string,
+  configPath: string,
+  templatePath: string,
+): Promise<void> {
+  return invoke("create_config_from_template", {
+    componentId,
+    configPath,
+    templatePath,
   });
 }

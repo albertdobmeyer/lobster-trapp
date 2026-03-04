@@ -31,14 +31,16 @@ const makeComponent = (
 });
 
 describe("Dashboard", () => {
-  test("shows 'Discovering components...' while loading with no data", () => {
-    render(
+  test("shows skeleton cards while loading with no data", () => {
+    const { container } = render(
       <MemoryRouter>
         <Dashboard components={[]} loading={true} onRefresh={vi.fn()} />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Discovering components...")).toBeInTheDocument();
+    // Skeleton cards have the pulse animation class
+    const skeletons = container.querySelectorAll(".animate-pulse");
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   test("shows 'No components found' when not loading and empty", () => {

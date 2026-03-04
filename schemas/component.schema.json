@@ -330,6 +330,48 @@
         }
       }
     },
+    "prerequisites": {
+      "type": "object",
+      "description": "What this component needs before it can run",
+      "additionalProperties": false,
+      "properties": {
+        "container_runtime": {
+          "type": "boolean",
+          "description": "Whether this component requires Docker/Podman",
+          "default": false
+        },
+        "setup_command": {
+          "type": "string",
+          "description": "Command ID from commands[] to run during setup"
+        },
+        "config_files": {
+          "type": "array",
+          "description": "Config files that must exist before the component works",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Relative path from component root"
+              },
+              "template": {
+                "type": "string",
+                "description": "Template file to copy from (relative path)"
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "check_command": {
+          "type": "string",
+          "description": "Shell command — exit 0 means prerequisites are met"
+        }
+      }
+    },
     "health": {
       "type": "array",
       "description": "Dashboard health badges — lightweight periodic probes for telemetry",

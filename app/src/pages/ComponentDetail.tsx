@@ -1,8 +1,11 @@
+import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import type { DiscoveredComponent } from "@/lib/types";
 import { useComponentStatus } from "@/hooks/useComponentStatus";
 import { useHealth } from "@/hooks/useHealth";
+import { useAppContext } from "@/lib/AppContext";
+import { SkeletonText, SkeletonBlock } from "@/components/Skeleton";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import StatusBadge from "@/components/StatusBadge";
 import HealthBadge from "@/components/HealthBadge";
@@ -15,9 +18,34 @@ interface ComponentDetailProps {
 
 export default function ComponentDetail({ components }: ComponentDetailProps) {
   const { id } = useParams<{ id: string }>();
+  const { updateSettings } = useAppContext();
   const component = components.find((c) => c.manifest.identity.id === id);
 
+  // Persist last-viewed component
+  useEffect(() => {
+    if (id) {
+      updateSettings({ lastViewedComponentId: id });
+    }
+  }, [id, updateSettings]);
+
   if (!component) {
+    // Still loading — show skeleton instead of instant "not found"
+    if (components.length === 0) {
+      return (
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="animate-pulse bg-gray-800 w-12 h-12 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <SkeletonText width="w-1/4" />
+              <SkeletonText width="w-1/2" />
+            </div>
+          </div>
+          <SkeletonBlock height="h-40" />
+          <SkeletonBlock height="h-32" />
+        </div>
+      );
+    }
+
     return (
       <div className="text-center py-20">
         <p className="text-gray-400">Component not found</p>

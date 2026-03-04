@@ -1,7 +1,12 @@
 import { renderHook, waitFor } from "@testing-library/react";
+import { createElement } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useManifests } from "./useManifests";
+import { ToastProvider } from "@/lib/ToastContext";
 import type { DiscoveredComponent } from "@/lib/types";
+
+const wrapper = ({ children }: { children: React.ReactNode }) =>
+  createElement(ToastProvider, null, children);
 
 const mockInvoke = vi.mocked(invoke);
 
@@ -28,7 +33,7 @@ beforeEach(() => {
 describe("useManifests", () => {
   test("starts in loading state", () => {
     mockInvoke.mockReturnValue(new Promise(() => {})); // never resolves
-    const { result } = renderHook(() => useManifests());
+    const { result } = renderHook(() => useManifests(), { wrapper });
     expect(result.current.loading).toBe(true);
     expect(result.current.components).toEqual([]);
     expect(result.current.error).toBeNull();
@@ -36,7 +41,7 @@ describe("useManifests", () => {
 
   test("loading → success with components", async () => {
     mockInvoke.mockResolvedValue([fakeComponent]);
-    const { result } = renderHook(() => useManifests());
+    const { result } = renderHook(() => useManifests(), { wrapper });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -48,7 +53,7 @@ describe("useManifests", () => {
 
   test("loading → error on failure", async () => {
     mockInvoke.mockRejectedValue(new Error("Tauri not available"));
-    const { result } = renderHook(() => useManifests());
+    const { result } = renderHook(() => useManifests(), { wrapper });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -60,7 +65,7 @@ describe("useManifests", () => {
 
   test("refresh re-fetches components", async () => {
     mockInvoke.mockResolvedValue([]);
-    const { result } = renderHook(() => useManifests());
+    const { result } = renderHook(() => useManifests(), { wrapper });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);

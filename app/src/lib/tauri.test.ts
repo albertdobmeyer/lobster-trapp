@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import {
   listComponents,
   getComponent,
+  setMonorepoRoot,
   runCommand,
   loadOptions,
   startStream,
@@ -10,6 +11,9 @@ import {
   writeConfig,
   runHealthProbe,
   getStatus,
+  checkPrerequisites,
+  initSubmodules,
+  createConfigFromTemplate,
 } from "./tauri";
 
 const mockInvoke = vi.mocked(invoke);
@@ -23,6 +27,14 @@ describe("IPC contract: each function calls invoke with correct command and args
     mockInvoke.mockResolvedValue([]);
     await listComponents();
     expect(mockInvoke).toHaveBeenCalledWith("list_components");
+  });
+
+  test("setMonorepoRoot calls set_monorepo_root with path", async () => {
+    mockInvoke.mockResolvedValue([]);
+    await setMonorepoRoot("/some/path");
+    expect(mockInvoke).toHaveBeenCalledWith("set_monorepo_root", {
+      path: "/some/path",
+    });
   });
 
   test("getComponent calls get_component with componentId", async () => {
@@ -126,6 +138,28 @@ describe("IPC contract: each function calls invoke with correct command and args
     await getStatus("openclaw-vault");
     expect(mockInvoke).toHaveBeenCalledWith("get_status", {
       componentId: "openclaw-vault",
+    });
+  });
+
+  test("checkPrerequisites calls check_prerequisites", async () => {
+    mockInvoke.mockResolvedValue({});
+    await checkPrerequisites();
+    expect(mockInvoke).toHaveBeenCalledWith("check_prerequisites");
+  });
+
+  test("initSubmodules calls init_submodules", async () => {
+    mockInvoke.mockResolvedValue("ok");
+    await initSubmodules();
+    expect(mockInvoke).toHaveBeenCalledWith("init_submodules");
+  });
+
+  test("createConfigFromTemplate calls with correct args", async () => {
+    mockInvoke.mockResolvedValue(undefined);
+    await createConfigFromTemplate("vault", ".env", ".env.example");
+    expect(mockInvoke).toHaveBeenCalledWith("create_config_from_template", {
+      componentId: "vault",
+      configPath: ".env",
+      templatePath: ".env.example",
     });
   });
 });

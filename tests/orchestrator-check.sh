@@ -433,6 +433,41 @@ if errors:
 " 2>/dev/null && pass "All manifest enum values are valid" || fail "Invalid enum values in manifests"
 
 # =============================================================================
+section "8. Prerequisites Validation"
+# =============================================================================
+
+python -c "
+import yaml, sys, glob
+
+manifests = glob.glob('components/*/component.yml')
+errors = []
+for m_path in manifests:
+    m = yaml.safe_load(open(m_path))
+    name = m.get('identity', {}).get('id', 'unknown')
+    prereqs = m.get('prerequisites')
+    if not prereqs:
+        continue
+
+    cmd_ids = [c['id'] for c in m.get('commands', [])]
+
+    # setup_command must reference a declared command
+    setup_cmd = prereqs.get('setup_command')
+    if setup_cmd and setup_cmd not in cmd_ids:
+        errors.append(f'{name}: prerequisites.setup_command \"{setup_cmd}\" not in commands')
+
+    # config_files paths should not escape component directory
+    for cf in prereqs.get('config_files', []):
+        path = cf.get('path', '')
+        if '..' in path or path.startswith('/'):
+            errors.append(f'{name}: prerequisites config_file path \"{path}\" looks unsafe')
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+" 2>/dev/null && pass "Prerequisites cross-references valid" || fail "Prerequisites cross-reference errors"
+
+# =============================================================================
 section "Summary"
 # =============================================================================
 

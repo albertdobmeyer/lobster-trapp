@@ -11,6 +11,29 @@ pub struct Manifest {
     pub configs: Vec<Config>,
     #[serde(default)]
     pub health: Vec<HealthProbe>,
+    #[serde(default)]
+    pub prerequisites: Option<Prerequisites>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Prerequisites {
+    #[serde(default)]
+    pub container_runtime: bool,
+    #[serde(default)]
+    pub setup_command: Option<String>,
+    #[serde(default)]
+    pub config_files: Vec<PrereqConfigFile>,
+    #[serde(default)]
+    pub check_command: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PrereqConfigFile {
+    pub path: String,
+    #[serde(default)]
+    pub template: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

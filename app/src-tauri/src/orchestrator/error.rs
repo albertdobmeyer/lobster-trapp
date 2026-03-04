@@ -15,6 +15,9 @@ pub enum OrchestratorError {
     #[error("Command execution failed: {0}")]
     ExecutionError(String),
 
+    #[error("Not found: {0}")]
+    NotFound(String),
+
     #[error("Config file not found: {0}")]
     ConfigNotFound(String),
 

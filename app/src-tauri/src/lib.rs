@@ -49,10 +49,12 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             commands::manifest_cmds::list_components,
             commands::manifest_cmds::get_component,
+            commands::manifest_cmds::set_monorepo_root,
             commands::execute::run_command,
             commands::execute::load_options,
             commands::stream::start_stream,
@@ -61,6 +63,9 @@ pub fn run() {
             commands::config::write_config,
             commands::status::get_status,
             commands::health::run_health_probe,
+            commands::prerequisites::check_prerequisites,
+            commands::prerequisites::init_submodules,
+            commands::prerequisites::create_config_from_template,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

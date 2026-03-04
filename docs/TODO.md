@@ -8,34 +8,48 @@ Tracked gaps from the 2026-03-03 audit. This covers the Tauri app's own issues, 
 
 - [x] `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`, and `@playwright/test` added to `package.json` devDependencies
 - [x] `vitest.config.ts` created with jsdom environment, globals, path aliases, and setup file
-- [x] `test`, `test:watch`, and `test:e2e` scripts added to `package.json`
-- [x] 29 unit tests across 5 test files all passing
+- [x] 52 frontend unit tests across 8 test files + 17 Rust unit tests + 40 orchestrator checks all passing
 - [ ] 4 Playwright E2E tests exist in `tests/` — runnable but need a dev server (Phase 4)
 
 ---
 
-## ANSI Color Rendering (Phase 4)
+## ANSI Color Rendering (Phase 4) — RESOLVED
 
-- [ ] `app/src/lib/ansi.ts` is 7 lines — it only strips ANSI escape codes
-- [ ] All terminal output from docker/make/colored scripts renders as plain text
-- [ ] Need actual ANSI-to-HTML or ANSI-to-spans rendering (consider `ansi-to-html` npm package)
-
----
-
-## Streaming Not Wired to UI (Phase 4)
-
-- [ ] `app/src/hooks/useCommandStream.ts` is fully implemented (Tauri event listeners, line buffering)
-- [ ] `app/src/components/CommandPanel.tsx` only uses `useCommand` (blocking execution)
-- [ ] Commands with `type: stream` (logs, proxy-logs) are run as blocking calls instead of streaming
-- [ ] Fix: detect `type: stream` in CommandPanel and use `useCommandStream` instead
+- [x] Full ANSI escape code parser in `app/src/components/renderers/ansi.ts` (parseAnsi)
+- [x] `AnsiLine` component renders styled spans with color, bold, dim, italic, underline, strikethrough
+- [x] Wired into `LogRenderer` and `TerminalRenderer`
 
 ---
 
-## Settings Page Stub (Phase 4)
+## Streaming Not Wired to UI (Phase 4) — RESOLVED
 
-- [ ] Settings page has a monorepo path override text input
-- [ ] The input is UI-only — never calls a Tauri backend command
-- [ ] No backend command exists to persist or apply the path override
+- [x] `StreamOutput` component with real-time output display
+- [x] `CommandPanel` detects `type: stream` and routes to `StreamOutput` instead of blocking execution
+- [x] Elapsed timer shows duration while streaming
+- [x] Auto-scroll, stop button, exit code display
+
+---
+
+## Settings Persistence (Phase 4) — RESOLVED
+
+- [x] `tauri-plugin-store` v2 added (Rust + npm)
+- [x] `AppSettings` interface: monorepoPathOverride, autoRefreshInterval, wizardCompleted, lastViewedComponentId
+- [x] `useSettings` hook wraps store with typed read/write and forward-compatible merge
+- [x] `AppContext` provides settings to all components
+- [x] Settings page has working controls: monorepo path override, refresh interval slider, save/cancel
+- [x] Backend `set_monorepo_root` command validates path and re-discovers components
+- [x] `monorepo_root` is now `RwLock<PathBuf>` for thread-safe mutation
+- [x] Last-viewed component persisted and restored
+
+---
+
+## Error UX + Loading States (Phase 4) — RESOLVED
+
+- [x] Toast notification system: color-coded borders, auto-dismiss, expandable details, retry button
+- [x] Error classification: maps OrchestratorError patterns to categories (timeout, not_found, permission, execution, config, parse)
+- [x] Toasts wired into all hooks: useCommand, useConfig, useManifests, useCommandStream, useComponentStatus
+- [x] Skeleton screens for Dashboard (loading cards) and ComponentDetail (loading header + blocks)
+- [x] Debounced status probe toast (only after 3 consecutive failures)
 
 ---
 
@@ -47,11 +61,16 @@ Tracked gaps from the 2026-03-03 audit. This covers the Tauri app's own issues, 
 
 ---
 
-## Setup Wizard (Phase 3 — Not Started)
+## Setup Wizard (Phase 3) — RESOLVED
 
-- [ ] 0% implemented — the #1 feature for non-technical users
-- [ ] Needs: prerequisite detection (Podman/Docker), submodule health, guided first-run, progress indicators, error recovery
-- [ ] See Phase 3 in `vision-and-status.md` for full requirements
+- [x] Schema extended with optional `prerequisites` section (container_runtime, setup_command, config_files, check_command)
+- [x] All 3 component manifests updated with prerequisites sections
+- [x] Backend: `check_prerequisites`, `init_submodules`, `create_config_from_template` commands
+- [x] Frontend: 5-step wizard (Welcome → Prerequisites → Submodules → Config → Complete)
+- [x] First-run detection: redirects to `/setup` when `wizardCompleted` is false
+- [x] "Re-run Setup Wizard" button in Settings page
+- [x] `usePrerequisites` hook with toast notifications
+- [x] Orchestrator check section 8 validates prerequisites cross-references (40 checks total)
 
 ---
 

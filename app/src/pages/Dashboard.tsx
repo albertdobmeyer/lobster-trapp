@@ -1,6 +1,7 @@
 import { RefreshCw } from "lucide-react";
 import type { DiscoveredComponent } from "@/lib/types";
 import ComponentCard from "@/components/ComponentCard";
+import { SkeletonCard } from "@/components/Skeleton";
 
 interface DashboardProps {
   components: DiscoveredComponent[];
@@ -40,8 +41,10 @@ export default function Dashboard({
       </div>
 
       {loading && components.length === 0 ? (
-        <div className="text-center py-20 text-gray-500">
-          Discovering components...
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       ) : components.length === 0 ? (
         <div className="text-center py-20">
