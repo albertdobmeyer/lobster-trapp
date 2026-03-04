@@ -6,6 +6,7 @@ import CommandButton from "./CommandButton";
 import ArgumentForm from "./ArgumentForm";
 import ConfirmDialog from "./ConfirmDialog";
 import OutputRenderer from "./OutputRenderer";
+import StreamOutput from "./StreamOutput";
 
 interface CommandPanelProps {
   commands: Command[];
@@ -24,6 +25,12 @@ export default function CommandPanel({
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingArgs, setPendingArgs] = useState<Record<string, string>>({});
   const [lastDisplay, setLastDisplay] = useState<string>("log");
+
+  // Stream state: tracks the currently active stream command
+  const [streamCommand, setStreamCommand] = useState<{
+    commandId: string;
+    args: Record<string, string>;
+  } | null>(null);
 
   // Group and sort commands
   const grouped = COMMAND_GROUP_ORDER
@@ -55,7 +62,7 @@ export default function CommandPanel({
       return;
     }
 
-    runCommand(cmd, {});
+    dispatchCommand(cmd, {});
   };
 
   const handleArgsSubmit = (args: Record<string, string>) => {
@@ -68,18 +75,28 @@ export default function CommandPanel({
     }
 
     if (activeCommand) {
-      runCommand(activeCommand, args);
+      dispatchCommand(activeCommand, args);
     }
   };
 
   const handleConfirm = () => {
     setShowConfirm(false);
     if (activeCommand) {
-      runCommand(activeCommand, pendingArgs);
+      dispatchCommand(activeCommand, pendingArgs);
     }
   };
 
-  const runCommand = async (cmd: Command, args: Record<string, string>) => {
+  const dispatchCommand = async (cmd: Command, args: Record<string, string>) => {
+    if (cmd.type === "stream") {
+      // Close any previous stream, clear blocking output
+      clear();
+      setStreamCommand({ commandId: cmd.id, args });
+      setPendingArgs({});
+      return;
+    }
+
+    // Non-stream: run as blocking command
+    setStreamCommand(null);
     clear();
     setLastDisplay(cmd.output?.display || "log");
     await execute(componentId, cmd.id, args);
@@ -99,7 +116,10 @@ export default function CommandPanel({
                 key={cmd.id}
                 command={cmd}
                 disabled={!isAvailable(cmd)}
-                running={running && activeCommand?.id === cmd.id}
+                running={
+                  (running && activeCommand?.id === cmd.id) ||
+                  (streamCommand?.commandId === cmd.id)
+                }
                 onClick={() => handleClick(cmd)}
               />
             ))}
@@ -107,8 +127,18 @@ export default function CommandPanel({
         </div>
       ))}
 
-      {/* Output */}
-      {(result || error) && (
+      {/* Stream output */}
+      {streamCommand && (
+        <StreamOutput
+          componentId={componentId}
+          commandId={streamCommand.commandId}
+          args={streamCommand.args}
+          onStop={() => setStreamCommand(null)}
+        />
+      )}
+
+      {/* Blocking command output */}
+      {!streamCommand && (result || error) && (
         <div className="mt-6">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider">

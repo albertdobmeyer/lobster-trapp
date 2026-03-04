@@ -21,11 +21,27 @@ pub async fn get_component(
     state: State<'_, AppState>,
     component_id: String,
 ) -> Result<DiscoveredComponent, OrchestratorError> {
-    let components = state.components.lock().unwrap();
+    // Try the cache first
+    {
+        let components = state.components.lock().unwrap();
+        if let Some(found) = components
+            .iter()
+            .find(|c| c.manifest.identity.id == component_id)
+        {
+            return Ok(found.clone());
+        }
+    }
 
-    components
+    // Cache miss (empty or component not found) — discover from filesystem
+    let discovered = discover_components(&state.monorepo_root)?;
+    let result = discovered
         .iter()
         .find(|c| c.manifest.identity.id == component_id)
-        .cloned()
-        .ok_or_else(|| OrchestratorError::ComponentNotFound(component_id))
+        .cloned();
+
+    // Populate cache so subsequent calls are fast
+    let mut components = state.components.lock().unwrap();
+    *components = discovered;
+
+    result.ok_or_else(|| OrchestratorError::ComponentNotFound(component_id))
 }

@@ -29,7 +29,7 @@ Each image follows the same structure:
 
 | Repo | Status | Path |
 |------|--------|------|
-| lobster-trapp | SVG placeholder | `docs/social-preview/lobster-trapp.svg` |
+| lobster-trapp | **SVG with official logo** | `docs/social-preview/lobster-trapp.svg` |
 | openclaw-vault | **Production PNG** | `docs/social-preview.png` (in vault repo) |
 | clawhub-forge | SVG placeholder | `docs/social-preview/clawhub-forge.svg` |
 | moltbook-pioneer | SVG placeholder | `docs/social-preview/moltbook-pioneer.svg` |

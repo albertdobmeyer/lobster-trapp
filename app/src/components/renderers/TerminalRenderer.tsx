@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { stripAnsi } from "./ansi";
+import AnsiLine from "./AnsiLine";
 
 interface TerminalRendererProps {
   content: string;
@@ -20,7 +20,7 @@ export default function TerminalRenderer({
     }
   }, [content]);
 
-  const lines = stripAnsi(content).split("\n");
+  const lines = content.split("\n");
 
   return (
     <div
@@ -29,7 +29,7 @@ export default function TerminalRenderer({
     >
       {lines.map((line, i) => (
         <div key={i} className="text-gray-300 leading-relaxed">
-          {line || "\u00A0"}
+          {line ? <AnsiLine text={line} /> : "\u00A0"}
         </div>
       ))}
       {streaming && (

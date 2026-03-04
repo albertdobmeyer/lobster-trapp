@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Save } from "lucide-react";
+import yaml from "js-yaml";
 import type { Config } from "@/lib/types";
 import { useConfig } from "@/hooks/useConfig";
 
@@ -15,6 +16,7 @@ export default function YamlEditor({ config, componentId }: YamlEditorProps) {
   );
   const [text, setText] = useState("");
   const [dirty, setDirty] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   useEffect(() => {
     load();
@@ -25,6 +27,20 @@ export default function YamlEditor({ config, componentId }: YamlEditorProps) {
   }, [content]);
 
   const handleSave = async () => {
+    // Validate YAML syntax before saving (for yaml/json config formats)
+    if (config.format === "yaml" || config.format === "json") {
+      try {
+        yaml.load(text);
+        setParseError(null);
+      } catch (e) {
+        const msg = e instanceof yaml.YAMLException
+          ? `YAML syntax error: ${e.reason} (line ${e.mark?.line !== undefined ? e.mark.line + 1 : "?"})`
+          : "Invalid YAML syntax";
+        setParseError(msg);
+        return;
+      }
+    }
+
     await save(text);
     setDirty(false);
   };
@@ -36,12 +52,18 @@ export default function YamlEditor({ config, componentId }: YamlEditorProps) {
   return (
     <div className="space-y-3">
       {error && <div className="text-sm text-red-400">{error}</div>}
+      {parseError && (
+        <div className="text-sm text-amber-400 bg-amber-950 border border-amber-800 rounded-md px-3 py-2">
+          {parseError}
+        </div>
+      )}
 
       <textarea
         value={text}
         onChange={(e) => {
           setText(e.target.value);
           setDirty(true);
+          setParseError(null);
         }}
         disabled={!config.editable}
         rows={20}

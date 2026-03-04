@@ -1,21 +1,132 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0f172a"/>
-      <stop offset="100%" style="stop-color:#1e293b"/>
+    <!-- Golden shield gradient -->
+    <linearGradient id="shield-face" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="35%" stop-color="#f59e0b"/>
+      <stop offset="65%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#b45309"/>
     </linearGradient>
+    <!-- Shield edge / bevel highlight -->
+    <linearGradient id="shield-rim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+    <!-- Claw gradient: deep red to crimson -->
+    <linearGradient id="claw-fill" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="40%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </linearGradient>
+    <!-- Dark background -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <!-- Inner shadow on shield -->
+    <radialGradient id="shield-inner" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#78350f" stop-opacity="0.1"/>
+    </radialGradient>
   </defs>
-  <!-- Background -->
+
+  <!-- Background rounded square -->
   <rect width="512" height="512" rx="80" fill="url(#bg)"/>
-  <!-- Shield outline -->
-  <path d="M256 72 L420 140 L420 280 Q420 380 256 448 Q92 380 92 280 L92 140 Z"
-        fill="none" stroke="#f97316" stroke-width="16" stroke-linejoin="round"/>
-  <!-- Shield fill (subtle) -->
-  <path d="M256 88 L408 152 L408 278 Q408 370 256 434 Q104 370 104 278 L104 152 Z"
-        fill="#0f172a" opacity="0.5"/>
-  <!-- LT monogram -->
-  <text x="256" y="310" text-anchor="middle" font-family="monospace" font-weight="bold"
-        font-size="180" fill="#f8fafc" letter-spacing="-8">LT</text>
-  <!-- Accent line -->
-  <line x1="168" y1="340" x2="344" y2="340" stroke="#f97316" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Shield outer rim (bevel) -->
+  <path d="M256 52 L432 128 L432 276 Q432 390 256 462 Q80 390 80 276 L80 128 Z"
+        fill="url(#shield-rim)" stroke="#92400e" stroke-width="2"/>
+
+  <!-- Shield face -->
+  <path d="M256 68 L418 140 L418 272 Q418 378 256 446 Q94 378 94 272 L94 140 Z"
+        fill="url(#shield-face)"/>
+
+  <!-- Shield inner sheen -->
+  <path d="M256 68 L418 140 L418 272 Q418 378 256 446 Q94 378 94 272 L94 140 Z"
+        fill="url(#shield-inner)"/>
+
+  <!-- Shield center band (darker gold, adds depth) -->
+  <path d="M256 90 L400 155 L400 268 Q400 365 256 428 Q112 365 112 268 L112 155 Z"
+        fill="none" stroke="#b45309" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- === LOBSTER CLAW === -->
+  <!-- The claw is a single pincer viewed from above, open and gripping -->
+
+  <!-- Left pincer arm (the larger/fixed one) -->
+  <path d="
+    M 200 340
+    Q 170 320 160 280
+    Q 148 230 170 190
+    Q 188 158 210 148
+    Q 235 138 252 150
+    Q 262 158 258 175
+    Q 252 200 240 220
+    Q 228 245 230 270
+    Q 232 295 240 310
+    Z
+  " fill="url(#claw-fill)" stroke="#7f1d1d" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Right pincer arm (the movable one) -->
+  <path d="
+    M 312 340
+    Q 342 320 352 280
+    Q 364 230 342 190
+    Q 324 158 302 148
+    Q 277 138 260 150
+    Q 250 158 254 175
+    Q 260 200 272 220
+    Q 284 245 282 270
+    Q 280 295 272 310
+    Z
+  " fill="url(#claw-fill)" stroke="#7f1d1d" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- Left pincer tip (curved hook) -->
+  <path d="
+    M 210 148
+    Q 220 125 240 118
+    Q 258 112 268 125
+    Q 272 135 262 148
+    Q 255 155 252 150
+  " fill="#ef4444" stroke="#7f1d1d" stroke-width="2" stroke-linejoin="round"/>
+
+  <!-- Right pincer tip (curved hook) -->
+  <path d="
+    M 302 148
+    Q 292 125 272 118
+    Q 254 112 244 125
+    Q 240 135 250 148
+    Q 257 155 260 150
+  " fill="#ef4444" stroke="#7f1d1d" stroke-width="2" stroke-linejoin="round"/>
+
+  <!-- Claw joint / knuckle base -->
+  <ellipse cx="256" cy="345" rx="62" ry="22"
+           fill="#b91c1c" stroke="#7f1d1d" stroke-width="2"/>
+
+  <!-- Claw segment lines (texture on arms) -->
+  <path d="M 195 300 Q 215 295 235 305" fill="none" stroke="#7f1d1d" stroke-width="1.5" opacity="0.5"/>
+  <path d="M 317 300 Q 297 295 277 305" fill="none" stroke="#7f1d1d" stroke-width="1.5" opacity="0.5"/>
+  <path d="M 185 270 Q 210 262 235 272" fill="none" stroke="#7f1d1d" stroke-width="1.5" opacity="0.4"/>
+  <path d="M 327 270 Q 302 262 277 272" fill="none" stroke="#7f1d1d" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Highlight on left pincer -->
+  <path d="
+    M 190 280
+    Q 178 240 195 200
+    Q 205 178 218 168
+  " fill="none" stroke="#fca5a5" stroke-width="2.5" opacity="0.35" stroke-linecap="round"/>
+
+  <!-- Highlight on right pincer -->
+  <path d="
+    M 322 280
+    Q 334 240 317 200
+    Q 307 178 294 168
+  " fill="none" stroke="#fca5a5" stroke-width="2.5" opacity="0.35" stroke-linecap="round"/>
+
+  <!-- Small rivets on shield (decorative) -->
+  <circle cx="130" cy="180" r="4" fill="#fde68a" opacity="0.6"/>
+  <circle cx="382" cy="180" r="4" fill="#fde68a" opacity="0.6"/>
+  <circle cx="118" cy="240" r="4" fill="#fde68a" opacity="0.6"/>
+  <circle cx="394" cy="240" r="4" fill="#fde68a" opacity="0.6"/>
+  <circle cx="256" cy="80" r="4" fill="#fde68a" opacity="0.6"/>
 </svg>

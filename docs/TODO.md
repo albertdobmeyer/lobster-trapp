@@ -39,11 +39,11 @@ Tracked gaps from the 2026-03-03 audit. This covers the Tauri app's own issues, 
 
 ---
 
-## YAML Validation (Phase 4)
+## YAML Validation (Phase 4) — RESOLVED
 
-- [ ] `YamlEditor` component saves content without syntax validation
-- [ ] Invalid YAML silently corrupts config files (e.g., `openclaw-hardening.yml`)
-- [ ] Fix: parse with `js-yaml` before saving, show error if invalid
+- [x] `YamlEditor` validates YAML syntax with `js-yaml` before saving
+- [x] Parse errors shown inline with line number
+- [x] Error clears on edit, save is blocked until syntax is valid
 
 ---
 
@@ -69,8 +69,8 @@ Tracked gaps from the 2026-03-03 audit. This covers the Tauri app's own issues, 
 
 ---
 
-## Deep-Link Race Condition (Phase 6)
+## Deep-Link Race Condition (Phase 6) — RESOLVED
 
-- [ ] `get_component` reads from a cache populated by `list_components`
-- [ ] Direct navigation to `/component/:id` before the dashboard loads returns an error
-- [ ] Fix: `get_component` should fall back to filesystem discovery if cache is empty
+- [x] `get_component` now falls back to `discover_components()` on cache miss
+- [x] Cache is populated as a side effect, so subsequent calls are fast
+- [x] Direct navigation to `/component/:id` works without visiting the dashboard first
