@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lobster-TrApp — Security-First Desktop GUI for OpenClaw</title>
+  <meta name="description" content="A manifest-driven desktop GUI that lets non-technical users safely operate AI agents in hardened containers.">
+  <style>
+    :root {
+      --slate-50: #f8fafc;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --orange-500: #f97316;
+      --orange-600: #ea580c;
+      --emerald-500: #10b981;
+      --violet-500: #8b5cf6;
+      --cyan-500: #06b6d4;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--slate-900);
+      color: var(--slate-300);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 80px 0 60px;
+      border-bottom: 1px solid var(--slate-700);
+    }
+
+    .hero h1 {
+      font-family: 'Courier New', monospace;
+      font-size: 3rem;
+      color: var(--slate-50);
+      margin-bottom: 8px;
+    }
+
+    .hero h1 span { color: var(--orange-500); }
+
+    .hero .tagline {
+      font-size: 1.2rem;
+      color: var(--slate-400);
+      margin-bottom: 32px;
+    }
+
+    .cta {
+      display: inline-block;
+      padding: 12px 32px;
+      background: var(--orange-500);
+      color: var(--slate-900);
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .cta:hover { background: var(--orange-600); }
+
+    /* Sections */
+    section {
+      padding: 48px 0;
+      border-bottom: 1px solid var(--slate-700);
+    }
+
+    section:last-child { border-bottom: none; }
+
+    h2 {
+      font-family: 'Courier New', monospace;
+      font-size: 1.5rem;
+      color: var(--slate-50);
+      margin-bottom: 24px;
+    }
+
+    /* Features */
+    .features {
+      display: grid;
+      gap: 20px;
+    }
+
+    .feature {
+      background: var(--slate-800);
+      padding: 20px 24px;
+      border-radius: 8px;
+      border-left: 3px solid var(--orange-500);
+    }
+
+    .feature strong {
+      color: var(--slate-50);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* Components table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--slate-700);
+    }
+
+    th {
+      color: var(--slate-400);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    td a {
+      color: var(--orange-500);
+      text-decoration: none;
+    }
+
+    td a:hover { text-decoration: underline; }
+
+    .role-runtime { color: var(--emerald-500); }
+    .role-toolchain { color: var(--cyan-500); }
+    .role-network { color: var(--violet-500); }
+
+    /* Architecture */
+    .arch-note {
+      background: var(--slate-800);
+      padding: 20px 24px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      line-height: 1.8;
+    }
+
+    code {
+      background: var(--slate-800);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      color: var(--slate-400);
+      font-size: 0.85rem;
+    }
+
+    footer a { color: var(--slate-400); text-decoration: none; }
+    footer a:hover { color: var(--slate-50); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>Lobster-<span>TrApp</span></h1>
+      <p class="tagline">Security-first desktop GUI for AI agents you can actually trust</p>
+      <a class="cta" href="https://github.com/gitgoodordietrying/lobster-trapp">View on GitHub</a>
+    </div>
+
+    <section>
+      <h2>What It Does</h2>
+      <div class="features">
+        <div class="feature">
+          <strong>Bootstrap</strong>
+          Detects prerequisites (Podman/Docker), clones submodules, builds containers &mdash; guided setup wizard for non-technical users.
+        </div>
+        <div class="feature">
+          <strong>Dashboard</strong>
+          Start, stop, and monitor components through a manifest-driven interface. Every button, command, and status badge is declared in <code>component.yml</code>, not hardcoded.
+        </div>
+        <div class="feature">
+          <strong>Security Surface</strong>
+          Verify results, inspect proxy logs, review scan findings. The reason you need this instead of a terminal.
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Components</h2>
+      <table>
+        <thead>
+          <tr><th>Component</th><th>Role</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="https://github.com/gitgoodordietrying/openclaw-vault">openclaw-vault</a></td>
+            <td class="role-runtime">runtime</td>
+            <td>Hardened container sandbox for the OpenClaw agent</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/gitgoodordietrying/clawhub-forge">clawhub-forge</a></td>
+            <td class="role-toolchain">toolchain</td>
+            <td>Skill development workbench + security scanning pipeline</td>
+          </tr>
+          <tr>
+            <td><a href="https://github.com/gitgoodordietrying/moltbook-pioneer">moltbook-pioneer</a></td>
+            <td class="role-network">network</td>
+            <td>Safe Moltbook reconnaissance + participation tools</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Architecture</h2>
+      <div class="arch-note">
+        The Tauri backend contains <strong style="color:var(--orange-500)">zero knowledge</strong> of what's inside any component.
+        Each component self-describes via <code>component.yml</code>.
+        Drop in any component with a valid manifest and it renders correctly.
+        The schema is the contract. The GUI is generic. The components are independent.
+      </div>
+    </section>
+
+    <footer>
+      <p>MIT License &middot; Built by <a href="https://github.com/gitgoodordietrying">gitgoodordietrying</a></p>
+      <p style="margin-top: 8px">Built with Tauri 2 + React 18 + Rust</p>
+    </footer>
+  </div>
+</body>
+</html>

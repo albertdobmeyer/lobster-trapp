@@ -22,7 +22,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: https://img.shields.io; connect-src ipc: http://ipc.localhost"
     }
   },
   "bundle": {
@@ -30,7 +30,13 @@
     "category": "DeveloperTool",
     "shortDescription": "Security-first desktop GUI for the OpenClaw ecosystem",
     "copyright": "Copyright (c) 2026 gitgoodordietrying",
-    "icon": ["icons/icon.ico"]
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   },
   "plugins": {
     "shell": {

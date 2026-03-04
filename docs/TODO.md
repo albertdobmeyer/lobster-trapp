@@ -4,15 +4,13 @@ Tracked gaps from the 2026-03-03 audit. This covers the Tauri app's own issues, 
 
 ---
 
-## Test Framework Not Configured (Phase 2 Blocker)
+## Test Framework Not Configured (Phase 2 Blocker) — RESOLVED
 
-- [ ] `vitest`, `@testing-library/react`, `jsdom`, and `@playwright/test` are installed in `node_modules` but NOT listed in `package.json` devDependencies
-- [ ] No `vitest.config.ts` exists
-- [ ] No `test` script in `package.json`
-- [ ] 22 unit tests exist in `app/src/` but cannot run
-- [ ] 4 Playwright E2E tests exist in `tests/` but cannot run
-
-**Fix**: Add deps to package.json, create vitest.config.ts, add `"test"` and `"test:e2e"` scripts.
+- [x] `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`, and `@playwright/test` added to `package.json` devDependencies
+- [x] `vitest.config.ts` created with jsdom environment, globals, path aliases, and setup file
+- [x] `test`, `test:watch`, and `test:e2e` scripts added to `package.json`
+- [x] 29 unit tests across 5 test files all passing
+- [ ] 4 Playwright E2E tests exist in `tests/` — runnable but need a dev server (Phase 4)
 
 ---
 
@@ -64,10 +62,10 @@ Tracked gaps from the 2026-03-03 audit. This covers the Tauri app's own issues, 
 
 ---
 
-## CSP Headers (Phase 6)
+## CSP Headers (Phase 6) — RESOLVED
 
-- [ ] Content Security Policy is `null` (disabled) in `tauri.conf.json`
-- [ ] Production builds should have a restrictive CSP
+- [x] Restrictive CSP set in `tauri.conf.json`: `default-src 'self'`, `script-src 'self'`, `style-src 'self' 'unsafe-inline'` (Tailwind), `connect-src ipc: http://ipc.localhost` (Tauri IPC)
+- [x] No `unsafe-eval`, no external script sources
 
 ---
 
