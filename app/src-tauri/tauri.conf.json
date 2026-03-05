@@ -29,19 +29,31 @@
     "active": true,
     "category": "DeveloperTool",
     "shortDescription": "Security-first desktop GUI for the OpenClaw ecosystem",
-    "copyright": "Copyright (c) 2026 gitgoodordietrying",
+    "copyright": "Copyright (c) 2026 Albert Dobmeyer",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.sectigo.com"
+    }
   },
   "plugins": {
     "shell": {
       "open": true
     },
-    "store": {}
+    "store": null,
+    "updater": {
+      "active": false,
+      "endpoints": [
+        "https://github.com/gitgoodordietrying/lobster-trapp/releases/latest/download/latest.json"
+      ],
+      "pubkey": ""
+    }
   }
 }

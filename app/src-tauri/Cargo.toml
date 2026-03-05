@@ -3,7 +3,7 @@ name = "lobster-trapp"
 version = "0.1.0"
 edition = "2021"
 description = "Security-first desktop GUI for the OpenClaw ecosystem"
-authors = ["gitgoodordietrying"]
+authors = ["Albert Dobmeyer"]
 license = "MIT"
 repository = "https://github.com/gitgoodordietrying/lobster-trapp"
 homepage = "https://github.com/gitgoodordietrying/lobster-trapp#readme"
@@ -12,6 +12,7 @@ homepage = "https://github.com/gitgoodordietrying/lobster-trapp#readme"
 tauri = { version = "2", features = [] }
 tauri-plugin-shell = "2"
 tauri-plugin-store = "2"
+tauri-plugin-updater = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"

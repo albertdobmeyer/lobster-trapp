@@ -1,9 +1,23 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import type {
   DiscoveredComponent,
   CommandResult,
   ComponentStatus,
 } from "./types";
+
+// Detect if running inside Tauri webview vs plain browser
+const isTauri = !!(window as Record<string, unknown>).__TAURI_INTERNALS__;
+
+function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  if (!isTauri) {
+    return Promise.reject(
+      new Error(
+        `Tauri IPC not available — running in browser mode. Command "${cmd}" requires the Tauri desktop app. Run "npm run tauri dev" instead of "npm run dev".`,
+      ),
+    );
+  }
+  return args ? tauriInvoke<T>(cmd, args) : tauriInvoke<T>(cmd);
+}
 
 export async function listComponents(): Promise<DiscoveredComponent[]> {
   return invoke<DiscoveredComponent[]>("list_components");

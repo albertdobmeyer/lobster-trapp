@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Local-only docs
+docs/code-signing-guide.md
+
 # Build outputs
 app/src-tauri/target/
 app/src-tauri/gen/

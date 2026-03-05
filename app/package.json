@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "Security-first desktop GUI for the OpenClaw ecosystem",
-  "author": "gitgoodordietrying",
+  "author": "Albert Dobmeyer",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -24,6 +24,7 @@
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-shell": "^2.0.0",
     "@tauri-apps/plugin-store": "^2.4.2",
+    "@tauri-apps/plugin-updater": "^2.0.0",
     "js-yaml": "^4.1.1",
     "lucide-react": "^0.400.0",
     "react": "^18.3.1",

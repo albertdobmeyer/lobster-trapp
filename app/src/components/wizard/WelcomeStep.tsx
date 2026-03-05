@@ -1,5 +1,3 @@
-import { Shell } from "lucide-react";
-
 interface WelcomeStepProps {
   onNext: () => void;
 }
@@ -7,9 +5,11 @@ interface WelcomeStepProps {
 export default function WelcomeStep({ onNext }: WelcomeStepProps) {
   return (
     <div className="text-center max-w-md mx-auto py-12">
-      <div className="w-20 h-20 rounded-2xl bg-orange-500/20 flex items-center justify-center mx-auto mb-6">
-        <Shell size={40} className="text-orange-400" />
-      </div>
+      <img
+        src="/logo.svg"
+        alt="Lobster-TrApp"
+        className="w-20 h-20 rounded-2xl mx-auto mb-6"
+      />
       <h1 className="text-3xl font-bold text-gray-100 mb-3">
         Welcome to Lobster-TrApp
       </h1>

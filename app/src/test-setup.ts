@@ -1,5 +1,8 @@
 import "@testing-library/jest-dom/vitest";
 
+// Simulate Tauri environment so isTauri check passes in tauri.ts
+(window as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
 }));
