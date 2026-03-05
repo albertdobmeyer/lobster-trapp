@@ -6,7 +6,7 @@ import type {
 } from "./types";
 
 // Detect if running inside Tauri webview vs plain browser
-const isTauri = !!(window as Record<string, unknown>).__TAURI_INTERNALS__;
+const isTauri = !!(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
 
 function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   if (!isTauri) {
