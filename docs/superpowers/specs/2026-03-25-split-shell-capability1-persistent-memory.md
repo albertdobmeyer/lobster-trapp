@@ -173,6 +173,115 @@ When switching from Split Shell to Hard Shell:
 
 **Volume size:** The persistent volume should have a size limit to prevent the agent from filling the disk. Podman volume size limits can be set via the `--opt size=` flag.
 
+### MANDATORY: Workspace Audit System
+
+**No shell level beyond Hard Shell is permitted without complete workspace visibility.** This is a non-negotiable requirement — the user must be able to see every file the agent creates, modifies, or deletes, and every network request the agent makes. Zero blind spots.
+
+#### Audit Command: `vault-audit.sh`
+
+A new script (`scripts/vault-audit.sh`) that provides a complete picture of what Hum did. Runs from the host, does not require the container to be running (reads the persistent volume directly).
+
+```
+Usage: bash scripts/vault-audit.sh [options]
+  --full          Full workspace listing with sizes and timestamps
+  --changes       Files created or modified since last audit
+  --diff <file>   Show content of a specific workspace file
+  --memory        Show all memory files (memory/*.md + MEMORY.md)
+  --sessions      Show session transcript summaries (message count, last active)
+  --network       Parse proxy logs (domains contacted, requests blocked, payload sizes)
+  --config        Show running OpenClaw config (verify shell level is correct)
+  --all           Run all of the above
+```
+
+Output example for `--changes`:
+```
+=== Workspace Changes Since Last Audit (2026-03-25 08:00) ===
+
+  NEW     memory/2026-03-25.md         (342 bytes)   13:45:02
+  MODIFY  USER.md                      (891 bytes)   13:40:15
+  MODIFY  IDENTITY.md                  (636 bytes)   13:40:10
+
+  No files deleted.
+  No files created outside workspace/.
+
+  Total workspace size: 18.2 KB / 64 MB limit
+```
+
+#### Audit Triggers
+
+The audit must be runnable:
+1. **On demand** — user runs `vault-audit.sh` from terminal or GUI button
+2. **On shell switch** — `switch-shell.sh` runs a full audit before AND after switching
+3. **On container stop** — `kill.sh --soft` runs `--changes` and displays summary
+4. **Periodically** — future: cron on the HOST (not inside the container) to audit daily
+
+#### What the Audit Checks
+
+| Check | What It Catches |
+|-------|----------------|
+| File listing with timestamps | New or modified files since last audit |
+| File content hash tracking | Detects if a file was silently modified between audits |
+| Workspace size | Prevents the agent from filling the disk |
+| Files outside workspace boundary | Detects if workspaceOnly was bypassed (should never happen) |
+| Proxy log summary | Domains contacted, requests blocked, unusual payload sizes |
+| Config verification | Confirms the running config matches the expected shell level |
+| Session transcript count | How many conversations, total size |
+| Personality file changes | Detects if SOUL.md, IDENTITY.md, or AGENTS.md were modified |
+
+#### Prompt Injection Detection
+
+The agent could write **prompt injection** into its own memory files — text designed to manipulate its future self into behaving differently (e.g., "IGNORE ALL PREVIOUS INSTRUCTIONS" hidden in a memory note). This is an LLM-level risk, not a system-level risk, but the audit should flag it.
+
+The audit script should scan workspace files for known injection patterns:
+- "ignore previous instructions"
+- "you are now"
+- "system prompt override"
+- "new instructions:"
+- Base64-encoded blocks (potential hidden payloads)
+- Unusually large files (could contain embedded data)
+
+These are heuristic checks, not guarantees. But they catch obvious attempts.
+
+#### Integration with Lobster-TrApp GUI (Future)
+
+The audit output should render in the GUI dashboard as:
+- A "Workspace" tab showing all files with preview
+- A "Network" tab showing proxy log timeline
+- A "Changes" badge showing count of files modified since last session
+- A "Security" tab showing shell level, config verification, and any flags
+
+#### component.yml Commands
+
+```yaml
+  - id: audit-workspace
+    name: Workspace Audit
+    description: Show all files the agent has created or modified
+    group: monitoring
+    type: query
+    danger: safe
+    command: bash scripts/vault-audit.sh --all
+    output:
+      format: text
+      display: report
+    available_when: [running-hard, running-split, running-soft, stopped]
+    sort_order: 5
+    timeout_seconds: 30
+
+  - id: audit-changes
+    name: Recent Changes
+    description: Files changed since last audit
+    group: monitoring
+    type: query
+    danger: safe
+    command: bash scripts/vault-audit.sh --changes
+    output:
+      format: text
+      display: log
+    available_when: [running-hard, running-split, running-soft, stopped]
+    sort_order: 6
+    timeout_seconds: 15
+```
+
 ### Residual risk: Exfiltration via LLM API
 
 The agent could encode workspace file contents (including conversation transcripts and memory) into LLM API requests. This was already a residual risk in Hard Shell (conversation content goes to the API). Split Shell doesn't materially change this — the same conversations that were sent to the API as context are now also saved to disk.
@@ -218,8 +327,9 @@ The agent could encode workspace file contents (including conversation transcrip
 | Create | `compose.split-shell.yml` | Override file for Split Shell volume mounts |
 | Modify | `scripts/entrypoint.sh` | Conditional config copy (first run only) |
 | Create | `scripts/switch-shell.sh` | Shell switching mechanism |
+| Create | `scripts/vault-audit.sh` | **MANDATORY** — workspace audit, network audit, config verification, injection detection |
 | Modify | `scripts/verify.sh` | Add Split Shell verification tests (checks 16-25) |
-| Modify | `component.yml` | Add shell states and switch commands |
+| Modify | `component.yml` | Add shell states, switch commands, and audit commands |
 | Create | `docs/split-shell-test-results.md` | Test documentation |
 
 ---
