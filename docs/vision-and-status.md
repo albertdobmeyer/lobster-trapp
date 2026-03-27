@@ -1,6 +1,13 @@
 # Lobster-TrApp — Vision & Status
 
-**Last updated**: 2026-03-03
+> **DEPRECATED (2026-03-27):** This document is outdated. It has been superseded by:
+> - **`docs/trifecta.md`** — Cross-module strategy and ownership matrix
+> - **`docs/superpowers/plans/2026-03-25-master-roadmap-v2.md`** — Unified product roadmap
+> - **Per-module roadmaps** — `components/*/docs/roadmap.md`
+>
+> This file is preserved as historical context. Do not update it — update the successor documents instead.
+
+**Last updated**: 2026-03-03 (frozen)
 
 This is the centralized planning document for the entire OpenClaw stack. It lives in lobster-trapp because the orchestrator is the integration point for all components.
 
