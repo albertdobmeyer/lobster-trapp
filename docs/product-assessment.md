@@ -39,7 +39,7 @@ Nobody else has built a security harness for OpenClaw. Every other "hardening gu
 
 ### 3. The containment actually works (proven)
 We verified with live testing:
-- 15/15 security checks pass with OpenClaw running
+- 23/23 security checks pass with OpenClaw running
 - Tool policy prevents the LLM from seeing denied tools (source code verified)
 - Proxy blocks unauthorized domains (registry.npmjs.org, evil.com — logged and blocked)
 - API key never enters the container (placeholder replaced by proxy)

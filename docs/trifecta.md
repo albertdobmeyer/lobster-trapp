@@ -39,7 +39,7 @@ No single defense layer is enough. A container can be misconfigured. A scanner c
 - API keys never enter the agent container (proxy-side injection)
 - Domain allowlist enforced at the network layer
 - Three shell levels (Hard/Split/Soft) for graduated trust
-- 15-point security verification
+- 23-point security verification
 - Three-level kill switch (soft/hard/nuclear)
 
 **Analogy:** The castle walls. They don't know what's inside — they just contain it.
@@ -86,7 +86,7 @@ Each capability has exactly one owner. No duplication, no ambiguity.
 | Shell level switching (Hard/Split/Soft) | vault | Runtime configuration |
 | Kill switch (soft/hard/nuclear) | vault | Runtime lifecycle |
 | Runtime monitoring (proxy logs, session audit) | vault | Observing what happens inside the moat |
-| 15-point security verification | vault | Runtime integrity checking |
+| 23-point security verification | vault | Runtime integrity checking |
 | Skill scanning (87 MITRE patterns) | forge | Pre-runtime supply chain defense |
 | Skill linting and structure validation | forge | Development quality gate |
 | Zero-trust skill verification | forge | Pre-publish security gate |
@@ -218,7 +218,7 @@ An attack must defeat ALL relevant layers to succeed. Each layer is independent.
 
 | Module | Maturity | Shell Levels | Tests | Key Gap |
 |---|---|---|---|---|
-| **openclaw-vault** | 75% | Hard Shell done, Split Shell done, Soft Shell not designed | 12 test scripts + 15-point verify | Monitoring stubs, Soft Shell design |
+| **openclaw-vault** | 90% | Hard Shell done, Split Shell done, tool control system operational | 13 test scripts + 23-point verify (47 tool control tests) | Soft Shell design, per-capability expansion |
 | **clawhub-forge** | 85% | N/A | 168 behavioral assertions | No .trust files generated, devcontainer setup missing |
 | **moltbook-pioneer** | 70% | N/A | Zero automated tests | No test coverage, safe_patterns not wired |
 

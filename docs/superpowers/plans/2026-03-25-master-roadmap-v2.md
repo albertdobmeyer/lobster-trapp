@@ -16,7 +16,7 @@
 | Phase | Status | What We Proved |
 |-------|--------|---------------|
 | Phase 0: Bug fixes | **DONE** | Clean foundation |
-| Phase 1: OpenClaw compatibility | **DONE** | Container works, 15/15 security checks, source code analyzed |
+| Phase 1: OpenClaw compatibility | **DONE** | Container works, 23/23 security checks (expanded from original 15), source code analyzed |
 | Phase 2: Gear 1 (Manual) | **DONE** | Agent responds via Telegram, tool policy verified, hallucination documented |
 
 ---
@@ -185,6 +185,6 @@ DONE ──→ Phase 3 (Gear 2 — make Hum useful)
 
 **Developer:** "Container-isolated OpenClaw with proxy-gated networking, six-layer defense-in-depth, and a GUI for non-technical users."
 
-**Security researcher:** "Defense-in-depth sandbox for OpenClaw: custom seccomp, proxy key injection, tool policy verified via source code analysis, 15-point live verification."
+**Security researcher:** "Defense-in-depth sandbox for OpenClaw: custom seccomp, proxy key injection, tool policy verified via source code analysis, 23-point live verification."
 
 **GitHub star-hunter:** "The only security harness for the most dangerous open-source AI agent. We proved the containment works. You can too."
