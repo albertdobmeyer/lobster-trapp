@@ -218,7 +218,7 @@ An attack must defeat ALL relevant layers to succeed. Each layer is independent.
 
 | Module | Maturity | Shell Levels | Tests | Key Gap |
 |---|---|---|---|---|
-| **openclaw-vault** | 90% | Hard Shell done, Split Shell done, tool control system operational | 13 test scripts + 23-point verify (47 tool control tests) | Soft Shell design, per-capability expansion |
+| **openclaw-vault** | 90% | Hard Shell done, Split Shell done, Soft Shell designed (spec ready) | 14 test scripts + 24-point verify (47 tool control + 21 attack surface tests) | Soft Shell implementation |
 | **clawhub-forge** | 85% | N/A | 168 behavioral assertions | No .trust files generated, devcontainer setup missing |
 | **moltbook-pioneer** | 70% | N/A | Zero automated tests | No test coverage, safe_patterns not wired |
 

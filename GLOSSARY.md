@@ -8,11 +8,11 @@ Official terminology for the Lobster-TrApp ecosystem. Use these terms consistent
 
 The shell is the security boundary around the OpenClaw agent. Inspired by lobster biology — a harder shell means more protection but less flexibility. The user chooses their shell level based on how much freedom they want to give their agent.
 
-| Term | What It Means | Agent Can... | Agent Cannot... |
-|------|--------------|-------------|----------------|
-| **Hard Shell** | Maximum protection. Every action requires approval. Conversation only. | Chat via Telegram. That's it. | Run commands, read files, browse web, schedule tasks, install skills. |
-| **Split Shell** | Selective openings. User grants specific capabilities one by one. | Use capabilities the user enabled (e.g., scheduling, file workspace, web browsing). | Access anything the user hasn't explicitly granted. Protected resources always blocked. |
-| **Soft Shell** | Maximum capability. Broad access with core protections always enforced. | Operate broadly — shell commands, file system, web, messaging. | Touch the driver seat: root, SSH keys, passwords, keyrings, admin accounts. Ever. |
+| Term | What It Means | Analogy | Agent Can... | Agent Cannot... |
+|------|--------------|---------|-------------|----------------|
+| **Hard Shell** | Maximum protection. Conversation only. | The cage | Chat via Telegram. That's it. | Run commands, read files, browse web, schedule tasks, install skills. |
+| **Split Shell** | Selective openings. Every action requires approval. | The arena | Read/write files, exec with safeBins (user approves each command via Telegram). | Access anything not explicitly approved. Protected resources always blocked. |
+| **Soft Shell** | Broad autonomy. SafeBins auto-approve. Core protections enforced. | The safari | Search web, schedule tasks, process files, run safeBins commands autonomously. | Touch the driver seat: root, SSH keys, passwords, keyrings, admin accounts. Ever. |
 
 **Shell Up** — Increase protection (e.g., Soft Shell → Hard Shell). Always instant, no confirmation needed. You can always pull the reins.
 
