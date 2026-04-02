@@ -46,17 +46,20 @@ No single defense layer is enough. A container can be misconfigured. A scanner c
 
 ### clawhub-forge — The Forge (Active Defense)
 
-**Role:** `toolchain` — the skill development workbench and security scanner.
+**Role:** `toolchain` — the security gatekeeper for the OpenClaw skill ecosystem.
 
-**What it does:** Vets skills before they can enter the runtime. 87 malicious patterns across 13 MITRE ATT&CK categories. Zero-trust verifier that quarantines any skill with a single unrecognizable line. Gated publishing pipeline where every skill must pass lint, scan, verify, and test before release.
+**What it does:** Three roles under one mission — **Shield** (safe skill downloads via CDR), **Anvil** (AI-assisted skill creation), **Stamp** (publish with security certificates). Vets every skill entering or leaving the system using 87 malicious patterns, zero-trust line-by-line verification, and a gated publishing pipeline.
 
 **Key innovations:**
-- Offline scanner (no network required)
+- Content Disarm & Reconstruction (CDR) — downloaded skills are rebuilt from semantic intent, never used directly (planned)
+- Offline scanner (87 MITRE ATT&CK patterns, no network required)
 - Zero-trust verification (guilty until proven safe, line by line)
-- SARIF output for GitHub code scanning integration
+- Security certificates (clearance reports with SHA-256 + optional GPG) (planned)
 - Built from real incident analysis (ClawHavoc, moltbook-ay trojan)
 
-**Analogy:** The blacksmith who inspects every weapon before it enters the castle.
+**Analogy:** The blacksmith who inspects every weapon before it enters the castle — and if a weapon arrives from outside, melts it down and forges a clean copy.
+
+**Design document:** `clawhub-forge/docs/forge-identity-and-design.md`
 
 ### moltbook-pioneer — The Scout (Situational Awareness)
 
@@ -216,19 +219,20 @@ An attack must defeat ALL relevant layers to succeed. Each layer is independent.
 
 ## Current Status
 
-| Module | Maturity | Shell Levels | Tests | Key Gap |
-|---|---|---|---|---|
-| **openclaw-vault** | 90% | Hard Shell done, Split Shell done, Soft Shell designed (spec ready) | 14 test scripts + 24-point verify (47 tool control + 21 attack surface tests) | Soft Shell implementation |
-| **clawhub-forge** | 85% | N/A | 168 behavioral assertions | No .trust files generated, devcontainer setup missing |
-| **moltbook-pioneer** | 70% | N/A | Zero automated tests | No test coverage, safe_patterns not wired |
+| Module | Maturity | Key Achievement | Next Phase |
+|---|---|---|---|
+| **openclaw-vault** | 95% | All 3 shell levels operational, 24-point verify, Soft Shell live | Certified complete |
+| **clawhub-forge** | 85% | 87-pattern scanner, zero-trust verifier, 25 skills, identity defined | Phase 1: Housekeeping |
+| **moltbook-pioneer** | 70% | 3 tools (feed scanner, census, identity), 30 patterns | Awaiting forge completion |
 
 ### Integration Status
 
 | Integration | Status | Blocking? |
 |---|---|---|
-| Skill installation path (forge → vault) | Not implemented | Blocks Soft Shell |
+| Skill installation path (forge → vault) | Spec'd, not implemented | Blocks skill delivery to vault |
+| Security certificates (forge → vault) | Designed (forge Phase 2) | Blocks automated skill acceptance |
+| CDR pipeline (forge internal) | Designed (forge Phase 3) | Blocks safe skill downloads |
 | Feed scanning integration (pioneer → vault) | Not implemented | Not blocking (Moltbook domains not in allowlist yet) |
-| Monitoring chain (vault → user) | Partially implemented | Blocks confident autonomy escalation |
 | GUI discovery (all → lobster-trapp) | Implemented via component.yml | Not blocking |
 
 ---
