@@ -1,4 +1,6 @@
-# Lobster-TrApp Master Roadmap v2
+# Lobster-TrApp Master Roadmap v2 — DEPRECATED
+
+> **This document is superseded by [`2026-04-04-master-roadmap-v3.md`](2026-04-04-master-roadmap-v3.md).** Phases 3-6 listed below as future work were completed between 2026-03-27 and 2026-04-03. The v3 roadmap reflects the actual state.
 
 **Updated:** 2026-03-25
 **Previous:** `2026-03-23-openclaw-vault-master-roadmap.md` (vault-only, superseded)
