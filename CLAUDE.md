@@ -103,8 +103,8 @@ bash tests/orchestrator-check.sh --fix  # Auto-fix submodule issues
 
 ### The Dual-Copy Problem
 Each component exists in TWO places:
-- **Standalone clone**: `B:\REPOS\local-llm\<component>\` (for focused development)
-- **Submodule copy**: `B:\REPOS\local-llm\lobster-trapp\components\<component>\` (for orchestrator integration)
+- **Standalone clone**: `~/<component>/` (for focused development)
+- **Submodule copy**: `~/lobster-trapp/components/<component>/` (for orchestrator integration)
 
 These are independent git checkouts. Changes in one do NOT automatically appear in the other.
 

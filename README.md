@@ -10,10 +10,6 @@ A security-first desktop GUI that lets non-technical users safely run AI agents,
 - **Start/stop/monitor via manifest-driven commands** — reads `component.yml` from each component, renders dashboards generically
 - **Surface security state** — verification results, proxy logs, scan findings displayed in a GUI instead of raw terminal output
 
-## Screenshots
-
-<!-- TODO: Add screenshots after Phase 3 (Setup Wizard) -->
-
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) 20+
@@ -77,7 +73,7 @@ See [CLAUDE.md](CLAUDE.md) for the full architecture specification, manifest con
 # Rust backend (14 unit tests)
 cd app/src-tauri && cargo test
 
-# Frontend (vitest — requires vitest in devDependencies, see TODO)
+# Frontend (52 unit tests)
 cd app && npm test
 
 # Full orchestration validation (39 checks)
