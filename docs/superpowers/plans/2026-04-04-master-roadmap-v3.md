@@ -66,27 +66,16 @@
 
 ## What's Next (Priority Order)
 
-### Phase A: Complete Moltbook-Pioneer
+### Phase A: Complete Moltbook-Pioneer — Bugs + Tests DONE (2026-04-04)
 
-**Why:** Pioneer is the least mature module — 70% complete, zero automated tests, known bugs. It must reach the same quality bar as vault and forge before the ecosystem is release-ready.
+**Status:** Phase 1 (bug fixes) and Phase 2 (test framework) completed in a single 11-commit session. All 7 known bugs fixed, 16 behavioral tests passing, Makefile with standard targets, safe_patterns wired and tested. Two latent bugs discovered and fixed during testing: `(?i)` PCRE flag broke grep ERE matching, and `|` delimiter collided with regex alternation.
 
-**Known issues:**
-- Zero automated test files (vault has 13 scripts, forge has 168+ assertions)
-- CRLF line endings break shebangs on Linux
-- `eval` in curl command (shell injection surface)
-- `safe_patterns` config key silently ignored
-- No Makefile (unlike vault and forge)
-- API liveness unknown (`moltbook.com/api/v1`)
+**Remaining pioneer work (Phases 3-5):**
+- Phase 3: Offline mode — add `--file` to agent-census, census fixture, API liveness check
+- Phase 4: Vault integration — pattern export for proxy-level feed scanning (spec: `pioneer/docs/specs/2026-04-04-vault-integration-design.md`)
+- Phase 5: Pattern harmonization — compare pioneer's 25 vs forge's 87 patterns, document overlap
 
-**Engineering work:**
-1. Fix bugs: CRLF, executable bits, eval, safe_patterns
-2. Create test framework (model on forge's `tests/_framework/`)
-3. Add fixture-based tests for all 3 tools (feed-scanner, agent-census, identity-checklist)
-4. Create Makefile with standard targets
-5. Update CLAUDE.md (remove Windows paths)
-6. Add `--dry-run` / `--file` mode for offline testing
-
-**Exit criteria:** `make test-tools` passes. All known bugs fixed. Quality bar matches forge (fixtures, assertions, framework).
+**Exit criteria for Phase A completion:** `make test` passes (DONE), offline mode works, pattern export format defined.
 
 ---
 
@@ -109,7 +98,7 @@
 **Why:** When Moltbook domains enter the Soft Shell allowlist, social content must be scanned for injection attacks before the agent sees it.
 
 **Engineering work:**
-- Import pioneer's 30 injection patterns into `vault-proxy.py`
+- Import pioneer's 25 injection patterns into `vault-proxy.py`
 - Pattern matching on Moltbook API response bodies at the proxy level
 - Log and optionally block responses containing injection signatures
 
