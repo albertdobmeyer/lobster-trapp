@@ -6,6 +6,7 @@ import ChecklistRenderer from "./renderers/ChecklistRenderer";
 import TerminalRenderer from "./renderers/TerminalRenderer";
 import BadgeRenderer from "./renderers/BadgeRenderer";
 import ReportRenderer from "./renderers/ReportRenderer";
+import CardGridRenderer from "./renderers/CardGridRenderer";
 
 interface OutputRendererProps {
   result: CommandResult;
@@ -25,8 +26,7 @@ export default function OutputRenderer({ result, display }: OutputRendererProps)
     case "badge":
       return <BadgeRenderer content={content} />;
     case "card-grid":
-      // Card grid renders each line/section as a separate card
-      return <ReportRenderer content={content} exitCode={result.exit_code} />;
+      return <CardGridRenderer content={content} exitCode={result.exit_code} />;
     case "report":
       return <ReportRenderer content={content} exitCode={result.exit_code} />;
     case "log":
