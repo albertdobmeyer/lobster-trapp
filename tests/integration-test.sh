@@ -169,6 +169,141 @@ fi
 rm -f "$REPORT"
 
 # =============================================================================
+section "2. Pattern Export Contract (pioneer -> vault)"
+# =============================================================================
+
+PATTERNS_EXPORT="$PIONEER/data/patterns-export.yml"
+PATTERNS_SOURCE="$PIONEER/config/injection-patterns.yml"
+
+# 2.1: Export produces the file
+if make -C "$PIONEER" export-patterns > /dev/null 2>&1; then
+  if [[ -f "$PATTERNS_EXPORT" ]]; then
+    pass "2.1 make export-patterns produces patterns-export.yml"
+  else
+    fail "2.1 make export-patterns succeeded but file missing"
+  fi
+else
+  fail "2.1 make export-patterns failed"
+fi
+
+# 2.2: Each exported pattern has required fields
+if [[ -f "$PATTERNS_EXPORT" ]]; then
+  FIELDS_OK=$(python3 -c "
+import yaml, sys
+with open('$PATTERNS_EXPORT') as f:
+    d = yaml.safe_load(f)
+ok = True
+for p in d['patterns']:
+    for field in ('id', 'severity', 'regex'):
+        if field not in p:
+            print(f'pattern missing {field}: {p}', file=sys.stderr)
+            ok = False
+print('OK' if ok else 'FAIL')
+" 2>/dev/null)
+  if [[ "$FIELDS_OK" == "OK" ]]; then
+    pass "2.2 All exported patterns have id, severity, regex"
+  else
+    fail "2.2 Exported patterns missing required fields"
+  fi
+else
+  fail "2.2 Export file not available (skipped)"
+fi
+
+# 2.3: All regexes compile
+if [[ -f "$PATTERNS_EXPORT" ]]; then
+  REGEX_OK=$(python3 -c "
+import yaml, re, sys
+with open('$PATTERNS_EXPORT') as f:
+    d = yaml.safe_load(f)
+ok = True
+for p in d['patterns']:
+    try:
+        re.compile(p['regex'])
+    except re.error as e:
+        print(f'{p[\"id\"]}: {e}', file=sys.stderr)
+        ok = False
+print('OK' if ok else 'FAIL')
+" 2>/dev/null)
+  if [[ "$REGEX_OK" == "OK" ]]; then
+    pass "2.3 All exported regexes compile"
+  else
+    fail "2.3 Some regexes fail to compile"
+  fi
+else
+  fail "2.3 Export file not available (skipped)"
+fi
+
+# 2.4: Integrity hash matches
+if [[ -f "$PATTERNS_EXPORT" ]]; then
+  HEADER_HASH=$(grep '^# Integrity: sha256:' "$PATTERNS_EXPORT" | sed 's/^# Integrity: sha256://')
+  if [[ -n "$HEADER_HASH" ]]; then
+    HASH_OK=$(python3 -c "
+import yaml, hashlib
+with open('$PATTERNS_EXPORT') as f:
+    d = yaml.safe_load(f)
+regexes = sorted(d['patterns'], key=lambda x: x['id'])
+hash_input = '\n'.join(p['regex'] for p in regexes)
+computed = hashlib.sha256(hash_input.encode()).hexdigest()
+print('OK' if computed == '$HEADER_HASH' else 'FAIL')
+" 2>/dev/null)
+    if [[ "$HASH_OK" == "OK" ]]; then
+      pass "2.4 Integrity hash matches exported regexes"
+    else
+      fail "2.4 Integrity hash mismatch"
+    fi
+  else
+    fail "2.4 No integrity header found in export"
+  fi
+else
+  fail "2.4 Export file not available (skipped)"
+fi
+
+# 2.5: Exported count matches source count
+if [[ -f "$PATTERNS_EXPORT" ]]; then
+  export_count=$(python3 -c "
+import yaml
+with open('$PATTERNS_EXPORT') as f:
+    d = yaml.safe_load(f)
+print(len(d['patterns']))
+" 2>/dev/null)
+  # Source YAML has regex escapes that break PyYAML — count '- id:' lines instead
+  source_count=$(grep -c '^\s*- id:' "$PATTERNS_SOURCE")
+  if [[ "$export_count" == "$source_count" ]]; then
+    pass "2.5 Pattern count matches source ($export_count patterns)"
+  else
+    fail "2.5 Pattern count mismatch: export=$export_count, source=$source_count"
+  fi
+else
+  fail "2.5 Export file not available (skipped)"
+fi
+
+# 2.6: All severities are valid
+if [[ -f "$PATTERNS_EXPORT" ]]; then
+  SEV_OK=$(python3 -c "
+import yaml, sys
+with open('$PATTERNS_EXPORT') as f:
+    d = yaml.safe_load(f)
+valid = {'CRITICAL', 'HIGH', 'MEDIUM', 'LOW'}
+ok = True
+for p in d['patterns']:
+    if p['severity'] not in valid:
+        print(f'{p[\"id\"]}: invalid severity {p[\"severity\"]}', file=sys.stderr)
+        ok = False
+print('OK' if ok else 'FAIL')
+" 2>/dev/null)
+  if [[ "$SEV_OK" == "OK" ]]; then
+    pass "2.6 All severities valid (CRITICAL/HIGH/MEDIUM/LOW)"
+  else
+    fail "2.6 Invalid severity values found"
+  fi
+else
+  fail "2.6 Export file not available (skipped)"
+fi
+
+# Clean up export
+rm -f "$PATTERNS_EXPORT"
+
+# =============================================================================
 section "5. Orchestrator Passthrough"
 # =============================================================================
 
