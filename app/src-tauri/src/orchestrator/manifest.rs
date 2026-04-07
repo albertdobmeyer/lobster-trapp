@@ -241,6 +241,7 @@ pub struct Config {
 pub enum ConfigFormat {
     Yaml,
     Json,
+    Json5,
     Env,
     LineList,
 }

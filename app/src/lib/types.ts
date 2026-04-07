@@ -13,7 +13,7 @@ export type OutputDisplay =
   | "card-grid"
   | "terminal"
   | "report";
-export type ConfigFormat = "yaml" | "json" | "env" | "line-list";
+export type ConfigFormat = "yaml" | "json" | "json5" | "env" | "line-list";
 export type ParseType = "regex" | "json_path" | "line_count" | "exit_code";
 
 export interface Identity {

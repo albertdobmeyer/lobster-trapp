@@ -285,7 +285,7 @@
           },
           "format": {
             "type": "string",
-            "enum": ["yaml", "json", "env", "line-list"]
+            "enum": ["yaml", "json", "json5", "env", "line-list"]
           },
           "editable": {
             "type": "boolean",

@@ -62,14 +62,14 @@ done
 section "2. JSON Schema Validation"
 # =============================================================================
 
-if python -c "import json; json.load(open('schemas/component.schema.json'))" 2>/dev/null; then
+if python3 -c "import json; json.load(open('schemas/component.schema.json'))" 2>/dev/null; then
   pass "Schema is valid JSON"
 else
   fail "Schema is not valid JSON"
 fi
 
 # Verify schema has all required sections
-python -c "
+python3 -c "
 import json, sys
 schema = json.load(open('schemas/component.schema.json'))
 props = schema.get('properties', {})
@@ -96,7 +96,7 @@ for manifest in components/*/component.yml; do
   MANIFEST_COUNT=$((MANIFEST_COUNT+1))
 
   # Parse YAML
-  if python -c "
+  if python3 -c "
 import sys
 try:
     import yaml
@@ -112,7 +112,7 @@ yaml.safe_load(open('$manifest'))
   fi
 
   # Validate identity fields
-  python -c "
+  python3 -c "
 import yaml, sys
 m = yaml.safe_load(open('$manifest'))
 identity = m.get('identity', {})
@@ -130,7 +130,7 @@ if role not in ['runtime', 'toolchain', 'network', 'placeholder']:
 " 2>/dev/null && pass "Identity valid: $component_name" || fail "Identity invalid: $component_name"
 
   # Cross-reference validation
-  python -c "
+  python3 -c "
 import yaml, sys
 m = yaml.safe_load(open('$manifest'))
 errors = []
@@ -172,7 +172,7 @@ if errors:
 " 2>/dev/null && pass "Cross-references valid: $component_name" || fail "Cross-reference errors: $component_name"
 
   # Validate command groups and danger levels
-  python -c "
+  python3 -c "
 import yaml, sys
 m = yaml.safe_load(open('$manifest'))
 valid_groups = {'lifecycle', 'operations', 'monitoring', 'maintenance'}
@@ -203,7 +203,7 @@ else
 fi
 
 # Check for placeholder components
-python -c "
+python3 -c "
 import yaml, sys, os, glob
 manifests = glob.glob('components/*/component.yml')
 for m_path in manifests:
@@ -307,7 +307,7 @@ if [ -d "app/src-tauri" ]; then
   fi
 
   # Check tauri.conf.json is valid JSON
-  if python -c "import json; json.load(open('app/src-tauri/tauri.conf.json'))" 2>/dev/null; then
+  if python3 -c "import json; json.load(open('app/src-tauri/tauri.conf.json'))" 2>/dev/null; then
     pass "tauri.conf.json is valid JSON"
   else
     fail "tauri.conf.json is not valid JSON"
@@ -319,7 +319,7 @@ if [ -f "app/package.json" ]; then
   pass "package.json exists"
 
   # Verify required dependencies
-  python -c "
+  python3 -c "
 import json, sys
 pkg = json.load(open('app/package.json'))
 deps = {**pkg.get('dependencies', {}), **pkg.get('devDependencies', {})}
@@ -345,7 +345,7 @@ section "6. Frontend-Backend Contract"
 # =============================================================================
 
 # Verify Rust command handlers match frontend invoke() calls
-python -c "
+python3 -c "
 import re, os, sys, glob
 
 # Extract Rust #[tauri::command] function names
@@ -394,12 +394,12 @@ section "7. Manifest-Schema Alignment"
 # =============================================================================
 
 # Check that manifest field names match what Rust serde expects
-python -c "
+python3 -c "
 import yaml, sys, glob
 
 manifests = glob.glob('components/*/component.yml')
 valid_output_displays = ['log', 'table', 'badge', 'checklist', 'card-grid', 'terminal', 'report']
-valid_config_formats = ['yaml', 'json', 'env', 'line-list']
+valid_config_formats = ['yaml', 'json', 'json5', 'env', 'line-list']
 valid_parse_types = ['regex', 'json_path', 'line_count', 'exit_code']
 
 errors = []
@@ -436,7 +436,7 @@ if errors:
 section "8. Prerequisites Validation"
 # =============================================================================
 
-python -c "
+python3 -c "
 import yaml, sys, glob
 
 manifests = glob.glob('components/*/component.yml')
