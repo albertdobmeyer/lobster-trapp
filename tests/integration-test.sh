@@ -383,6 +383,35 @@ if [[ "$TOOLS_OK" == true ]]; then
 fi
 
 # =============================================================================
+section "4. Submodule Health"
+# =============================================================================
+
+for mod in "$VAULT" "$FORGE" "$PIONEER"; do
+  mod_name="$(basename "$mod")"
+
+  # 4.1: component.yml exists
+  if [[ -f "$mod/component.yml" ]]; then
+    pass "4.1 $mod_name has component.yml"
+  else
+    fail "4.1 $mod_name missing component.yml"
+  fi
+
+  # 4.2: Submodule is on a branch (not detached HEAD)
+  if git -C "$mod" symbolic-ref HEAD > /dev/null 2>&1; then
+    pass "4.2 $mod_name is on a branch"
+  else
+    warn "4.2 $mod_name has detached HEAD"
+  fi
+
+  # 4.3: Working tree is clean
+  if [[ -z "$(git -C "$mod" status --porcelain 2>/dev/null)" ]]; then
+    pass "4.3 $mod_name working tree is clean"
+  else
+    warn "4.3 $mod_name has uncommitted changes"
+  fi
+done
+
+# =============================================================================
 section "5. Orchestrator Passthrough"
 # =============================================================================
 
