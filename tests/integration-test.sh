@@ -304,6 +304,85 @@ fi
 rm -f "$PATTERNS_EXPORT"
 
 # =============================================================================
+section "3. Cross-Reference Integrity"
+# =============================================================================
+
+# 3.1: Forge design document exists (referenced by trifecta.md)
+if [[ -f "$FORGE/docs/forge-identity-and-design.md" ]]; then
+  pass "3.1 Forge design document exists"
+else
+  fail "3.1 Missing: $FORGE/docs/forge-identity-and-design.md"
+fi
+
+# 3.2: Vault skill installation spec mentions clearance report fields
+SPEC_SKILL="$VAULT/docs/specs/2026-03-30-skill-installation-path.md"
+if [[ -f "$SPEC_SKILL" ]]; then
+  MENTIONS=0
+  for term in "scan" "critical" "verdict" "checksum"; do
+    if grep -qi "$term" "$SPEC_SKILL" 2>/dev/null; then
+      MENTIONS=$((MENTIONS+1))
+    fi
+  done
+  if [[ "$MENTIONS" -ge 3 ]]; then
+    pass "3.2 Skill installation spec references clearance report fields ($MENTIONS/4 terms)"
+  else
+    fail "3.2 Skill installation spec missing clearance report references ($MENTIONS/4 terms)"
+  fi
+else
+  fail "3.2 Missing: $SPEC_SKILL"
+fi
+
+# 3.3: Feed scanning spec mentions patterns and severity
+SPEC_FEED="$VAULT/docs/specs/2026-03-30-feed-scanning-deferred.md"
+if [[ -f "$SPEC_FEED" ]]; then
+  HAS_PATTERNS=false
+  HAS_SEVERITY=false
+  grep -qi "patterns" "$SPEC_FEED" 2>/dev/null && HAS_PATTERNS=true
+  grep -qi "severity" "$SPEC_FEED" 2>/dev/null && HAS_SEVERITY=true
+  if [[ "$HAS_PATTERNS" == true && "$HAS_SEVERITY" == true ]]; then
+    pass "3.3 Feed scanning spec mentions patterns and severity"
+  else
+    fail "3.3 Feed scanning spec missing references (patterns=$HAS_PATTERNS, severity=$HAS_SEVERITY)"
+  fi
+else
+  fail "3.3 Missing: $SPEC_FEED"
+fi
+
+# 3.4: All modules have CLAUDE.md and component.yml
+ALL_MANIFESTS=true
+for mod in "$VAULT" "$FORGE" "$PIONEER"; do
+  for f in "CLAUDE.md" "component.yml"; do
+    if [[ ! -f "$mod/$f" ]]; then
+      fail "3.4 Missing: $mod/$f"
+      ALL_MANIFESTS=false
+    fi
+  done
+done
+if [[ "$ALL_MANIFESTS" == true ]]; then
+  pass "3.4 All modules have CLAUDE.md and component.yml"
+fi
+
+# 3.5: Ownership matrix — key tools exist in expected locations
+TOOLS_OK=true
+for f in \
+  "$FORGE/tools/skill-scan.sh" \
+  "$FORGE/tools/skill-verify.sh" \
+  "$FORGE/tools/skill-lint.sh" \
+  "$PIONEER/tools/feed-scanner.sh" \
+  "$PIONEER/tools/agent-census.sh" \
+  "$PIONEER/tools/identity-checklist.sh" \
+  "$VAULT/scripts/verify.sh" \
+  "$VAULT/proxy/vault-proxy.py"; do
+  if [[ ! -f "$f" ]]; then
+    fail "3.5 Missing tool: $f"
+    TOOLS_OK=false
+  fi
+done
+if [[ "$TOOLS_OK" == true ]]; then
+  pass "3.5 Ownership matrix: all key tools present"
+fi
+
+# =============================================================================
 section "5. Orchestrator Passthrough"
 # =============================================================================
 
