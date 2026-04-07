@@ -1,6 +1,6 @@
 # The Trifecta — Three-Layer Defense for the OpenClaw Ecosystem
 
-**Updated:** 2026-03-27
+**Updated:** 2026-04-06
 **Scope:** How openclaw-vault, clawhub-forge, and moltbook-pioneer work together as a coordinated defense system.
 
 ---
@@ -39,7 +39,7 @@ No single defense layer is enough. A container can be misconfigured. A scanner c
 - API keys never enter the agent container (proxy-side injection)
 - Domain allowlist enforced at the network layer
 - Three shell levels (Hard/Split/Soft) for graduated trust
-- 23-point security verification
+- 24-point security verification
 - Three-level kill switch (soft/hard/nuclear)
 
 **Analogy:** The castle walls. They don't know what's inside — they just contain it.
@@ -68,7 +68,7 @@ No single defense layer is enough. A container can be misconfigured. A scanner c
 **What it does:** Scans agent-generated social content for prompt injection, tracks platform statistics, validates agent identity before registration. Three engagement levels (Observer, Researcher, Participant) with increasing capability and risk.
 
 **Key innovations:**
-- 30 injection patterns tuned for social content (different from forge's skill patterns)
+- 25 injection patterns tuned for social content (different from forge's skill patterns)
 - Agent census with trend tracking
 - Pre-flight identity checklist
 - Threat model based on real incidents (1.5M API tokens exposed in breach)
@@ -89,13 +89,13 @@ Each capability has exactly one owner. No duplication, no ambiguity.
 | Shell level switching (Hard/Split/Soft) | vault | Runtime configuration |
 | Kill switch (soft/hard/nuclear) | vault | Runtime lifecycle |
 | Runtime monitoring (proxy logs, session audit) | vault | Observing what happens inside the moat |
-| 23-point security verification | vault | Runtime integrity checking |
+| 24-point security verification | vault | Runtime integrity checking |
 | Skill scanning (87 MITRE patterns) | forge | Pre-runtime supply chain defense |
 | Skill linting and structure validation | forge | Development quality gate |
 | Zero-trust skill verification | forge | Pre-publish security gate |
 | Gated publishing pipeline | forge | Supply chain control |
 | Skill development scaffolding | forge | Developer tooling |
-| Feed injection scanning (30 patterns) | pioneer | Social content analysis |
+| Feed injection scanning (25 patterns) | pioneer | Social content analysis |
 | Platform census and trends | pioneer | Situational awareness |
 | Agent identity safety checklist | pioneer | Pre-registration validation |
 | Safe participation guidelines | pioneer | Operational guidance |
@@ -114,7 +114,7 @@ Each capability has exactly one owner. No duplication, no ambiguity.
 
 ### Workflow 1: Skill Installation Path (Forge → Vault)
 
-**Status:** Not yet implemented. This is the most important integration gap.
+**Status:** Implemented on both sides. Forge exports with clearance report, vault validates and installs.
 
 ```
 Developer creates skill
@@ -168,14 +168,9 @@ Agent acts inside vault
         → read-chat.sh    (conversation history)
         → vault-audit.sh  (workspace files, memory, injection scan)
         → verify.sh       (security integrity)
-    → [NOT YET] network-log-parser.py (anomaly detection)
-    → [NOT YET] session-report.sh (post-session summary)
+        → network-log-parser.py (anomaly detection)
+        → session-report.py (post-session summary)
 ```
-
-**What needs to happen:**
-- Implement network log parser (anomaly detection on proxy logs)
-- Implement session report generator (human-readable post-session summary)
-- Remove redundant skill-scanner.sh stub (this is forge's job)
 
 ---
 
@@ -209,7 +204,7 @@ An attack must defeat ALL relevant layers to succeed. Each layer is independent.
 
 | Layer | Module | What stops it |
 |---|---|---|
-| 1. Feed scanner | pioneer | 30 injection patterns tuned for social content |
+| 1. Feed scanner | pioneer | 25 injection patterns tuned for social content |
 | 2. DM pairing policy | vault (config) | Each Telegram user must be individually approved |
 | 3. Tool policy | vault (config) | Even if injection succeeds, denied tools stay invisible |
 | 4. Human approval | vault (config) | ask: "always" — user sees every command before execution |
@@ -221,19 +216,20 @@ An attack must defeat ALL relevant layers to succeed. Each layer is independent.
 
 | Module | Maturity | Key Achievement | Next Phase |
 |---|---|---|---|
-| **openclaw-vault** | 95% | All 3 shell levels operational, 24-point verify, Soft Shell live | Certified complete |
-| **clawhub-forge** | 85% | 87-pattern scanner, zero-trust verifier, 25 skills, identity defined | Phase 1: Housekeeping |
-| **moltbook-pioneer** | 70% | 3 tools (feed scanner, census, identity), 30 patterns | Awaiting forge completion |
+| **openclaw-vault** | 100% | All 3 shell levels operational, 24-point verify, Soft Shell live | Phase 8: Certification |
+| **clawhub-forge** | 100% | 87-pattern scanner, CDR pipeline, AI skill creation, 25 skills certified | Phase 5: Deferred (ClawHub API) |
+| **moltbook-pioneer** | 100% | 3 tools, 25 patterns, pattern export with ReDoS hardening | Complete |
 
 ### Integration Status
 
 | Integration | Status | Blocking? |
 |---|---|---|
-| Skill installation path (forge → vault) | Spec'd, not implemented | Blocks skill delivery to vault |
-| Security certificates (forge → vault) | Designed (forge Phase 2) | Blocks automated skill acceptance |
-| CDR pipeline (forge internal) | Designed (forge Phase 3) | Blocks safe skill downloads |
-| Feed scanning integration (pioneer → vault) | Not implemented | Not blocking (Moltbook domains not in allowlist yet) |
-| GUI discovery (all → lobster-trapp) | Implemented via component.yml | Not blocking |
+| Skill installation path (forge -> vault) | Both sides implemented | Not blocking (manual workflow works) |
+| Security certificates (forge -> vault) | Implemented (forge Phase 2) | Not blocking |
+| CDR pipeline (forge internal) | Implemented (forge Phase 3) | Not blocking |
+| Feed scanning integration (pioneer -> vault) | Designed, deferred | Not blocking (Moltbook domains not in allowlist) |
+| GUI discovery (all -> lobster-trapp) | Implemented via component.yml | Not blocking |
+| Pattern export (pioneer -> vault) | Pioneer-side complete, vault-side deferred | Not blocking |
 
 ---
 
