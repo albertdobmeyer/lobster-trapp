@@ -134,7 +134,7 @@ fi
 # 1.5: Pattern count matches actual patterns.sh
 if [[ -f "$REPORT" ]]; then
   report_count=$(jq '.scan.pattern_count' "$REPORT" 2>/dev/null)
-  actual_count="$(grep -v '^#' "$FORGE/tools/lib/patterns.sh" | grep -v '^\s*$' | grep -c '|')"
+  actual_count="$(grep -v '^#' "$FORGE/tools/lib/patterns.sh" | grep -v '^\s*$' | grep -c '|' || echo 0)"
   if [[ "$report_count" == "$actual_count" ]]; then
     pass "1.5 Pattern count matches ($actual_count patterns)"
   else
@@ -238,14 +238,15 @@ if [[ -f "$PATTERNS_EXPORT" ]]; then
   HEADER_HASH=$(grep '^# Integrity: sha256:' "$PATTERNS_EXPORT" | sed 's/^# Integrity: sha256://')
   if [[ -n "$HEADER_HASH" ]]; then
     HASH_OK=$(python3 -c "
-import yaml, hashlib
-with open('$PATTERNS_EXPORT') as f:
+import yaml, hashlib, sys
+expected = sys.argv[1]
+with open(sys.argv[2]) as f:
     d = yaml.safe_load(f)
 regexes = sorted(d['patterns'], key=lambda x: x['id'])
 hash_input = '\n'.join(p['regex'] for p in regexes)
 computed = hashlib.sha256(hash_input.encode()).hexdigest()
-print('OK' if computed == '$HEADER_HASH' else 'FAIL')
-" 2>/dev/null)
+print('OK' if computed == expected else 'FAIL')
+" "$HEADER_HASH" "$PATTERNS_EXPORT" 2>/dev/null)
     if [[ "$HASH_OK" == "OK" ]]; then
       pass "2.4 Integrity hash matches exported regexes"
     else
@@ -267,7 +268,7 @@ with open('$PATTERNS_EXPORT') as f:
 print(len(d['patterns']))
 " 2>/dev/null)
   # Source YAML has regex escapes that break PyYAML — count '- id:' lines instead
-  source_count=$(grep -c '^\s*- id:' "$PATTERNS_SOURCE")
+  source_count=$(grep -c '^\s*- id:' "$PATTERNS_SOURCE" || echo 0)
   if [[ "$export_count" == "$source_count" ]]; then
     pass "2.5 Pattern count matches source ($export_count patterns)"
   else
@@ -321,7 +322,9 @@ for ref_path in \
     trifecta_ok=false
   fi
 done
-$trifecta_ok && pass "3.1 trifecta.md referenced files exist"
+if [[ "$trifecta_ok" == true ]]; then
+  pass "3.1 trifecta.md referenced files exist"
+fi
 
 # 3.2: Vault skill installation spec mentions clearance report fields
 SPEC_SKILL="$VAULT/docs/specs/2026-03-30-skill-installation-path.md"
@@ -454,8 +457,10 @@ fi
 # =============================================================================
 # Results
 # =============================================================================
+TOTAL=$((PASS + FAIL + WARN))
 echo ""
-echo -e "Results: ${GREEN}${PASS} passed${NC}, ${RED}${FAIL} failed${NC}, ${YELLOW}${WARN} warnings${NC}"
+echo -e "Results: ${GREEN}${PASS} passed${NC}, ${RED}${FAIL} failed${NC}, ${YELLOW}${WARN} warnings${NC} (${TOTAL} total)"
 if [ "$FAIL" -gt 0 ]; then
   exit 1
 fi
+exit 0
