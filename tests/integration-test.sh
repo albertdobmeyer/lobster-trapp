@@ -307,12 +307,21 @@ rm -f "$PATTERNS_EXPORT"
 section "3. Cross-Reference Integrity"
 # =============================================================================
 
-# 3.1: Forge design document exists (referenced by trifecta.md)
-if [[ -f "$FORGE/docs/forge-identity-and-design.md" ]]; then
-  pass "3.1 Forge design document exists"
-else
-  fail "3.1 Missing: $FORGE/docs/forge-identity-and-design.md"
-fi
+# 3.1: trifecta.md referenced files exist
+trifecta_ok=true
+for ref_path in \
+  "$FORGE/docs/forge-identity-and-design.md" \
+  "GLOSSARY.md" \
+  "$VAULT/docs/roadmap.md" \
+  "$FORGE/docs/roadmap.md" \
+  "$PIONEER/docs/roadmap.md" \
+; do
+  if [[ ! -f "$ref_path" ]]; then
+    fail "3.1 trifecta.md references missing file: $ref_path"
+    trifecta_ok=false
+  fi
+done
+$trifecta_ok && pass "3.1 trifecta.md referenced files exist"
 
 # 3.2: Vault skill installation spec mentions clearance report fields
 SPEC_SKILL="$VAULT/docs/specs/2026-03-30-skill-installation-path.md"
