@@ -74,10 +74,25 @@ Tracked gaps from the 2026-03-03 audit. This covers the Tauri app's own issues, 
 
 ---
 
-## card-grid Renderer (Phase 6)
+## card-grid Renderer (Phase G) — Spec Written
 
 - [ ] `card-grid` output display is aliased to `ReportRenderer` instead of having its own implementation
 - [ ] Should render structured data as a grid of cards (e.g., skill scan results, census data)
+- [ ] **Spec:** `docs/specs/2026-04-07-card-grid-renderer.md`
+
+---
+
+## Finalization — Remaining Work (v4 Roadmap)
+
+Full roadmap: `docs/roadmap-v4-finalization.md` (supersedes `docs/superpowers/plans/2026-04-04-master-roadmap-v3.md`)
+
+| Phase | Area | Spec |
+|-------|------|------|
+| F | Test infrastructure + CI hardening | `docs/specs/2026-04-07-ci-integration-tests.md` |
+| G | Card-grid renderer | `docs/specs/2026-04-07-card-grid-renderer.md` |
+| H | Cross-platform bundle + updater | `docs/specs/2026-04-07-bundle-and-updater.md` |
+| I | Setup wizard E2E + forge polish | `docs/specs/2026-04-07-setup-wizard-e2e.md` |
+| J | Landing page + release prep | (no spec — straightforward) |
 
 ---
 
