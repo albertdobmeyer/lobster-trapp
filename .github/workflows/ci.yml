@@ -86,6 +86,26 @@ jobs:
 
       - run: bash tests/orchestrator-check.sh
 
+  integration-tests:
+    name: Integration tests (cross-module contracts)
+    needs: check-orchestration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install pyyaml
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - run: bash tests/integration-test.sh --ci
+
   smoke-test:
     name: Playwright smoke tests
     needs: check-frontend
@@ -111,7 +131,7 @@ jobs:
   build-and-release:
     name: Build (${{ matrix.platform.name }})
     if: github.event_name == 'push'  || github.event_name == 'workflow_dispatch'
-    needs: [check-frontend, check-rust, check-orchestration]
+    needs: [check-frontend, check-rust, check-orchestration, integration-tests]
     permissions:
       contents: write
     strategy:

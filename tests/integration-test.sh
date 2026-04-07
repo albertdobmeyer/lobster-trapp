@@ -12,16 +12,23 @@
 # Complements orchestrator-check.sh (manifest/structure validation) with
 # data contract validation (actual cross-module data flows).
 #
-# Usage: bash tests/integration-test.sh
+# Usage: bash tests/integration-test.sh [--ci]
 # Dependencies: bash, python3, jq
 # =============================================================================
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+CI_MODE=false
+if [[ "${1:-}" == "--ci" ]]; then
+  CI_MODE=true
+fi
+
 PASS=0
 FAIL=0
 WARN=0
+SKIP=0
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -32,6 +39,7 @@ NC='\033[0m'
 pass() { PASS=$((PASS+1)); echo -e "  ${GREEN}[PASS]${NC} $1"; }
 fail() { FAIL=$((FAIL+1)); echo -e "  ${RED}[FAIL]${NC} $1"; }
 warn() { WARN=$((WARN+1)); echo -e "  ${YELLOW}[WARN]${NC} $1"; }
+skip() { SKIP=$((SKIP+1)); echo -e "  ${YELLOW}[SKIP]${NC} $1"; }
 section() { echo -e "\n${BLUE}=== $1 ===${NC}"; }
 
 cd "$REPO_ROOT"
@@ -428,10 +436,14 @@ section "5. Orchestrator Passthrough"
 # =============================================================================
 
 # 5.1: Run orchestrator-check.sh silently
-if bash tests/orchestrator-check.sh > /dev/null 2>&1; then
-  pass "5.1 orchestrator-check.sh passes"
+if [[ "$CI_MODE" == true ]]; then
+  skip "5.1 orchestrator-check.sh (runs in separate CI job)"
 else
-  fail "5.1 orchestrator-check.sh failed (run it standalone for details)"
+  if bash tests/orchestrator-check.sh > /dev/null 2>&1; then
+    pass "5.1 orchestrator-check.sh passes"
+  else
+    fail "5.1 orchestrator-check.sh failed (run it standalone for details)"
+  fi
 fi
 
 # 5.2: Each component.yml declares the expected role
@@ -457,9 +469,9 @@ fi
 # =============================================================================
 # Results
 # =============================================================================
-TOTAL=$((PASS + FAIL + WARN))
+TOTAL=$((PASS + FAIL + WARN + SKIP))
 echo ""
-echo -e "Results: ${GREEN}${PASS} passed${NC}, ${RED}${FAIL} failed${NC}, ${YELLOW}${WARN} warnings${NC} (${TOTAL} total)"
+echo -e "Results: ${GREEN}${PASS} passed${NC}, ${RED}${FAIL} failed${NC}, ${YELLOW}${WARN} warnings${NC}, ${YELLOW}${SKIP} skipped${NC} (${TOTAL} total)"
 if [ "$FAIL" -gt 0 ]; then
   exit 1
 fi
