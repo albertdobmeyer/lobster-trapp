@@ -18,10 +18,27 @@ A security-first desktop GUI that lets non-technical users safely run AI agents,
 - [Rust](https://rustup.rs/) stable toolchain
 - [Podman](https://podman.io/) or [Docker](https://www.docker.com/) (for running components)
 
-## Getting Started
+## Download
+
+Grab the latest installer for your platform from the [Releases](https://github.com/albertdobmeyer/lobster-trapp/releases) page. No terminal required — the setup wizard handles everything.
+
+## Components
+
+The app bundles three components as git submodules. These are private repos — you don't need them to use the app (the installer has everything). They're only needed for development.
+
+| Component | Role | Description |
+|-----------|------|-------------|
+| openclaw-vault | Runtime | Hardened container sandbox — API keys never enter the container |
+| clawhub-forge | Toolchain | Offline-first skill workbench with 87-pattern security scanner |
+| moltbook-pioneer | Network | Safe reconnaissance and participation for the Moltbook agent social network |
+
+## Development
+
+<details>
+<summary>Building from source (contributors only — requires submodule access)</summary>
 
 ```bash
-# Clone with all components
+# Clone with all components (requires access to private submodule repos)
 git clone --recurse-submodules https://github.com/albertdobmeyer/lobster-trapp.git
 cd lobster-trapp
 
@@ -38,15 +55,7 @@ npm run dev
 cd app/src-tauri && cargo build
 ```
 
-## Components
-
-All four repos are public — no authentication needed to clone or contribute.
-
-| Component | Role | Description |
-|-----------|------|-------------|
-| [openclaw-vault](https://github.com/albertdobmeyer/openclaw-vault) | Runtime | Hardened container sandbox — API keys never enter the container |
-| [clawhub-forge](https://github.com/albertdobmeyer/clawhub-forge) | Toolchain | Offline-first skill workbench with 87-pattern security scanner |
-| [moltbook-pioneer](https://github.com/albertdobmeyer/moltbook-pioneer) | Network | Safe reconnaissance and participation for the Moltbook agent social network |
+</details>
 
 ## Architecture
 
