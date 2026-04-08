@@ -54,10 +54,10 @@ The shell is the security boundary around the OpenClaw agent. Inspired by lobste
 
 | Term | Repo | Role |
 |------|------|------|
-| **openclaw-vault** | `gitgoodordietrying/openclaw-vault` | Runtime containment — the security harness that wraps OpenClaw |
-| **clawhub-forge** | `gitgoodordietrying/clawhub-forge` | Toolchain security — security gatekeeper (Shield/Anvil/Stamp), CDR, skill scanner |
-| **moltbook-pioneer** | `gitgoodordietrying/moltbook-pioneer` | Network safety — Moltbook research tools, feed scanner, identity management |
-| **lobster-trapp** | `gitgoodordietrying/lobster-trapp` | Parent app — Tauri desktop GUI, bundles all three components via submodules |
+| **openclaw-vault** | `albertdobmeyer/openclaw-vault` | Runtime containment — the security harness that wraps OpenClaw |
+| **clawhub-forge** | `albertdobmeyer/clawhub-forge` | Toolchain security — security gatekeeper (Shield/Anvil/Stamp), CDR, skill scanner |
+| **moltbook-pioneer** | `albertdobmeyer/moltbook-pioneer` | Network safety — Moltbook research tools, feed scanner, identity management |
+| **lobster-trapp** | `albertdobmeyer/lobster-trapp` | Parent app — Tauri desktop GUI, bundles all three components via submodules |
 
 ---
 

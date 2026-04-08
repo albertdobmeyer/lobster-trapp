@@ -41,7 +41,7 @@ File: `app/src-tauri/tauri.conf.json`
   "updater": {
     "active": false,
     "endpoints": [
-      "https://github.com/gitgoodordietrying/lobster-trapp/releases/latest/download/latest.json"
+      "https://github.com/albertdobmeyer/lobster-trapp/releases/latest/download/latest.json"
     ],
     "pubkey": ""
   }
@@ -135,7 +135,7 @@ Repository → Settings → Secrets and variables → Actions
 "updater": {
   "active": true,
   "endpoints": [
-    "https://github.com/gitgoodordietrying/lobster-trapp/releases/latest/download/latest.json"
+    "https://github.com/albertdobmeyer/lobster-trapp/releases/latest/download/latest.json"
   ],
   "pubkey": "<public key from generate step>"
 }

@@ -38,14 +38,14 @@ In 2 seconds of glance time, a viewer should understand three things:
 │     │          │   can actually trust         │
 │     └──────────┘                             │
 │                                              │
-│              gitgoodordietrying              │
+│              albertdobmeyer              │
 │                                              │
 └──────────────────────────────────────────────┘
 ```
 
 - **Left third**: The official logo — golden shield with emerald trim and red lobster claws — rendered at roughly 300x360 px, vertically centered
 - **Right two-thirds**: Text block, vertically centered, left-aligned
-- **Footer**: `gitgoodordietrying` in muted monospace, centered at the bottom
+- **Footer**: `albertdobmeyer` in muted monospace, centered at the bottom
 
 ### Why this layout
 

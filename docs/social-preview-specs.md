@@ -23,7 +23,7 @@ Each image follows the same structure:
 1. Full-bleed background color
 2. Repo name in monospace font (large, centered)
 3. Tagline below in regular weight
-4. `gitgoodordietrying` footer at bottom
+4. `albertdobmeyer` footer at bottom
 
 ## Current Status
 

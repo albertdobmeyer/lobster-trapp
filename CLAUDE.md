@@ -21,9 +21,9 @@ The Tauri backend must contain **zero knowledge** of what's inside any submodule
 ```
 lobster-trapp/                    (this repo — public)
 ├── components/
-│   ├── openclaw-vault/           git submodule → gitgoodordietrying/openclaw-vault
-│   ├── clawhub-forge/            git submodule → gitgoodordietrying/clawhub-forge
-│   └── moltbook-pioneer/         git submodule → gitgoodordietrying/moltbook-pioneer
+│   ├── openclaw-vault/           git submodule → albertdobmeyer/openclaw-vault
+│   ├── clawhub-forge/            git submodule → albertdobmeyer/clawhub-forge
+│   └── moltbook-pioneer/         git submodule → albertdobmeyer/moltbook-pioneer
 ├── app/                          Tauri 2 + React 18 desktop GUI
 │   ├── src/                      React frontend
 │   └── src-tauri/                Rust backend

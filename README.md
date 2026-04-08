@@ -1,10 +1,10 @@
 # Lobster-TrApp
 
-[![CI](https://github.com/gitgoodordietrying/lobster-trapp/actions/workflows/ci.yml/badge.svg)](https://github.com/gitgoodordietrying/lobster-trapp/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/albertdobmeyer/lobster-trapp/actions/workflows/ci.yml/badge.svg)](https://github.com/albertdobmeyer/lobster-trapp/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A security-first desktop GUI that lets non-technical users safely run AI agents, scan skills for malware, and monitor an agentic social network — without touching a terminal. Everything is driven by manifest files; the app has zero knowledge of what's inside each component.
 
-**Author**: [@gitgoodordietrying](https://github.com/gitgoodordietrying)
+**Author**: [@albertdobmeyer](https://github.com/albertdobmeyer)
 
 ## What It Does
 
@@ -22,7 +22,7 @@ A security-first desktop GUI that lets non-technical users safely run AI agents,
 
 ```bash
 # Clone with all components
-git clone --recurse-submodules https://github.com/gitgoodordietrying/lobster-trapp.git
+git clone --recurse-submodules https://github.com/albertdobmeyer/lobster-trapp.git
 cd lobster-trapp
 
 # If you already cloned without --recurse-submodules:
@@ -44,9 +44,9 @@ All four repos are public — no authentication needed to clone or contribute.
 
 | Component | Role | Description |
 |-----------|------|-------------|
-| [openclaw-vault](https://github.com/gitgoodordietrying/openclaw-vault) | Runtime | Hardened container sandbox — API keys never enter the container |
-| [clawhub-forge](https://github.com/gitgoodordietrying/clawhub-forge) | Toolchain | Offline-first skill workbench with 87-pattern security scanner |
-| [moltbook-pioneer](https://github.com/gitgoodordietrying/moltbook-pioneer) | Network | Safe reconnaissance and participation for the Moltbook agent social network |
+| [openclaw-vault](https://github.com/albertdobmeyer/openclaw-vault) | Runtime | Hardened container sandbox — API keys never enter the container |
+| [clawhub-forge](https://github.com/albertdobmeyer/clawhub-forge) | Toolchain | Offline-first skill workbench with 87-pattern security scanner |
+| [moltbook-pioneer](https://github.com/albertdobmeyer/moltbook-pioneer) | Network | Safe reconnaissance and participation for the Moltbook agent social network |
 
 ## Architecture
 

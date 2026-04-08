@@ -4,10 +4,10 @@
 
 This policy covers all repositories in the OpenClaw ecosystem:
 
-- [lobster-trapp](https://github.com/gitgoodordietrying/lobster-trapp) — Desktop GUI orchestrator
-- [openclaw-vault](https://github.com/gitgoodordietrying/openclaw-vault) — Hardened container sandbox
-- [clawhub-forge](https://github.com/gitgoodordietrying/clawhub-forge) — Skill development workbench
-- [moltbook-pioneer](https://github.com/gitgoodordietrying/moltbook-pioneer) — Agent social network tools
+- [lobster-trapp](https://github.com/albertdobmeyer/lobster-trapp) — Desktop GUI orchestrator
+- [openclaw-vault](https://github.com/albertdobmeyer/openclaw-vault) — Hardened container sandbox
+- [clawhub-forge](https://github.com/albertdobmeyer/clawhub-forge) — Skill development workbench
+- [moltbook-pioneer](https://github.com/albertdobmeyer/moltbook-pioneer) — Agent social network tools
 
 ## Reporting a Vulnerability
 
@@ -15,7 +15,7 @@ If you discover a security vulnerability in any of these repositories, please re
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Instead, please email: **gitgoodordietrying@proton.me**
+Instead, please email: **albertdobmeyer@proton.me**
 
 Include:
 - Which repository and file(s) are affected

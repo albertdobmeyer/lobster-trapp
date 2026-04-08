@@ -5,8 +5,8 @@ edition = "2021"
 description = "Security-first desktop GUI for the OpenClaw ecosystem"
 authors = ["Albert Dobmeyer"]
 license = "MIT"
-repository = "https://github.com/gitgoodordietrying/lobster-trapp"
-homepage = "https://github.com/gitgoodordietrying/lobster-trapp#readme"
+repository = "https://github.com/albertdobmeyer/lobster-trapp"
+homepage = "https://github.com/albertdobmeyer/lobster-trapp#readme"
 
 [dependencies]
 tauri = { version = "2", features = [] }

@@ -7,9 +7,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gitgoodordietrying/lobster-trapp.git"
+    "url": "https://github.com/albertdobmeyer/lobster-trapp.git"
   },
-  "homepage": "https://github.com/gitgoodordietrying/lobster-trapp#readme",
+  "homepage": "https://github.com/albertdobmeyer/lobster-trapp#readme",
   "type": "module",
   "scripts": {
     "dev": "vite",

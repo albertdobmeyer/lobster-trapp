@@ -45,16 +45,28 @@
     "macOS": {
       "minimumSystemVersion": "10.15",
       "dmg": {
-        "appPosition": { "x": 180, "y": 170 },
-        "applicationFolderPosition": { "x": 480, "y": 170 },
-        "windowSize": { "width": 660, "height": 400 }
+        "appPosition": {
+          "x": 180,
+          "y": 170
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 170
+        },
+        "windowSize": {
+          "width": 660,
+          "height": 400
+        }
       },
       "signingIdentity": null,
       "providerShortName": null
     },
     "linux": {
       "deb": {
-        "depends": ["libwebkit2gtk-4.1-0", "libappindicator3-1"],
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libappindicator3-1"
+        ],
         "section": "utils",
         "priority": "optional"
       },
@@ -69,11 +81,11 @@
     },
     "store": null,
     "updater": {
-      "active": false,
+      "active": true,
       "endpoints": [
-        "https://github.com/gitgoodordietrying/lobster-trapp/releases/latest/download/latest.json"
+        "https://github.com/albertdobmeyer/lobster-trapp/releases/latest/download/latest.json"
       ],
-      "pubkey": ""
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDJBOEVDNkM4QzFEOUYzMDcKUldRSDg5bkJ5TWFPS3NoazZPVkQwYUtDS0RMWjdIc2I2QVgxNXlJS1F6eThTcUJQeDVPTCtWS1EK"
     }
   }
 }
