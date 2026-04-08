@@ -27,5 +27,8 @@ Desktop.ini
 # Claude Code local settings
 .claude/
 
+# Superpowers brainstorm sessions
+.superpowers/
+
 # Logs
 *.log
