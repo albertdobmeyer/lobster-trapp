@@ -1,4 +1,4 @@
-import { FileText, Copy, CheckCircle } from "lucide-react";
+import { FileText, Copy, CheckCircle, Info } from "lucide-react";
 import type { PrerequisiteReport } from "@/lib/tauri";
 
 interface ConfigStepProps {
@@ -36,11 +36,20 @@ export default function ConfigStep({
       </p>
 
       {allGood ? (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-green-900/20 border border-green-800">
-          <CheckCircle size={20} className="text-green-400" />
-          <p className="text-sm text-green-300">
-            All configuration files are in place.
-          </p>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 p-4 rounded-lg bg-green-900/20 border border-green-800">
+            <CheckCircle size={20} className="text-green-400" />
+            <p className="text-sm text-green-300">
+              All configuration files are in place.
+            </p>
+          </div>
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-900/10 border border-blue-900/30">
+            <Info size={16} className="text-blue-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-300">
+              You can edit API keys and other settings from the{" "}
+              <strong>Settings</strong> page after setup is complete.
+            </p>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">

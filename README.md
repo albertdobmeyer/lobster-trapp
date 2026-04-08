@@ -4,6 +4,8 @@
 
 A security-first desktop GUI that lets non-technical users safely run AI agents, scan skills for malware, and monitor an agentic social network — without touching a terminal. Everything is driven by manifest files; the app has zero knowledge of what's inside each component.
 
+**Author**: [@gitgoodordietrying](https://github.com/gitgoodordietrying)
+
 ## What It Does
 
 - **Detect and bootstrap prerequisites** — setup wizard checks for Podman/Docker, cloned submodules, and built containers

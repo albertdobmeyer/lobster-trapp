@@ -10,7 +10,7 @@
 
 **Spec reference:** Section 4.6 of `docs/superpowers/specs/2026-03-23-openclaw-vault-security-harness-design.md`
 
-**Working directory:** `/home/albertd/lobster-trapp/components/openclaw-vault`
+**Working directory:** `components/openclaw-vault`
 
 ---
 
@@ -36,7 +36,7 @@ The test uses `wget` on lines 12, 20, 29, 38, 50, 61, 70. But `wget` was strippe
 
 Run:
 ```bash
-cd /home/albertd/lobster-trapp/components/openclaw-vault
+cd components/openclaw-vault
 head -77 tests/test-network-isolation.sh
 ```
 Verify: All test functions use `wget`.
@@ -205,7 +205,7 @@ Expected: No output (no syntax errors).
 - [ ] **Step 4: Commit**
 
 ```bash
-cd /home/albertd/lobster-trapp/components/openclaw-vault
+cd components/openclaw-vault
 git add tests/test-network-isolation.sh
 git commit -m "fix: replace wget with Node.js http in network isolation tests
 
@@ -229,7 +229,7 @@ The `proxy-logs` command references `openclaw-proxy` but the actual container in
 
 Run:
 ```bash
-cd /home/albertd/lobster-trapp/components/openclaw-vault
+cd components/openclaw-vault
 grep 'container_name.*proxy' compose.yml
 grep 'openclaw-proxy' component.yml
 ```
@@ -302,7 +302,7 @@ The `anthropic-version` header is hardcoded to `"2023-06-01"`. When Anthropic up
 
 Run:
 ```bash
-cd /home/albertd/lobster-trapp/components/openclaw-vault
+cd components/openclaw-vault
 sed -n '159,165p' proxy/vault-proxy.py
 ```
 Expected: Line 163 shows `flow.request.headers["anthropic-version"] = "2023-06-01"`

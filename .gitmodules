@@ -1,9 +1,9 @@
 [submodule "components/openclaw-vault"]
 	path = components/openclaw-vault
-	url = git@github.com:albertdobmeyer/openclaw-vault.git
+	url = git@github.com:gitgoodordietrying/openclaw-vault.git
 [submodule "components/clawhub-forge"]
 	path = components/clawhub-forge
-	url = git@github.com:albertdobmeyer/clawhub-forge.git
+	url = git@github.com:gitgoodordietrying/clawhub-forge.git
 [submodule "components/moltbook-pioneer"]
 	path = components/moltbook-pioneer
-	url = git@github.com:albertdobmeyer/moltbook-pioneer.git
+	url = git@github.com:gitgoodordietrying/moltbook-pioneer.git

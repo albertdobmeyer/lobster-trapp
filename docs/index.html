@@ -4,231 +4,628 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lobster-TrApp — Security-First Desktop GUI for OpenClaw</title>
-  <meta name="description" content="A manifest-driven desktop GUI that lets non-technical users safely operate AI agents in hardened containers.">
+  <meta name="description" content="A manifest-driven desktop GUI that lets non-technical users safely operate AI agents in hardened containers. Your API keys never enter the container.">
+  <meta property="og:title" content="Lobster-TrApp — Security-First Desktop GUI for OpenClaw">
+  <meta property="og:description" content="Run AI agents safely. Your API keys never enter the container.">
+  <meta property="og:type" content="website">
   <style>
     :root {
       --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
       --slate-300: #cbd5e1;
       --slate-400: #94a3b8;
+      --slate-500: #64748b;
       --slate-700: #334155;
       --slate-800: #1e293b;
       --slate-900: #0f172a;
-      --orange-500: #f97316;
-      --orange-600: #ea580c;
+      --slate-950: #020617;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+      --emerald-400: #34d399;
       --emerald-500: #10b981;
+      --violet-400: #a78bfa;
       --violet-500: #8b5cf6;
+      --cyan-400: #22d3ee;
       --cyan-500: #06b6d4;
+      --red-400: #f87171;
+      --amber-400: #fbbf24;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: var(--slate-900);
+      background: var(--slate-950);
       color: var(--slate-300);
       line-height: 1.6;
     }
 
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 0 24px;
+    }
+
+    /* Nav */
+    nav {
+      padding: 20px 0;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Courier New', monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--slate-50);
+      text-decoration: none;
+    }
+
+    .logo span { color: var(--blue-500); }
+
+    nav a {
+      color: var(--slate-400);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: var(--slate-50); }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      align-items: center;
     }
 
     /* Hero */
     .hero {
       text-align: center;
-      padding: 80px 0 60px;
-      border-bottom: 1px solid var(--slate-700);
+      padding: 80px 0 64px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--blue-500);
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald-500);
     }
 
     .hero h1 {
-      font-family: 'Courier New', monospace;
-      font-size: 3rem;
+      font-size: 3.2rem;
+      font-weight: 800;
       color: var(--slate-50);
-      margin-bottom: 8px;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
     }
 
-    .hero h1 span { color: var(--orange-500); }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--blue-500), var(--cyan-400));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-    .hero .tagline {
-      font-size: 1.2rem;
+    .hero .subtitle {
+      font-size: 1.15rem;
       color: var(--slate-400);
-      margin-bottom: 32px;
+      max-width: 560px;
+      margin: 0 auto 36px;
     }
 
-    .cta {
-      display: inline-block;
-      padding: 12px 32px;
-      background: var(--orange-500);
-      color: var(--slate-900);
-      text-decoration: none;
-      font-weight: 600;
-      border-radius: 6px;
-      transition: background 0.2s;
+    .hero-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
     }
 
-    .cta:hover { background: var(--orange-600); }
-
-    /* Sections */
-    section {
-      padding: 48px 0;
-      border-bottom: 1px solid var(--slate-700);
-    }
-
-    section:last-child { border-bottom: none; }
-
-    h2 {
-      font-family: 'Courier New', monospace;
-      font-size: 1.5rem;
-      color: var(--slate-50);
-      margin-bottom: 24px;
-    }
-
-    /* Features */
-    .features {
-      display: grid;
-      gap: 20px;
-    }
-
-    .feature {
-      background: var(--slate-800);
-      padding: 20px 24px;
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
       border-radius: 8px;
-      border-left: 3px solid var(--orange-500);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: all 0.2s;
     }
 
-    .feature strong {
+    .btn-primary {
+      background: var(--blue-600);
+      color: white;
+    }
+
+    .btn-primary:hover { background: var(--blue-700); }
+
+    .btn-secondary {
+      background: var(--slate-800);
+      color: var(--slate-300);
+      border: 1px solid var(--slate-700);
+    }
+
+    .btn-secondary:hover {
+      background: var(--slate-700);
       color: var(--slate-50);
-      display: block;
-      margin-bottom: 4px;
     }
 
-    /* Components table */
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    .hero-stats {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(51, 65, 85, 0.3);
     }
 
-    th, td {
-      text-align: left;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--slate-700);
+    .hero-stat {
+      text-align: center;
     }
 
-    th {
-      color: var(--slate-400);
-      font-size: 0.85rem;
+    .hero-stat .number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--slate-50);
+      font-family: 'Courier New', monospace;
+    }
+
+    .hero-stat .label {
+      font-size: 0.75rem;
+      color: var(--slate-500);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
 
-    td a {
-      color: var(--orange-500);
+    /* Sections */
+    section {
+      padding: 64px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-header h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--slate-50);
+      margin-bottom: 12px;
+    }
+
+    .section-header p {
+      color: var(--slate-400);
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* Module cards */
+    .modules {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .module {
+      background: var(--slate-900);
+      border: 1px solid var(--slate-800);
+      border-radius: 12px;
+      padding: 28px 24px;
+      transition: border-color 0.2s;
+    }
+
+    .module:hover { border-color: var(--slate-700); }
+
+    .module-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+    }
+
+    .module h3 {
+      font-size: 1.1rem;
+      color: var(--slate-50);
+      margin-bottom: 4px;
+    }
+
+    .module .role {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+
+    .module p {
+      font-size: 0.9rem;
+      color: var(--slate-400);
+    }
+
+    .module a {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 0.85rem;
+      color: var(--blue-500);
       text-decoration: none;
     }
 
-    td a:hover { text-decoration: underline; }
+    .module a:hover { text-decoration: underline; }
 
-    .role-runtime { color: var(--emerald-500); }
-    .role-toolchain { color: var(--cyan-500); }
-    .role-network { color: var(--violet-500); }
-
-    /* Architecture */
-    .arch-note {
-      background: var(--slate-800);
-      padding: 20px 24px;
-      border-radius: 8px;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9rem;
-      line-height: 1.8;
+    /* How it works */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      counter-reset: step;
     }
+
+    .step {
+      text-align: center;
+      counter-increment: step;
+    }
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--slate-800);
+      border: 2px solid var(--slate-700);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--blue-500);
+      font-size: 1rem;
+      margin: 0 auto 16px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .step h3 {
+      font-size: 1rem;
+      color: var(--slate-50);
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: 0.85rem;
+      color: var(--slate-500);
+    }
+
+    /* Security highlight */
+    .security {
+      background: var(--slate-900);
+      border: 1px solid var(--slate-800);
+      border-radius: 12px;
+      padding: 32px;
+      margin-top: 48px;
+    }
+
+    .security h3 {
+      font-size: 1.1rem;
+      color: var(--slate-50);
+      margin-bottom: 16px;
+    }
+
+    .security-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .security-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+
+    .security-item .check {
+      color: var(--emerald-400);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* Downloads */
+    .downloads {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .download-card {
+      background: var(--slate-900);
+      border: 1px solid var(--slate-800);
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .download-card:hover { border-color: var(--blue-500); }
+
+    .download-card .os {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+
+    .download-card h3 {
+      font-size: 1rem;
+      color: var(--slate-50);
+      margin-bottom: 4px;
+    }
+
+    .download-card .format {
+      font-size: 0.8rem;
+      color: var(--slate-500);
+    }
+
+    /* Architecture note */
+    .arch-note {
+      background: var(--slate-900);
+      border-left: 3px solid var(--blue-500);
+      padding: 20px 24px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.95rem;
+      margin-top: 48px;
+    }
+
+    .arch-note strong { color: var(--slate-50); }
 
     code {
       background: var(--slate-800);
       padding: 2px 6px;
       border-radius: 3px;
-      font-size: 0.9em;
+      font-size: 0.85em;
+      font-family: 'Courier New', monospace;
     }
 
     /* Footer */
     footer {
       text-align: center;
-      padding: 40px 0;
-      color: var(--slate-400);
+      padding: 48px 0;
+      border-top: 1px solid rgba(51, 65, 85, 0.3);
+      color: var(--slate-500);
       font-size: 0.85rem;
     }
 
-    footer a { color: var(--slate-400); text-decoration: none; }
+    footer a {
+      color: var(--slate-400);
+      text-decoration: none;
+    }
+
     footer a:hover { color: var(--slate-50); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.2rem; }
+      .modules, .steps, .downloads, .security-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-stats { flex-direction: column; gap: 16px; }
+    }
   </style>
 </head>
 <body>
+  <nav>
+    <div class="container">
+      <a href="#" class="logo">Lobster-<span>TrApp</span></a>
+      <div class="nav-links">
+        <a href="#modules">Modules</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#download">Download</a>
+        <a href="https://github.com/gitgoodordietrying/lobster-trapp">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
   <div class="container">
+    <!-- Hero -->
     <div class="hero">
-      <h1>Lobster-<span>TrApp</span></h1>
-      <p class="tagline">Security-first desktop GUI for AI agents you can actually trust</p>
-      <a class="cta" href="https://github.com/gitgoodordietrying/lobster-trapp">View on GitHub</a>
+      <div class="hero-badge">
+        <span class="dot"></span>
+        v0.1.0 — Security-First AI Agent Runtime
+      </div>
+      <h1>Your API keys <em>never</em><br>enter the container.</h1>
+      <p class="subtitle">
+        A desktop app that runs OpenClaw inside hardened containers with proxy-gated networking, a malware scanner, and a guided setup wizard. No terminal required.
+      </p>
+      <div class="hero-buttons">
+        <a href="#download" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </a>
+        <a href="https://github.com/gitgoodordietrying/lobster-trapp" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="number">24</div>
+          <div class="label">Security Checks</div>
+        </div>
+        <div class="hero-stat">
+          <div class="number">87</div>
+          <div class="label">Malware Patterns</div>
+        </div>
+        <div class="hero-stat">
+          <div class="number">3</div>
+          <div class="label">Shell Levels</div>
+        </div>
+        <div class="hero-stat">
+          <div class="number">0</div>
+          <div class="label">API Keys in Container</div>
+        </div>
+      </div>
     </div>
 
-    <section>
-      <h2>What It Does</h2>
-      <div class="features">
-        <div class="feature">
-          <strong>Bootstrap</strong>
-          Detects prerequisites (Podman/Docker), clones submodules, builds containers &mdash; guided setup wizard for non-technical users.
+    <!-- Modules -->
+    <section id="modules">
+      <div class="section-header">
+        <h2>Three Modules, One Mission</h2>
+        <p>Each module handles one part of safely operating AI agents. Together, they cover containment, skill security, and ecosystem awareness.</p>
+      </div>
+      <div class="modules">
+        <div class="module">
+          <div class="module-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald-500);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>OpenClaw Vault</h3>
+          <div class="role" style="color: var(--emerald-400);">runtime</div>
+          <p>Hardened container sandbox with proxy-gated networking. API keys stay in the proxy sidecar &mdash; the agent never sees them. Read-only filesystem, all caps dropped, custom seccomp.</p>
+          <a href="https://github.com/gitgoodordietrying/openclaw-vault">Learn more &rarr;</a>
         </div>
-        <div class="feature">
-          <strong>Dashboard</strong>
-          Start, stop, and monitor components through a manifest-driven interface. Every button, command, and status badge is declared in <code>component.yml</code>, not hardcoded.
+        <div class="module">
+          <div class="module-icon" style="background: rgba(6, 182, 212, 0.1); color: var(--cyan-500);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </div>
+          <h3>ClawHub Forge</h3>
+          <div class="role" style="color: var(--cyan-400);">toolchain</div>
+          <p>Offline skill development workbench with an 87-pattern malware scanner, zero-trust verifier, and Content Disarm &amp; Reconstruction pipeline. Guilty until proven innocent.</p>
+          <a href="https://github.com/gitgoodordietrying/clawhub-forge">Learn more &rarr;</a>
         </div>
-        <div class="feature">
-          <strong>Security Surface</strong>
-          Verify results, inspect proxy logs, review scan findings. The reason you need this instead of a terminal.
+        <div class="module">
+          <div class="module-icon" style="background: rgba(139, 92, 246, 0.1); color: var(--violet-500);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <h3>Moltbook Pioneer</h3>
+          <div class="role" style="color: var(--violet-400);">network</div>
+          <p>Safe reconnaissance and participation tools for the Moltbook agentic social network. Feed scanner detects prompt injection, authority impersonation, and encoded payloads.</p>
+          <a href="https://github.com/gitgoodordietrying/moltbook-pioneer">Learn more &rarr;</a>
         </div>
       </div>
     </section>
 
-    <section>
-      <h2>Components</h2>
-      <table>
-        <thead>
-          <tr><th>Component</th><th>Role</th><th>Description</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><a href="https://github.com/gitgoodordietrying/openclaw-vault">openclaw-vault</a></td>
-            <td class="role-runtime">runtime</td>
-            <td>Hardened container sandbox for the OpenClaw agent</td>
-          </tr>
-          <tr>
-            <td><a href="https://github.com/gitgoodordietrying/clawhub-forge">clawhub-forge</a></td>
-            <td class="role-toolchain">toolchain</td>
-            <td>Skill development workbench + security scanning pipeline</td>
-          </tr>
-          <tr>
-            <td><a href="https://github.com/gitgoodordietrying/moltbook-pioneer">moltbook-pioneer</a></td>
-            <td class="role-network">network</td>
-            <td>Safe Moltbook reconnaissance + participation tools</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
+    <!-- How It Works -->
+    <section id="how-it-works">
+      <div class="section-header">
+        <h2>How It Works</h2>
+        <p>From download to running agent &mdash; no terminal, no YAML editing, no manual container setup.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Install</h3>
+          <p>Download the installer for your platform. One binary, everything included.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Setup Wizard</h3>
+          <p>The wizard checks prerequisites, clones components, creates configs, and builds containers &mdash; all with real-time progress.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Dashboard</h3>
+          <p>Start, stop, and monitor your agent from a manifest-driven GUI. Every command and status badge is declared, not hardcoded.</p>
+        </div>
+      </div>
 
-    <section>
-      <h2>Architecture</h2>
+      <!-- Security details -->
+      <div class="security">
+        <h3>Six Defense Layers</h3>
+        <div class="security-grid">
+          <div class="security-item">
+            <span class="check">&check;</span>
+            <span><strong style="color:var(--slate-100)">Container isolation</strong> &mdash; read-only root, caps dropped, seccomp, noexec, non-root</span>
+          </div>
+          <div class="security-item">
+            <span class="check">&check;</span>
+            <span><strong style="color:var(--slate-100)">Network proxy</strong> &mdash; domain allowlist, API key injection, request logging</span>
+          </div>
+          <div class="security-item">
+            <span class="check">&check;</span>
+            <span><strong style="color:var(--slate-100)">Tool policy</strong> &mdash; deny list filters tools before the LLM sees them</span>
+          </div>
+          <div class="security-item">
+            <span class="check">&check;</span>
+            <span><strong style="color:var(--slate-100)">App restrictions</strong> &mdash; sandbox.mode off, workspaceOnly, elevated disabled</span>
+          </div>
+          <div class="security-item">
+            <span class="check">&check;</span>
+            <span><strong style="color:var(--slate-100)">Exec controls</strong> &mdash; allowlist security, ask always, safeBins whitelist</span>
+          </div>
+          <div class="security-item">
+            <span class="check">&check;</span>
+            <span><strong style="color:var(--slate-100)">Hardening config</strong> &mdash; DM pairing, no persistence, telemetry disabled</span>
+          </div>
+        </div>
+      </div>
+
       <div class="arch-note">
-        The Tauri backend contains <strong style="color:var(--orange-500)">zero knowledge</strong> of what's inside any component.
+        <strong>Manifest-driven architecture:</strong> the Tauri backend contains
+        <strong style="color:var(--blue-500)">zero knowledge</strong> of what's inside any component.
         Each component self-describes via <code>component.yml</code>.
         Drop in any component with a valid manifest and it renders correctly.
-        The schema is the contract. The GUI is generic. The components are independent.
       </div>
     </section>
 
-    <footer>
-      <p>MIT License &middot; Built by <a href="https://github.com/gitgoodordietrying">gitgoodordietrying</a></p>
-      <p style="margin-top: 8px">Built with Tauri 2 + React 18 + Rust</p>
-    </footer>
+    <!-- Downloads -->
+    <section id="download">
+      <div class="section-header">
+        <h2>Download</h2>
+        <p>Available for Linux, macOS, and Windows. Requires Podman or Docker for the vault container.</p>
+      </div>
+      <div class="downloads">
+        <a href="https://github.com/gitgoodordietrying/lobster-trapp/releases/latest" class="download-card">
+          <div class="os">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2C8 6 8 18 12 22M12 2c4 4 4 16 0 20"/></svg>
+          </div>
+          <h3>Linux</h3>
+          <div class="format">.deb &middot; .AppImage</div>
+        </a>
+        <a href="https://github.com/gitgoodordietrying/lobster-trapp/releases/latest" class="download-card">
+          <div class="os">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" stroke-width="1.5"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M2 12h20"/><path d="M12 2v20"/></svg>
+          </div>
+          <h3>macOS</h3>
+          <div class="format">.dmg &middot; ARM &amp; Intel</div>
+        </a>
+        <a href="https://github.com/gitgoodordietrying/lobster-trapp/releases/latest" class="download-card">
+          <div class="os">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--slate-300)" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>Windows</h3>
+          <div class="format">.msi &middot; .exe</div>
+        </a>
+      </div>
+    </section>
   </div>
+
+  <footer>
+    <div class="container">
+      <p>MIT License &middot; Built by <a href="https://github.com/gitgoodordietrying">@gitgoodordietrying</a></p>
+      <p style="margin-top: 8px; color: var(--slate-500)">Built with Tauri 2 + React 18 + Rust</p>
+    </div>
+  </footer>
 </body>
 </html>

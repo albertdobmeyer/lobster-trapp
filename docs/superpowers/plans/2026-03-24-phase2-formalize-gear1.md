@@ -10,7 +10,7 @@
 
 **Spec reference:** Section 5.4 (Gear 1 definition) of the design spec.
 
-**Working directory:** `/home/albertd/lobster-trapp/components/openclaw-vault`
+**Working directory:** `components/openclaw-vault`
 
 **SAFETY:** Haiku-only API key, $5 cap, no web tools. Exec security = deny. Tool profile = minimal. Telegram DM policy = pairing (must manually approve each sender).
 
@@ -50,7 +50,7 @@ User must open Telegram and chat with `@BotFather`:
 
 - [ ] **Step 2: Add bot token to .env file**
 
-Append to `/home/albertd/lobster-trapp/components/openclaw-vault/.env`:
+Append to `components/openclaw-vault/.env`:
 ```
 TELEGRAM_BOT_TOKEN=<paste token here>
 ```
@@ -405,7 +405,7 @@ git push origin main
 
 Then update parent repo:
 ```bash
-cd /home/albertd/lobster-trapp
+cd lobster-trapp
 git add components/openclaw-vault
 git commit -m "chore: update openclaw-vault — Phase 2 (Gear 1 formalized)"
 git push origin main

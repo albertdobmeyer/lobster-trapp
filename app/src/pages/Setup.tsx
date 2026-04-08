@@ -1,20 +1,23 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePrerequisites } from "@/hooks/usePrerequisites";
+import { useManifests } from "@/hooks/useManifests";
 import { useAppContext } from "@/lib/AppContext";
 import WelcomeStep from "@/components/wizard/WelcomeStep";
 import PrerequisitesStep from "@/components/wizard/PrerequisitesStep";
 import SubmodulesStep from "@/components/wizard/SubmodulesStep";
 import ConfigStep from "@/components/wizard/ConfigStep";
+import SetupComponentsStep from "@/components/wizard/SetupComponentsStep";
 import CompleteStep from "@/components/wizard/CompleteStep";
 
-type Step = "welcome" | "prerequisites" | "submodules" | "config" | "complete";
+type Step = "welcome" | "prerequisites" | "submodules" | "config" | "setup-components" | "complete";
 
 const STEP_ORDER: Step[] = [
   "welcome",
   "prerequisites",
   "submodules",
   "config",
+  "setup-components",
   "complete",
 ];
 
@@ -22,6 +25,7 @@ export default function Setup() {
   const [step, setStep] = useState<Step>("welcome");
   const { report, checking, initializing, check, initSubs, createConfig } =
     usePrerequisites();
+  const { components } = useManifests();
   const { updateSettings } = useAppContext();
   const navigate = useNavigate();
 
@@ -100,7 +104,16 @@ export default function Setup() {
             onBack={goBack}
           />
         )}
-        {step === "complete" && <CompleteStep onFinish={handleFinish} />}
+        {step === "setup-components" && (
+          <SetupComponentsStep
+            components={components}
+            onNext={goNext}
+            onBack={goBack}
+          />
+        )}
+        {step === "complete" && (
+          <CompleteStep components={components} onFinish={handleFinish} />
+        )}
       </div>
     </div>
   );

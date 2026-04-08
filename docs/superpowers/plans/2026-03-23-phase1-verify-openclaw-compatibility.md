@@ -10,7 +10,7 @@
 
 **Spec reference:** Open Questions 1, 4, 8, and Layer 4 validation from `docs/superpowers/specs/2026-03-23-openclaw-vault-security-harness-design.md`
 
-**Working directory:** `/home/albertd/lobster-trapp/components/openclaw-vault`
+**Working directory:** `components/openclaw-vault`
 
 **SAFETY:** The API key is Haiku-only with a $5 spending cap. No web tools enabled. ClawHub domains blocked. SSH key backed up to `/tmp/ssh_backup_20260323`. If anything unexpected happens, run `bash scripts/kill.sh --hard` immediately.
 
@@ -54,7 +54,7 @@ This is the first real test. If the build fails on `npm install -g @anthropic-ai
 
 Run:
 ```bash
-cd /home/albertd/lobster-trapp/components/openclaw-vault
+cd components/openclaw-vault
 podman build -t openclaw-vault -f Containerfile . 2>&1 | tee /tmp/vault-build.log
 ```
 
@@ -109,7 +109,7 @@ Expected: `.env exists` and `1` (one key entry).
 
 Run:
 ```bash
-cd /home/albertd/lobster-trapp/components/openclaw-vault
+cd components/openclaw-vault
 podman-compose up -d 2>&1 | tee /tmp/vault-start.log
 ```
 
@@ -474,7 +474,7 @@ Create `docs/phase1-findings.md` with all answers to open questions, organized a
 - [ ] **Step 5: Commit findings**
 
 ```bash
-cd /home/albertd/lobster-trapp/components/openclaw-vault
+cd components/openclaw-vault
 git add docs/phase1-findings.md
 git commit -m "docs: add Phase 1 findings — OpenClaw compatibility verification"
 ```
