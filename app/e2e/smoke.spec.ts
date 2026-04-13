@@ -1,10 +1,13 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Smoke tests", () => {
-  test("app loads with Dashboard heading", async ({ page }) => {
+  test("app loads with Dashboard or Setup wizard", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveTitle(/Lobster/i);
-    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    // On first run, the app redirects to the setup wizard; otherwise shows Dashboard
+    const dashboard = page.getByRole("heading", { name: "Dashboard" });
+    const setup = page.getByText(/welcome|setup|prerequisites/i);
+    await expect(dashboard.or(setup)).toBeVisible();
   });
 
   test("content renders (not a blank white screen)", async ({ page }) => {

@@ -24,13 +24,17 @@ Grab the latest installer for your platform from the [Releases](https://github.c
 
 ## Components
 
-The app orchestrates components via git submodules. These are currently private repos — the app requires access to component manifests to function. See the development section for setup instructions. Public release packaging is in progress.
+The app orchestrates components via git submodules. The setup wizard can clone them automatically, or you can do it manually:
+
+```bash
+git submodule update --init --recursive
+```
 
 | Component | Role | Description |
 |-----------|------|-------------|
 | openclaw-vault | Runtime | Hardened container sandbox — API keys are injected at the proxy layer, outside the container |
 | clawhub-forge | Toolchain | Offline-first skill workbench with 87-pattern security scanner |
-| moltbook-pioneer | Network | Safe reconnaissance for the Moltbook agent social network *(not included in v0.1.0 — API currently unavailable)* |
+| moltbook-pioneer | Network | Safe reconnaissance for the Moltbook agent social network *(experimental — Moltbook API currently unavailable)* |
 
 ## Development
 
