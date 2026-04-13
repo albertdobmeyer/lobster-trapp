@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/albertdobmeyer/lobster-trapp/actions/workflows/ci.yml/badge.svg)](https://github.com/albertdobmeyer/lobster-trapp/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A security-first desktop GUI that lets non-technical users safely run AI agents, scan skills for malware, and monitor an agentic social network — without touching a terminal. Everything is driven by manifest files; the app has zero knowledge of what's inside each component.
+A security-focused desktop GUI that lets non-technical users run AI agents with container isolation and scan skills for malware — without touching a terminal. Everything is driven by manifest files; the app has zero knowledge of what's inside each component.
 
 **Author**: [@albertdobmeyer](https://github.com/albertdobmeyer)
 
@@ -24,13 +24,13 @@ Grab the latest installer for your platform from the [Releases](https://github.c
 
 ## Components
 
-The app bundles three components as git submodules. These are private repos — you don't need them to use the app (the installer has everything). They're only needed for development.
+The app orchestrates components via git submodules. These are currently private repos — the app requires access to component manifests to function. See the development section for setup instructions. Public release packaging is in progress.
 
 | Component | Role | Description |
 |-----------|------|-------------|
-| openclaw-vault | Runtime | Hardened container sandbox — API keys never enter the container |
+| openclaw-vault | Runtime | Hardened container sandbox — API keys are injected at the proxy layer, outside the container |
 | clawhub-forge | Toolchain | Offline-first skill workbench with 87-pattern security scanner |
-| moltbook-pioneer | Network | Safe reconnaissance and participation for the Moltbook agent social network |
+| moltbook-pioneer | Network | Safe reconnaissance for the Moltbook agent social network *(not included in v0.1.0 — API currently unavailable)* |
 
 ## Development
 
