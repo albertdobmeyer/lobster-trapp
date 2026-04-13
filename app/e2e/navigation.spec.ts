@@ -11,14 +11,9 @@ test.describe("Navigation and routing", () => {
 
   test("settings page has controls", async ({ page }) => {
     await page.goto("/settings");
-    // Settings page should render meaningful content even in non-Tauri mode
-    const body = await page.locator("body").textContent();
-    expect(body?.length).toBeGreaterThan(20);
-    // If settings renders, check for expected controls; in non-Tauri mode
-    // the page may show fallback content since invoke calls fail
-    const monorepo = page.getByText(/monorepo/i);
-    const settings = page.getByRole("heading", { name: /settings/i });
-    await expect(monorepo.or(settings)).toBeVisible();
+    // Settings page should show the Settings heading and monorepo path control
+    await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
+    await expect(page.getByText(/monorepo path/i).first()).toBeVisible();
   });
 
   test("unknown route shows 404 or redirects to dashboard", async ({ page }) => {
