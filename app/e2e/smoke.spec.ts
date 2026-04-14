@@ -21,6 +21,8 @@ test.describe("Smoke tests", () => {
   test("navigation to /settings works", async ({ page }) => {
     await page.goto("/settings");
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+    // About section shows version
+    await expect(page.getByText("Lobster-TrApp v0.1.0")).toBeVisible();
   });
 
   test("no unexpected console errors", async ({ page }) => {
@@ -44,5 +46,20 @@ test.describe("Smoke tests", () => {
     await page.waitForTimeout(1000);
 
     expect(errors).toEqual([]);
+  });
+
+  test("no console warnings about React Router future flags", async ({ page }) => {
+    const warnings: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "warning") {
+        warnings.push(msg.text());
+      }
+    });
+
+    await page.goto("/");
+    await page.waitForTimeout(1000);
+
+    const routerWarnings = warnings.filter((w) => w.includes("v7_"));
+    expect(routerWarnings).toEqual([]);
   });
 });

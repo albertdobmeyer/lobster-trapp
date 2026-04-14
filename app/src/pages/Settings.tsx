@@ -18,7 +18,7 @@ export default function Settings() {
 
   // Track dirty state
   useEffect(() => {
-    const pathChanged = (monorepoPath || null) !== (settings.monorepoPathOverride ?? "");
+    const pathChanged = (monorepoPath || null) !== (settings.monorepoPathOverride || null);
     const intervalChanged = refreshInterval !== settings.autoRefreshInterval / 1000;
     setDirty(pathChanged || intervalChanged);
   }, [monorepoPath, refreshInterval, settings]);

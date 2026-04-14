@@ -30,5 +30,11 @@ Desktop.ini
 # Superpowers brainstorm sessions
 .superpowers/
 
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Test screenshots
+test-screenshots/
+
 # Logs
 *.log

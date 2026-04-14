@@ -11,54 +11,67 @@ test.describe("Navigation and routing", () => {
 
   test("settings page has controls", async ({ page }) => {
     await page.goto("/settings");
-    // Settings page should show the Settings heading and monorepo path control
     await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
     await expect(page.getByText(/monorepo path/i).first()).toBeVisible();
+    await expect(page.getByRole("slider")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Re-run Setup Wizard" })).toBeVisible();
   });
 
-  test("unknown route shows 404 or redirects to dashboard", async ({ page }) => {
+  test("unknown route shows 404 page with navigation", async ({ page }) => {
     await page.goto("/nonexistent-page");
-    // Should either show dashboard (redirect) or some meaningful content
-    const body = await page.locator("body").textContent();
-    expect(body?.length).toBeGreaterThan(10);
-    // Should not show a blank page
+    await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+    await expect(page.getByText("doesn't exist or has been moved")).toBeVisible();
+    // Sidebar is still visible for navigation
+    await expect(page.getByRole("link", { name: /settings/i })).toBeVisible();
+    // "Back to Dashboard" link exists
+    const backLink = page.getByRole("link", { name: "Back to Dashboard" });
+    await expect(backLink).toBeVisible();
   });
 
-  test("direct navigation to /component/unknown-id works gracefully", async ({ page }) => {
+  test("404 'Back to Dashboard' link navigates home", async ({ page }) => {
+    await page.goto("/nonexistent-page");
+    await page.getByRole("link", { name: "Back to Dashboard" }).click();
+    await expect(page).toHaveURL(/\/(?:setup)?$/);
+  });
+
+  test("direct navigation to /component/unknown-id shows not-found state", async ({ page }) => {
     await page.goto("/component/unknown-id-that-does-not-exist");
-    // Should show some content — either error state or redirect
-    // (In non-Tauri mode, this will show loading/error since invoke fails)
-    const body = await page.locator("body").textContent();
-    expect(body?.length).toBeGreaterThan(10);
+    // Should show "Component not found" (not infinite skeleton)
+    await expect(page.getByText("Component not found")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Back to Dashboard" })).toBeVisible();
   });
 
-  test("setup wizard route loads", async ({ page }) => {
+  test("setup wizard route loads with welcome message", async ({ page }) => {
     await page.goto("/setup");
-    // The setup wizard should render with a welcome message or step indicator
-    const body = await page.locator("body").textContent();
-    expect(body?.length).toBeGreaterThan(20);
+    await expect(page.getByRole("heading", { name: /welcome/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /get started/i })).toBeVisible();
+  });
+
+  test("dashboard empty state has setup wizard link", async ({ page }) => {
+    // Navigate to dashboard (may redirect to /setup if wizard not completed)
+    await page.goto("/");
+    const dashboard = page.getByRole("heading", { name: "Dashboard" });
+    const wizardLink = page.getByRole("link", { name: "Run Setup Wizard" });
+    const setup = page.getByText(/welcome/i);
+    // Either shows dashboard with wizard link, or redirects to setup
+    await expect(dashboard.or(setup)).toBeVisible();
+    // If on dashboard, the empty state should have a wizard link
+    if (await dashboard.isVisible()) {
+      await expect(page.getByText("No components detected yet")).toBeVisible();
+      await expect(wizardLink).toBeVisible();
+    }
   });
 });
 
 test.describe("Visual structure", () => {
   test("dark theme is applied", async ({ page }) => {
     await page.goto("/");
-    // The app uses bg-gray-950 dark theme
     const body = page.locator("body");
-    // Check that the background is dark (not default white)
     const bgColor = await body.evaluate((el) =>
       window.getComputedStyle(el).backgroundColor
     );
     // Should be a dark color, not white (rgb(255,255,255))
     expect(bgColor).not.toBe("rgb(255, 255, 255)");
-  });
-
-  test("dashboard has responsive layout", async ({ page }) => {
-    await page.goto("/");
-    // At desktop width, sidebar should be visible
-    await page.setViewportSize({ width: 1280, height: 800 });
-    const body = await page.locator("body").textContent();
-    expect(body?.length).toBeGreaterThan(20);
   });
 
   test("no JavaScript errors on settings page", async ({ page }) => {
