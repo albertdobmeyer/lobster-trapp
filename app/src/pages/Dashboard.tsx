@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { RefreshCw } from "lucide-react";
 import type { DiscoveredComponent } from "@/lib/types";
 import ComponentCard from "@/components/ComponentCard";
@@ -48,10 +49,13 @@ export default function Dashboard({
         </div>
       ) : components.length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-gray-400 mb-2">No components found</p>
-          <p className="text-sm text-gray-600">
-            Ensure component.yml manifests exist in components/*/
+          <p className="text-gray-400 mb-2">No components detected yet</p>
+          <p className="text-sm text-gray-600 mb-4">
+            Run the setup wizard to configure and discover your components.
           </p>
+          <Link to="/setup" className="btn btn-safe inline-flex items-center gap-2">
+            Run Setup Wizard
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

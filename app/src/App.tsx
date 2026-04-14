@@ -8,6 +8,7 @@ import Dashboard from "@/pages/Dashboard";
 import ComponentDetail from "@/pages/ComponentDetail";
 import Settings from "@/pages/Settings";
 import Setup from "@/pages/Setup";
+import NotFound from "@/pages/NotFound";
 
 export default function App() {
   const { settings, loaded: settingsLoaded, update: updateSettings } = useSettings();
@@ -46,9 +47,10 @@ export default function App() {
           />
           <Route
             path="/component/:id"
-            element={<ComponentDetail components={components} />}
+            element={<ComponentDetail components={components} loading={loading} />}
           />
           <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </ToastProvider>

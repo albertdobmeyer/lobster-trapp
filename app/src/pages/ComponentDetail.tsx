@@ -14,9 +14,10 @@ import ConfigPanel from "@/components/ConfigPanel";
 
 interface ComponentDetailProps {
   components: DiscoveredComponent[];
+  loading: boolean;
 }
 
-export default function ComponentDetail({ components }: ComponentDetailProps) {
+export default function ComponentDetail({ components, loading }: ComponentDetailProps) {
   const { id } = useParams<{ id: string }>();
   const { updateSettings } = useAppContext();
   const component = components.find((c) => c.manifest.identity.id === id);
@@ -30,7 +31,7 @@ export default function ComponentDetail({ components }: ComponentDetailProps) {
 
   if (!component) {
     // Still loading — show skeleton instead of instant "not found"
-    if (components.length === 0) {
+    if (loading) {
       return (
         <div className="space-y-6">
           <div className="flex items-center gap-4">

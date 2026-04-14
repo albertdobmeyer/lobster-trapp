@@ -50,7 +50,7 @@ describe("Dashboard", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("No components found")).toBeInTheDocument();
+    expect(screen.getByText("No components detected yet")).toBeInTheDocument();
   });
 
   test("renders correct number of cards when components provided", () => {

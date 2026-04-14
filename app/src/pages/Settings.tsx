@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Info, FolderOpen, RefreshCw, Save, X, RotateCcw } from "lucide-react";
 import { useAppContext } from "@/lib/AppContext";
+import { useToast } from "@/lib/ToastContext";
 import { setMonorepoRoot } from "@/lib/tauri";
 
 export default function Settings() {
   const { settings, updateSettings } = useAppContext();
+  const { addToast } = useToast();
   const navigate = useNavigate();
 
   const [monorepoPath, setMonorepoPath] = useState(settings.monorepoPathOverride ?? "");
@@ -39,6 +41,11 @@ export default function Settings() {
       });
 
       setDirty(false);
+      addToast({
+        type: "success",
+        title: "Settings saved",
+        message: "Your changes have been applied.",
+      });
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err));
     } finally {
