@@ -50,11 +50,13 @@ export default function PrerequisitesStep({
         <CheckItem
           label="Component submodules"
           detail={
-            allSubmodulesCloned
-              ? `${report.submodules.length} components found`
-              : "Some submodules missing or have no manifest"
+            !allSubmodulesCloned
+              ? "Some submodules missing or have no manifest"
+              : report.components.length < report.submodules.length
+                ? `${report.components.length} of ${report.submodules.length} components loaded (some failed to parse)`
+                : `${report.components.length} components found`
           }
-          passed={allSubmodulesCloned}
+          passed={allSubmodulesCloned && report.components.length >= report.submodules.length}
           required
         />
 
