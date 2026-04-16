@@ -32,6 +32,7 @@ const placeholderComponent: DiscoveredComponent = {
     commands: [],
     configs: [],
     health: [],
+    workflows: [],
   },
   component_dir: "/fake/path",
 };
@@ -50,6 +51,7 @@ const activeComponent: DiscoveredComponent = {
     commands: [],
     configs: [],
     health: [],
+    workflows: [],
   },
   component_dir: "/fake/path",
 };

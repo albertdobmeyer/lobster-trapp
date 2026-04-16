@@ -13,6 +13,8 @@ pub struct Manifest {
     pub health: Vec<HealthProbe>,
     #[serde(default)]
     pub prerequisites: Option<Prerequisites>,
+    #[serde(default)]
+    pub workflows: Vec<Workflow>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -298,7 +300,119 @@ pub struct HealthThresholds {
     pub red: Option<String>,
 }
 
+// ─── Workflow types ──────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Workflow {
+    pub id: String,
+    pub name: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub user_description: Option<String>,
+    #[serde(default = "default_workflow_trigger")]
+    pub trigger: WorkflowTrigger,
+    #[serde(default = "default_danger")]
+    pub danger: Danger,
+    #[serde(default = "default_shell_requirement")]
+    pub shell_requirement: ShellRequirement,
+    pub steps: Vec<WorkflowStep>,
+    #[serde(default)]
+    pub inputs: Vec<WorkflowInput>,
+    #[serde(default)]
+    pub output: Option<WorkflowOutput>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum WorkflowTrigger {
+    Manual,
+    OnDemand,
+    Automatic,
+    Scheduled,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum ShellRequirement {
+    Hard,
+    Split,
+    Soft,
+    Any,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowStep {
+    pub id: String,
+    pub command: String,
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub args: std::collections::HashMap<String, String>,
+    #[serde(default)]
+    pub depends_on: Option<String>,
+    #[serde(default = "default_true")]
+    pub abort_on_failure: bool,
+    #[serde(default)]
+    pub success_condition: Option<SuccessCondition>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SuccessCondition {
+    #[serde(default)]
+    pub exit_code: Option<i32>,
+    #[serde(default)]
+    pub stdout_contains: Option<String>,
+    #[serde(default)]
+    pub stdout_regex: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowInput {
+    pub id: String,
+    pub r#type: WorkflowInputType,
+    pub label: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default = "default_true")]
+    pub required: bool,
+    #[serde(default)]
+    pub default: Option<serde_json::Value>,
+    #[serde(default)]
+    pub options: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum WorkflowInputType {
+    String,
+    Url,
+    Enum,
+    Boolean,
+    Number,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkflowOutput {
+    #[serde(default = "default_workflow_display")]
+    pub display: WorkflowDisplayMode,
+    #[serde(default)]
+    pub summary_step: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum WorkflowDisplayMode {
+    Log,
+    Checklist,
+    Report,
+    Badge,
+}
+
 // Default value functions
+fn default_workflow_trigger() -> WorkflowTrigger { WorkflowTrigger::Manual }
+fn default_shell_requirement() -> ShellRequirement { ShellRequirement::Any }
+fn default_workflow_display() -> WorkflowDisplayMode { WorkflowDisplayMode::Checklist }
 fn default_interval() -> u64 { 10 }
 fn default_probe_timeout() -> u64 { 5 }
 fn default_health_interval() -> u64 { 30 }

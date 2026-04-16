@@ -3,6 +3,8 @@ import type {
   DiscoveredComponent,
   CommandResult,
   ComponentStatus,
+  Workflow,
+  WorkflowResult,
 } from "./types";
 
 // Detect if running inside Tauri webview vs plain browser
@@ -167,5 +169,27 @@ export async function createConfigFromTemplate(
     componentId,
     configPath,
     templatePath,
+  });
+}
+
+// ─── Workflow commands ───────────────────────────────────────────
+
+export async function listWorkflows(
+  componentId: string,
+): Promise<Workflow[]> {
+  return invoke<Workflow[]>("list_workflows", {
+    componentId,
+  });
+}
+
+export async function executeWorkflow(
+  componentId: string,
+  workflowId: string,
+  inputs: Record<string, string> = {},
+): Promise<WorkflowResult> {
+  return invoke<WorkflowResult>("execute_workflow", {
+    componentId,
+    workflowId,
+    inputs,
   });
 }

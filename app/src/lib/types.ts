@@ -151,6 +151,75 @@ export interface Manifest {
   configs: Config[];
   health: HealthProbe[];
   prerequisites?: Prerequisites;
+  workflows: Workflow[];
+}
+
+// ─── Workflow types ──────────────────────────────────────────────
+
+export type WorkflowTrigger = "manual" | "on-demand" | "automatic" | "scheduled";
+export type ShellRequirement = "hard" | "split" | "soft" | "any";
+export type WorkflowInputType = "string" | "url" | "enum" | "boolean" | "number";
+export type WorkflowDisplayMode = "log" | "checklist" | "report" | "badge";
+export type StepStatus = "pending" | "running" | "passed" | "failed" | "skipped";
+export type WorkflowStatus = "running" | "completed" | "failed" | "aborted";
+
+export interface SuccessCondition {
+  exit_code?: number;
+  stdout_contains?: string;
+  stdout_regex?: string;
+}
+
+export interface WorkflowStep {
+  id: string;
+  command: string;
+  name?: string;
+  args: Record<string, string>;
+  depends_on?: string;
+  abort_on_failure: boolean;
+  success_condition?: SuccessCondition;
+}
+
+export interface WorkflowInput {
+  id: string;
+  type: WorkflowInputType;
+  label: string;
+  description?: string;
+  required: boolean;
+  default?: unknown;
+  options: string[];
+}
+
+export interface WorkflowOutput {
+  display: WorkflowDisplayMode;
+  summary_step?: string;
+}
+
+export interface Workflow {
+  id: string;
+  name: string;
+  description?: string;
+  user_description?: string;
+  trigger: WorkflowTrigger;
+  danger: Danger;
+  shell_requirement: ShellRequirement;
+  steps: WorkflowStep[];
+  inputs: WorkflowInput[];
+  output?: WorkflowOutput;
+}
+
+export interface StepResult {
+  step_id: string;
+  command_id: string;
+  status: StepStatus;
+  result?: CommandResult;
+  error?: string;
+}
+
+export interface WorkflowResult {
+  workflow_id: string;
+  status: WorkflowStatus;
+  steps: StepResult[];
+  duration_ms: number;
 }
 
 export interface DiscoveredComponent {

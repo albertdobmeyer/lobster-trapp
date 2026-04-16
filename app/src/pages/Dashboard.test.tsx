@@ -26,6 +26,7 @@ const makeComponent = (
     commands: [],
     configs: [],
     health: [],
+    workflows: [],
   },
   component_dir: `/fake/${id}`,
 });

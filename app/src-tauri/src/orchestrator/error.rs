@@ -9,6 +9,12 @@ pub enum OrchestratorError {
     #[error("Command not found: {command} in component {component}")]
     CommandNotFound { component: String, command: String },
 
+    #[error("Workflow not found: {workflow} in component {component}")]
+    WorkflowNotFound { component: String, workflow: String },
+
+    #[error("Workflow step failed: {step} in workflow {workflow}: {message}")]
+    WorkflowStepFailed { workflow: String, step: String, message: String },
+
     #[error("Manifest parse error in {path}: {message}")]
     ManifestParseError { path: String, message: String },
 

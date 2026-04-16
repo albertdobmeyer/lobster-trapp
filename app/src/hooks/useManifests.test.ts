@@ -22,6 +22,7 @@ const fakeComponent: DiscoveredComponent = {
     commands: [],
     configs: [],
     health: [],
+    workflows: [],
   },
   component_dir: "/fake/path",
 };
