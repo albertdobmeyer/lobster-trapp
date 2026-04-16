@@ -5,6 +5,8 @@
 **Current state:** Ecosystem 85-100% complete. All three components operational with passing test suites. GUI functional with manifest-driven discovery, command execution, streaming, and config editing.
 **Cross-reference:** `docs/trifecta.md` (module relationships), per-repo `docs/roadmap.md` (module-level detail)
 
+> **Note (2026-04-16):** The Architecture v2 perimeter redesign (2026-04-15, commit c89c7ca) introduced a parallel phase track (Phases 1-7) covering containerization of forge/pioneer, compose topology, schema evolution, workflow executor, and workflow UI. Phases 1-5 of that track are complete. This roadmap's Phases F-J remain valid for release infrastructure and polish. See `docs/superpowers/specs/2026-04-15-architecture-v2-perimeter-redesign.md` (v2 spec) and `docs/handoff.md` (current status).
+
 ---
 
 ## Product
@@ -34,7 +36,7 @@ A desktop app that lets anyone safely run OpenClaw on their personal computer, c
 | **openclaw-vault** | 8/8 complete | Certified | 24-point verify, 13 test scripts, 3 shell levels |
 | **clawhub-forge** | 4/5 complete | Phase 5 deferred (ClawHub API) | 87-pattern scanner, CDR pipeline, 25 skills certified |
 | **moltbook-pioneer** | 6/6 complete | Done | 48 tests, 25 injection patterns, 3 engagement presets |
-| **lobster-trapp GUI** | Functional | ~85% complete | 10 Tauri commands, 6 renderers, 52 frontend tests, 40 orchestrator checks |
+| **lobster-trapp GUI** | Functional | ~85% complete | 10 Tauri commands, 6 renderers, 52 frontend tests, 41 orchestrator checks |
 
 ### Cross-Repo Harmonization — Complete (2026-04-06)
 

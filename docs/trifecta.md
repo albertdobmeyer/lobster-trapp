@@ -261,7 +261,7 @@ Workflows chain declared commands into single user-facing actions. The GUI execu
 | **openclaw-vault** | 100% | vault-agent + vault-proxy | 24-point verify, 3 shell levels, 6-layer defense |
 | **clawhub-forge** | 100% | vault-forge | 87-pattern scanner, CDR pipeline, 25 skills certified |
 | **moltbook-pioneer** | 100% | vault-pioneer | 48 tests, 25 injection patterns, 3 engagement presets |
-| **lobster-trapp** | ~70% | n/a (host) | GUI functional, workflows defined, executor pending |
+| **lobster-trapp** | ~85% | n/a (host) | GUI functional, workflow executor + UI implemented, perimeter orchestrated |
 
 ### What's Implemented
 
@@ -270,11 +270,11 @@ Workflows chain declared commands into single user-facing actions. The GUI execu
 - 10 component workflows + 4 orchestrator workflows defined
 - 41-check validation suite (all passing)
 - Containerfiles for forge and pioneer
+- Rust workflow executor with interpolation, sequencing, and success conditions (Phase 4, c670e9a)
+- React workflow UI with progress tracking, input forms, and danger-level styling (Phase 5, 9a5cd78)
 
-### What's Pending
+### What Remains
 
-- Rust workflow executor (Phase 4)
-- React workflow UI (Phase 5)
 - Claude Code integration / MCP server (Phase 7, post-v0.1.0)
 
 ---

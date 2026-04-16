@@ -35,7 +35,7 @@ Nobody else has built a security harness for OpenClaw. Every other "hardening gu
 - Injects API keys via proxy (agent never sees the real key)
 - Logs and filters ALL network traffic
 - Provides a GUI for non-technical users
-- Offers multiple security levels (gears)
+- Offers multiple security levels (gears — now called "shell levels," see addendum)
 
 ### 3. The containment actually works (proven)
 We verified with live testing:
@@ -197,3 +197,26 @@ Lowest priority. The agent social network is interesting but not essential for t
 **Keep building, but focus ruthlessly on Gear 2 and the GUI.** Everything else is nice-to-have until the core product delivers real value safely.
 
 The security engineering we've done is excellent and proven. Now we need to make it useful.
+
+---
+
+## Addendum: Architecture v2 Update (2026-04-15)
+
+The architecture underwent a major redesign on 2026-04-15. Key changes relevant to this assessment:
+
+**Terminology update:** "Gear 1/2/3" is now **Hard Shell / Split Shell / Soft Shell**. See `GLOSSARY.md` for the full mapping.
+
+**Cons partially addressed:**
+- **Con #2 (setup complexity):** The setup wizard (Phase I) is now wired to real container commands. The compose perimeter (`compose.yml`) reduces setup from 8 manual steps to: install Podman, enter API key, run the app.
+- **Con #7 (three repos too ambitious):** All three repos are now containerized into one unified perimeter defined in `compose.yml`. They deploy as a single `podman compose up` command, not three independent tools.
+- **Con #1 (Gear 1 not compelling):** The dynamic shell (Hard/Split/Soft) is now implemented with an intelligent warden (Claude Code / Opus) that adjusts restrictions contextually. This addresses the "either too restricted or too free" dichotomy.
+
+**Architecture changes:**
+- Forge and Pioneer now run inside containers (vault-forge, vault-pioneer) in a 4-container perimeter
+- All untrusted content stays inside the perimeter — zero on the host
+- Workflow executor (Phase 4) and workflow UI (Phase 5) are now implemented
+- The product is reframed from "monorepo orchestrator" to "security infrastructure"
+
+**The core assessment stands.** The product is useful IF the agent delivers real value to users safely. The security engineering is more robust than when this was written, but the fundamental question — "do non-technical users want a secure OpenClaw?" — remains unanswered until real users try it.
+
+See `docs/superpowers/specs/2026-04-15-architecture-v2-perimeter-redesign.md` for the full v2 design spec.

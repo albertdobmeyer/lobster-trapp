@@ -364,7 +364,7 @@
     /* ── Ecosystem Section ───────────────────────────── */
     .ecosystem-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 20px;
       margin-bottom: 48px;
       max-width: 680px;
@@ -603,7 +603,7 @@
     <h1 class="headline">Run AI agents with <em>defense-in-depth isolation.</em></h1>
 
     <p class="hero-sub">
-      A desktop app that runs OpenClaw inside hardened containers with proxy-gated networking and a malware scanner. No terminal required.
+      A desktop app that wraps OpenClaw in a 4-container security perimeter — so you get an autonomous AI assistant without risking your files, accounts, or API keys. No terminal required.
     </p>
 
     <div class="hero-actions">
@@ -624,6 +624,7 @@
     </div>
 
     <div class="trust">
+      <div class="trust-item"><span class="dot"></span> 4-container perimeter</div>
       <div class="trust-item"><span class="dot"></span> 24-point security verification</div>
       <div class="trust-item"><span class="dot"></span> Container isolation</div>
       <div class="trust-item"><span class="dot"></span> Proxy-gated network</div>
@@ -743,7 +744,7 @@
   <section id="ecosystem" class="section">
     <div class="section-label">The Ecosystem</div>
     <h2 class="section-title">Built for the OpenClaw agent stack</h2>
-    <p class="section-subtitle">Lobster-TrApp wraps two independent security tools into one desktop app. Each one protects a different layer.</p>
+    <p class="section-subtitle">Lobster-TrApp wraps three independent security tools into one containerized perimeter. Each one protects a different attack surface.</p>
 
     <div class="ecosystem-grid">
       <div class="card eco-card">
@@ -772,43 +773,62 @@
         </a>
       </div>
 
+      <div class="card eco-card">
+        <div class="eco-role" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">Network</div>
+        <div class="card-icon" style="background: rgba(139, 92, 246, 0.1);">
+          <!-- Eye icon for Pioneer -->
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <h3>Moltbook Pioneer</h3>
+        <p>Safe reconnaissance for the agent social network. 25 injection pattern detectors scan feed content inside the container before the agent ever sees it.</p>
+        <p style="font-size: 0.78rem; color: #64748b; margin-top: 8px; font-style: italic;">Moltbook API currently unavailable — Pioneer is containerized and ready.</p>
+      </div>
+
     </div>
 
-    <!-- Ecosystem flow diagram (placeholder SVG) -->
+    <!-- Ecosystem flow diagram -->
     <div class="ecosystem-flow">
-      <svg viewBox="0 0 480 140" xmlns="http://www.w3.org/2000/svg">
-        <rect width="480" height="140" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+      <svg viewBox="0 0 580 140" xmlns="http://www.w3.org/2000/svg">
+        <rect width="580" height="140" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
 
         <!-- You node -->
-        <circle cx="60" cy="70" r="28" fill="rgba(148, 163, 184, 0.08)" stroke="#64748b" stroke-width="1.5"/>
-        <text x="60" y="66" fill="#94a3b8" font-size="10" font-weight="600" text-anchor="middle" font-family="system-ui">You</text>
-        <text x="60" y="80" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">develop</text>
+        <circle cx="50" cy="70" r="28" fill="rgba(148, 163, 184, 0.08)" stroke="#64748b" stroke-width="1.5"/>
+        <text x="50" y="66" fill="#94a3b8" font-size="10" font-weight="600" text-anchor="middle" font-family="system-ui">You</text>
+        <text x="50" y="80" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">control</text>
 
         <!-- Arrow -->
-        <line x1="92" y1="70" x2="142" y2="70" stroke="#334155" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
+        <line x1="82" y1="70" x2="122" y2="70" stroke="#334155" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
 
         <!-- Forge node -->
-        <circle cx="172" cy="70" r="28" fill="rgba(6, 182, 212, 0.08)" stroke="#06b6d4" stroke-width="1.5"/>
-        <text x="172" y="66" fill="#06b6d4" font-size="10" font-weight="600" text-anchor="middle" font-family="system-ui">Forge</text>
-        <text x="172" y="80" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">vet skills</text>
+        <circle cx="152" cy="70" r="28" fill="rgba(6, 182, 212, 0.08)" stroke="#06b6d4" stroke-width="1.5"/>
+        <text x="152" y="66" fill="#06b6d4" font-size="10" font-weight="600" text-anchor="middle" font-family="system-ui">Forge</text>
+        <text x="152" y="80" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">vet skills</text>
 
         <!-- Arrow -->
-        <line x1="204" y1="70" x2="254" y2="70" stroke="#334155" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
-        <text x="229" y="60" fill="#334155" font-size="8" text-anchor="middle" font-family="system-ui">clean</text>
+        <line x1="184" y1="70" x2="224" y2="70" stroke="#334155" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
+
+        <!-- Pioneer node -->
+        <circle cx="254" cy="70" r="28" fill="rgba(139, 92, 246, 0.08)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <text x="254" y="66" fill="#8b5cf6" font-size="10" font-weight="600" text-anchor="middle" font-family="system-ui">Pioneer</text>
+        <text x="254" y="80" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">scan feeds</text>
+
+        <!-- Arrow -->
+        <line x1="286" y1="70" x2="326" y2="70" stroke="#334155" stroke-width="1.5" marker-end="url(#flow-arrow)"/>
 
         <!-- Vault node -->
-        <circle cx="284" cy="70" r="28" fill="rgba(16, 185, 129, 0.08)" stroke="#10b981" stroke-width="1.5"/>
-        <text x="284" y="66" fill="#10b981" font-size="10" font-weight="600" text-anchor="middle" font-family="system-ui">Vault</text>
-        <text x="284" y="80" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">run agent</text>
+        <circle cx="356" cy="70" r="28" fill="rgba(16, 185, 129, 0.08)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="356" y="66" fill="#10b981" font-size="10" font-weight="600" text-anchor="middle" font-family="system-ui">Vault</text>
+        <text x="356" y="80" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">run agent</text>
 
         <!-- Arrow to Lobster-TrApp -->
-        <line x1="316" y1="70" x2="350" y2="70" stroke="#334155" stroke-width="1.5"/>
+        <line x1="388" y1="70" x2="420" y2="70" stroke="#334155" stroke-width="1.5"/>
 
         <!-- Lobster-TrApp wrapper -->
-        <rect x="350" y="30" width="110" height="80" rx="10" fill="rgba(37, 99, 235, 0.06)" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4 2"/>
-        <text x="405" y="58" fill="#60a5fa" font-size="10" font-weight="600" text-anchor="middle" font-family="system-ui">Lobster-TrApp</text>
-        <text x="405" y="74" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">one desktop app</text>
-        <text x="405" y="88" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">unified dashboard</text>
+        <rect x="420" y="25" width="140" height="90" rx="10" fill="rgba(37, 99, 235, 0.06)" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4 2"/>
+        <text x="490" y="55" fill="#60a5fa" font-size="10" font-weight="600" text-anchor="middle" font-family="system-ui">Lobster-TrApp</text>
+        <text x="490" y="71" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">one desktop app</text>
+        <text x="490" y="85" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">4-container perimeter</text>
+        <text x="490" y="99" fill="#475569" font-size="8" text-anchor="middle" font-family="system-ui">unified dashboard</text>
 
         <defs>
           <marker id="flow-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
