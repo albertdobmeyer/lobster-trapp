@@ -11,6 +11,7 @@ import StatusBadge from "@/components/StatusBadge";
 import HealthBadge from "@/components/HealthBadge";
 import CommandPanel from "@/components/CommandPanel";
 import ConfigPanel from "@/components/ConfigPanel";
+import WorkflowPanel from "@/components/WorkflowPanel";
 
 interface ComponentDetailProps {
   components: DiscoveredComponent[];
@@ -58,7 +59,7 @@ export default function ComponentDetail({ components, loading }: ComponentDetail
   }
 
   const { manifest } = component;
-  const { identity, status, commands, configs, health } = manifest;
+  const { identity, status, commands, configs, health, workflows } = manifest;
 
   if (identity.role === "placeholder") {
     return <PlaceholderView identity={identity} />;
@@ -71,6 +72,7 @@ export default function ComponentDetail({ components, loading }: ComponentDetail
       commands={commands}
       configs={configs}
       health={health}
+      workflows={workflows}
       componentId={identity.id}
     />
   );
@@ -110,6 +112,7 @@ function ActiveComponentView({
   commands,
   configs,
   health,
+  workflows,
   componentId,
 }: {
   identity: DiscoveredComponent["manifest"]["identity"];
@@ -117,6 +120,7 @@ function ActiveComponentView({
   commands: DiscoveredComponent["manifest"]["commands"];
   configs: DiscoveredComponent["manifest"]["configs"];
   health: DiscoveredComponent["manifest"]["health"];
+  workflows: DiscoveredComponent["manifest"]["workflows"];
   componentId: string;
 }) {
   const { status: currentStatus, loading: statusLoading } =
@@ -191,6 +195,11 @@ function ActiveComponentView({
             ))}
           </div>
         </div>
+      )}
+
+      {/* Workflows */}
+      {workflows.length > 0 && (
+        <WorkflowPanel workflows={workflows} componentId={componentId} />
       )}
 
       {/* Commands */}
