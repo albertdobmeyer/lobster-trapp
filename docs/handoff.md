@@ -83,31 +83,161 @@ TIER 3: CONTAINED — OpenClaw agents (do the work, within boundaries)
 
 All tests passing: 147/147 frontend, 41/41 orchestrator checks, 0 TypeScript errors.
 
-## What Needs to Be Done (Phases 6-7)
+## What Was Done (Phase 6) — Doc Cleanup (dbadc53)
 
-### Phase 6: Documentation Updates
+All documentation aligned with architecture v2:
 
-The docs currently describe the old architecture (separate host-side components). They need to reflect the perimeter model.
+- `README.md` — rewritten: product pitch, prison allegory table, 4-container architecture, updated counts
+- `docs/index.html` — Pioneer card added, hero subtitle updated, ecosystem grid 2→3 cols, flow SVG widened with Pioneer
+- `docs/trifecta.md` — status section updated (Phases 4/5 now implemented)
+- `docs/product-assessment.md` — dated v2 addendum, Gear→Shell terminology note
+- `docs/roadmap-v4-finalization.md` — v2 cross-reference blockquote, test count fix
+- All 3 component `CLAUDE.md` files — containerization/perimeter context added (submodule commits pushed)
 
-**Already updated this session:**
-- `docs/trifecta.md` — rewritten for perimeter model
-- `CLAUDE.md` — reframed from orchestrator to security infrastructure
-- `GLOSSARY.md` — new terms added (perimeter, warden, trust tier, workflow)
+## E2E User Journey Audit (2026-04-16)
 
-**Still needs updating:**
-- `README.md` — reframe for non-technical audience + new architecture
-- Component `CLAUDE.md` files — mention containerized deployment
-- `docs/product-assessment.md` — update "Honest Cons" section (setup is simpler now, architecture is unified)
-- `docs/roadmap-v4-finalization.md` — mark Phases F-J as superseded by architecture v2
-- Landing page content (`docs/index.html`) — if architecture story is told there
+We attempted a full end-to-end walkthrough of the non-technical user journey. This audit revealed that while the **architecture is sound** (Phases 1-5), the **user-facing experience has critical gaps** that block a v0.1.0 release.
 
-### Phase 7: Claude Code Integration (Future)
+### Dev Machine State
+- No Rust toolchain installed → cannot build the Tauri desktop app
+- No Podman or Docker installed → cannot run the 4-container perimeter
+- 7.2GB RAM, no hardware virtualization (AMD A12-9720P)
+- Podman CAN run on this machine (Linux containers use kernel namespaces, not VMs) but RAM is tight for 4 containers
+- **Implication**: Even the developer can't run the full stack locally. A non-technical user faces even more friction.
 
-This is separable and can ship after v0.1.0.
+### What We Tested
+- **Landing page** (`docs/index.html`): Structure is solid, visual design polished. All 3 components shown. Download button auto-detects platform.
+- **Setup wizard** (browser-only via `npm run dev`): Welcome step renders correctly. Prerequisites step shows spinner then fails with Tauri IPC errors (expected without Rust backend).
 
-- CLI interface: `lobster-trapp status/shell/install-skill/logs`
-- MCP server: expose tools for Claude Code to manage containers and workflows
-- Warden logic: contextual approval/denial, anomaly detection, plain-language reporting
+### Landing Page Findings (Step 0)
+**Works:**
+- Clean visual design, all 3 ecosystem cards (Vault, Forge, Pioneer)
+- Download button detects platform, per-platform installer links
+- Flow diagram shows You → Forge → Pioneer → Vault → Lobster-TrApp
+- Honest disclaimer: "Security tool, not a security guarantee"
+
+**Friction for non-technical users:**
+- Language is too technical ("MITRE ATT&CK", "seccomp profiles", "read-only filesystem")
+- No explanation of what OpenClaw IS — assumes user already knows
+- Step 2 says "Discover Components" and "manifest files" — meaningless to non-technical users
+- "Requires Podman or Docker" — user doesn't know what these are
+- All download links go to the same GitHub Releases page (not direct file links)
+- Hero visual shows developer jargon ("seccomp + PID limits + non-root")
+
+### Setup Wizard Findings (Steps 2a-2f)
+Based on code review of all wizard step components:
+
+**Step 2a (Welcome):** Clean, no issues. Auto-redirects first-time users here.
+
+**Step 2b (Prerequisites) — BLOCKER #1:**
+- Checks for Podman/Docker, submodules, component manifests
+- If Podman/Docker not found: shows red X + "Docker or Podman required"
+- **NO install button, NO instructions, NO link to Podman docs**
+- User is completely stuck. This breaks the "no terminal required" promise.
+- Need: platform-specific install guidance or bundled installer
+
+**Step 2c (Submodules):**
+- Detects/clones git submodules. "Clone All Submodules" button works.
+- But: binary installer from GitHub Releases doesn't include submodules
+- Cloning requires git (non-technical users may not have git)
+- SSH clone failures show cryptic "Permission denied (publickey)" errors
+
+**Step 2d (Config) — BLOCKER #2:**
+- Shows missing config files, offers "Create" button to copy `.env.example` → `.env`
+- But `.env` contains PLACEHOLDER values — user must manually edit them
+- **Does NOT prompt for API key or Telegram bot token**
+- **No guidance on WHERE to get an Anthropic API key or HOW to create a Telegram bot**
+- User creates configs with dummy values → agent won't work → no error explanation
+
+**Step 2e (Setup Components):**
+- Runs `make setup` for each component (builds container images)
+- Shows raw Podman/Docker build output (very verbose, confusing for non-technical users)
+- No progress percentage — user doesn't know if it's stuck or working
+- Build failures show "Failed (exit N)" with no explanation or remediation
+
+**Step 2f (Complete):**
+- Offers "Start" buttons for each component + "Go to Dashboard"
+- "Start" button runs command silently — no feedback if it fails
+- User might skip starting and go to dashboard without running anything
+
+### Dashboard Findings (Step 3)
+Based on code review:
+- Shows grid of 3 component cards with status badges
+- **No "what's next?" onboarding guidance** after setup
+- **No "Start All" button** — user must navigate to each component individually
+- Component descriptions are technical ("Skill development workbench and security scanner")
+- If containers aren't running: shows "Not Set Up" with no actionable guidance
+- Empty state: "No components detected yet — Run the setup wizard" (confusing if wizard already ran)
+
+### Agent Capabilities Findings (Steps 4-5)
+Based on code review of shell configs and tool manifest:
+
+| Shell Level | Practical Use | Tools | Web? | Files? | Scheduling? |
+|------------|--------------|-------|------|--------|-------------|
+| **Hard** | Chat only | 0 | No | No | No |
+| **Split** | File ops with per-action approval | 11 | No | Yes (approved) | No |
+| **Soft** | Autonomous assistant | 17 | Search only | Yes (auto) | Yes (approved) |
+
+- Agent is controlled via **Telegram only** — no in-app chat
+- GUI doesn't explain how to talk to the agent after setup
+- Soft Shell (the useful one) is not fully exposed as a GUI command
+- Only 3-4 domains in allowlist by default (Anthropic, OpenAI, Telegram, GitHub)
+- No email integration, no browser tool, no host file access
+- **The agent works INSIDE the container** — user needs to understand this mental model
+
+### Hard Constraints (Things the Agent Can NEVER Do)
+- Access SSH keys, passwords, keyrings
+- Delete files (rm stripped from image)
+- Run interpreters (Python, Node, Bash, Ruby stripped)
+- Modify its own security config
+- Spawn sub-agents
+- Reach unapproved domains
+- Break out of container
+
+## What Needs to Be Done
+
+### Blockers (must fix before v0.1.0)
+
+1. **Prerequisites step: Podman/Docker install guidance**
+   - Add platform-specific instructions or "Install Podman" button
+   - At minimum: link to podman.io with simple instructions
+   - Files: `app/src/components/wizard/PrerequisitesStep.tsx`
+
+2. **Config step: API key and Telegram bot entry**
+   - Add form fields for Anthropic API key and Telegram bot token
+   - Guide user through getting these (links to console.anthropic.com, BotFather)
+   - Validate keys before proceeding
+   - Files: `app/src/components/wizard/ConfigStep.tsx`
+
+3. **Dev environment: Install Rust + Podman on dev machine**
+   - Need Rust to build Tauri app for testing
+   - Need Podman to test 4-container perimeter
+   - Podman works without virtualization on Linux (kernel namespaces)
+
+### Friction (should fix before v0.1.0)
+
+4. **Setup component step: Better progress indication**
+   - Replace raw build output with progress bar or phase indicators
+   - Human-readable error messages when builds fail
+
+5. **Dashboard: Post-setup onboarding**
+   - "Your setup is complete! Click a component to get started" guidance
+   - "Start All" button or orchestrator workflow trigger
+
+6. **Landing page: Simplify language**
+   - Replace technical jargon with plain language
+   - Explain what OpenClaw IS before explaining how we secure it
+
+7. **Error handling: Actionable messages**
+   - Replace "Failed (exit N)" with "Container build failed — check your internet connection and try again"
+   - Add ErrorBoundary component (created but not wired in: `app/src/components/ErrorBoundary.tsx`)
+
+### Post-v0.1.0
+
+8. **Claude Code CLI/MCP integration (Phase 7)**
+   - CLI interface: `lobster-trapp status/shell/install-skill/logs`
+   - MCP server: expose tools for Claude Code to manage containers and workflows
+   - Warden logic: contextual approval/denial, anomaly detection, plain-language reporting
 
 ## Key Design Documents
 

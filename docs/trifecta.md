@@ -275,6 +275,8 @@ Workflows chain declared commands into single user-facing actions. The GUI execu
 
 ### What Remains
 
+- E2E user journey blockers: Podman install guidance in wizard, API key entry in config step (see `docs/handoff.md`)
+- UX polish: dashboard onboarding, error messages, landing page language simplification
 - Claude Code integration / MCP server (Phase 7, post-v0.1.0)
 
 ---
