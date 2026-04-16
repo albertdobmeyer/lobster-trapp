@@ -438,6 +438,161 @@
           }
         }
       }
+    },
+    "workflows": {
+      "type": "array",
+      "description": "Multi-step automated sequences. Each workflow chains declared commands into a single user-facing action that the GUI or an external agent (Claude Code) can trigger.",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "steps"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "URL-safe workflow identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable display name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Technical description for developers"
+          },
+          "user_description": {
+            "type": "string",
+            "description": "Plain-language explanation shown to non-technical users in the GUI"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": ["manual", "on-demand", "automatic", "scheduled"],
+            "default": "manual",
+            "description": "When this workflow executes: manual (user clicks), on-demand (requested by another workflow), automatic (triggered by events), scheduled (periodic)"
+          },
+          "danger": {
+            "type": "string",
+            "enum": ["safe", "caution", "destructive"],
+            "default": "safe"
+          },
+          "shell_requirement": {
+            "type": "string",
+            "enum": ["hard", "split", "soft", "any"],
+            "default": "any",
+            "description": "Minimum shell level required to run this workflow"
+          },
+          "steps": {
+            "type": "array",
+            "description": "Ordered sequence of steps. Each step references a declared command ID.",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "command"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9-]+$",
+                  "description": "Step identifier (unique within this workflow)"
+                },
+                "command": {
+                  "type": "string",
+                  "description": "Command ID from this component's commands[] array"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Step display name (defaults to referenced command's name)"
+                },
+                "args": {
+                  "type": "object",
+                  "description": "Argument values for the command. Supports {{input.x}} for workflow inputs and {{steps.prev_id.output}} for previous step output.",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "depends_on": {
+                  "type": "string",
+                  "description": "Step ID that must complete before this step runs (default: previous step)"
+                },
+                "abort_on_failure": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "If true, workflow aborts when this step fails"
+                },
+                "success_condition": {
+                  "type": "object",
+                  "description": "How to determine if this step succeeded (default: exit code 0)",
+                  "additionalProperties": false,
+                  "properties": {
+                    "exit_code": {
+                      "type": "integer"
+                    },
+                    "stdout_contains": {
+                      "type": "string"
+                    },
+                    "stdout_regex": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "inputs": {
+            "type": "array",
+            "description": "User-provided inputs for this workflow (prompted before execution)",
+            "items": {
+              "type": "object",
+              "required": ["id", "type", "label"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9_]+$"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["string", "url", "enum", "boolean", "number"]
+                },
+                "label": {
+                  "type": "string",
+                  "description": "Display label"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "required": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "default": {},
+                "options": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Static options for enum type"
+                }
+              }
+            }
+          },
+          "output": {
+            "type": "object",
+            "description": "What this workflow produces as its final result",
+            "additionalProperties": false,
+            "properties": {
+              "display": {
+                "type": "string",
+                "enum": ["log", "checklist", "report", "badge"],
+                "default": "checklist",
+                "description": "How to render workflow results in the GUI"
+              },
+              "summary_step": {
+                "type": "string",
+                "description": "Step ID whose output is used as the workflow summary"
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

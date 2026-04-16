@@ -1,0 +1,107 @@
+# Lobster-TrApp: Orchestrator Workflows
+#
+# Cross-component sequences that span multiple components.
+# These are NOT in any single component.yml — they live here because
+# they express relationships between components.
+#
+# The GUI and Claude Code execute these as single user-facing actions.
+# Each step references a component ID + command ID or workflow ID.
+
+workflows:
+  # ─── Install a Skill Safely ────────────────────────────────────
+  # The flagship cross-component workflow: forge scans a skill
+  # inside the perimeter, then delivers the certified result
+  # to the agent's workspace.
+  - id: install-skill
+    name: Install a Skill
+    user_description: >
+      Downloads a skill, scans it for security threats inside a
+      secure sandbox, rebuilds it from scratch to remove any hidden
+      content, and installs the clean version for your assistant.
+    danger: caution
+    shell_requirement: split
+    steps:
+      - id: download-and-scan
+        component: clawhub-forge
+        workflow: safe-download
+        args:
+          skill_name: "{{input.skill_name}}"
+        abort_on_failure: true
+      - id: install
+        component: openclaw-vault
+        command: install-skill
+        args:
+          skill_path: "exports/{{input.skill_name}}"
+        depends_on: download-and-scan
+    inputs:
+      - id: skill_name
+        type: string
+        label: Skill name
+        description: Name of the skill to install from ClawHub
+
+  # ─── First-Time Setup ──────────────────────────────────────────
+  # The complete setup flow for a new user: detect runtime,
+  # build containers, start the agent, verify security.
+  - id: first-run-setup
+    name: Set Up Your Assistant
+    user_description: >
+      Sets up the secure environment for your AI assistant.
+      Builds the containment system, starts all security layers,
+      and verifies everything is locked down properly.
+    danger: caution
+    steps:
+      - id: vault-setup
+        component: openclaw-vault
+        workflow: secure-start
+        abort_on_failure: true
+      - id: forge-setup
+        component: clawhub-forge
+        command: setup
+        depends_on: vault-setup
+      - id: pioneer-setup
+        component: moltbook-pioneer
+        command: setup
+        depends_on: vault-setup
+    inputs: []
+
+  # ─── Full Security Audit ───────────────────────────────────────
+  # Run verification across all components simultaneously.
+  - id: full-audit
+    name: Security Audit
+    user_description: >
+      Runs a complete security check across the entire system —
+      container isolation, skill scanner health, feed monitoring
+      status, and network security.
+    danger: safe
+    steps:
+      - id: vault-verify
+        component: openclaw-vault
+        workflow: full-verify
+      - id: forge-verify
+        component: clawhub-forge
+        workflow: full-check
+      - id: pioneer-verify
+        component: moltbook-pioneer
+        workflow: safety-check
+
+  # ─── Enable Feed Monitoring ────────────────────────────────────
+  # Export pioneer's injection patterns for the proxy to use,
+  # then enable Moltbook domains in the allowlist.
+  # NOTE: Currently deferred — Moltbook API is down.
+  - id: enable-feeds
+    name: Enable Social Monitoring
+    user_description: >
+      Activates monitoring of the Moltbook agent network. Exports
+      security patterns to the gateway so dangerous content is
+      filtered before your assistant sees it.
+    danger: caution
+    shell_requirement: split
+    steps:
+      - id: export-patterns
+        component: moltbook-pioneer
+        workflow: export-patterns
+        abort_on_failure: true
+      - id: safety-preflight
+        component: moltbook-pioneer
+        workflow: safety-check
+        depends_on: export-patterns

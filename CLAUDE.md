@@ -1,64 +1,99 @@
-# Lobster-TrApp — Monorepo Orchestrator
+# Lobster-TrApp — Security Infrastructure for AI Agents
 
 ## What This Is
 
-Lobster-TrApp is the **monorepo orchestrator** for the OpenClaw ecosystem. It bundles three independent component repos under a unified Tauri desktop GUI that discovers and renders dashboards generically from manifest files.
+Lobster-TrApp is a **security infrastructure** that lets non-technical users safely run OpenClaw (an autonomous AI agent) on their personal computer. It wraps the entire OpenClaw ecosystem in a containerized perimeter where all untrusted content — the agent itself, downloaded skills, social network feeds — is processed inside hardened containers, never on the user's host machine.
 
-**You are working in the parent orchestrator.** Changes here affect how all components are discovered, displayed, and controlled.
+**You are working in the parent orchestrator.** This repo bundles three component repos as submodules, provides the Tauri desktop GUI, defines the manifest contract, and manages the container perimeter.
 
-## What the App Does (Exactly Three Things)
+## What the Product Does
 
-1. **Detect and bootstrap prerequisites** — setup wizard (Podman/Docker present? Submodules cloned? Containers built?)
-2. **Start/stop/monitor via manifest-driven commands** — the dashboard (reads `component.yml`, runs declared commands, displays output)
-3. **Surface security state** — verify results, proxy logs, scan findings (the reason a non-technical user needs this instead of a terminal)
+A non-technical user downloads Lobster-TrApp, enters an API key, connects Telegram, and gets a safe AI assistant they can talk to from their phone. The security is invisible — they don't know about containers, proxies, or shell levels. They just have an assistant that works.
 
-## The Hard Constraint
+Behind the scenes, Lobster-TrApp manages a 4-container perimeter that air-gaps the dangerous AI agent from the user's system while letting it do useful work. The **dynamic shell** adjusts restrictions based on context, and an intelligent warden (Claude Code / Opus) makes security decisions on behalf of the user.
 
-The Tauri backend must contain **zero knowledge** of what's inside any submodule. If you deleted openclaw-vault and dropped in a completely different component with a valid `component.yml`, the app must render it correctly. The moment vault-specific or forge-specific code appears in the Rust backend, the manifest-driven architecture is compromised.
+## The Security Model
+
+Think of this as a prison labor system. The OpenClaw agents are inmates — powerful but dangerous. The perimeter is the prison:
+
+- **vault-agent** (cell block) — where the agent runs, heavily restricted
+- **vault-forge** (workshop) — where untrusted SKILL files are scanned and rebuilt, inside the fence
+- **vault-pioneer** (monitoring station) — where untrusted social content is analyzed, inside the fence
+- **vault-proxy** (the gate) — the only door in/out, holds API keys, enforces allowlists
+
+Nothing untrusted ever touches the user's host. See `docs/trifecta.md` for the full security model.
+
+### Multi-Agent Trust Chain
+
+```
+TIER 1: TRUSTED — Human + Claude Code (warden, host access, makes decisions)
+TIER 2: INFRASTRUCTURE — Lobster-TrApp (4 containers, enforces boundaries)
+TIER 3: CONTAINED — OpenClaw agents (do the work, within boundaries)
+```
 
 ## Architecture
 
 ```
 lobster-trapp/                    (this repo — public)
 ├── components/
-│   ├── openclaw-vault/           git submodule → albertdobmeyer/openclaw-vault
-│   ├── clawhub-forge/            git submodule → albertdobmeyer/clawhub-forge
-│   └── moltbook-pioneer/         git submodule → albertdobmeyer/moltbook-pioneer
+│   ├── openclaw-vault/           git submodule — container + proxy
+│   ├── clawhub-forge/            git submodule — containerized scanner
+│   └── moltbook-pioneer/         git submodule — containerized feed monitor
 ├── app/                          Tauri 2 + React 18 desktop GUI
 │   ├── src/                      React frontend
 │   └── src-tauri/                Rust backend
+├── compose.yml                   4-service perimeter (agent + forge + pioneer + proxy)
 ├── schemas/
-│   └── component.schema.json     THE CONTRACT — all manifests must conform
+│   └── component.schema.json     THE CONTRACT — all manifests conform to this
+├── config/
+│   └── orchestrator-workflows.yml  Cross-component workflow definitions
 ├── tests/
-│   └── orchestrator-check.sh     39-check validation suite
-├── docker-compose.example.yml    Example only (NOT used at runtime)
-└── config/                       Shared configuration
+│   └── orchestrator-check.sh     41-check validation suite
+└── docs/
+    ├── trifecta.md               How the three modules work together
+    └── handoff.md                Current state and next steps
 ```
 
-
 ### Component Roles
-| Component | Role | Status |
-|-----------|------|--------|
-| openclaw-vault | `runtime` — hardened container sandbox for OpenClaw agent | Active submodule |
-| clawhub-forge | `toolchain` — skill development workbench + security pipeline | Active submodule |
-| moltbook-pioneer | `network` — safe Moltbook reconnaissance + participation tools | Active submodule |
+| Component | Role | Container | Status |
+|-----------|------|-----------|--------|
+| openclaw-vault | `runtime` — agent containment | vault-agent + vault-proxy | Active |
+| clawhub-forge | `toolchain` — skill security scanner | vault-forge | Active |
+| moltbook-pioneer | `network` — social feed monitor | vault-pioneer | Active (API deferred) |
 
 ## The Manifest Contract
 
-**This is the most important concept.** Each component self-describes via `component.yml` in its root. The GUI discovers these files and renders dashboards generically — no hardcoded component knowledge.
-
-The contract is defined in `schemas/component.schema.json` with 5 sections:
+Each component self-describes via `component.yml`. The GUI discovers these and renders dashboards generically. The contract is defined in `schemas/component.schema.json` with 6 sections:
 
 1. **identity** — id, name, version, role, icon, color
-2. **status** — declared states + probe commands to determine current state
-3. **commands** — user-actionable operations with args, danger levels, output formats
+2. **status** — declared states + probe commands
+3. **commands** — individual operations with args, danger levels, output formats
 4. **configs** — editable config files with format metadata
 5. **health** — lightweight probes for dashboard badges
+6. **workflows** — multi-step automated sequences (chains commands into user-facing actions)
+
+### Workflows
+
+Workflows are the bridge between the manifest-driven architecture and non-technical users. Instead of clicking individual commands, users trigger workflows that execute multi-step pipelines automatically:
+
+- **Component workflows** (in each `component.yml`): vet-skill, safe-download, secure-start, etc.
+- **Orchestrator workflows** (in `config/orchestrator-workflows.yml`): install-skill (forge.scan → vault.install), first-run-setup, full-audit
 
 ### Rules for the Contract
-- **Never change enum values** in the schema without updating all manifests AND the Rust `manifest.rs` AND the TypeScript `types.ts`
+- **Never change enum values** without updating: schema JSON, Rust `manifest.rs`, TypeScript `types.ts`
 - **Enum alignment is tested** by `tests/orchestrator-check.sh` section 7
-- **Cross-references are validated**: `available_when` must reference declared states, `restart_command` must reference declared commands
+- **Cross-references are validated**: commands, states, workflow steps, orchestrator component refs
+- **Workflow steps must reference valid command IDs** within the same component
+
+## The Generic Architecture Constraint
+
+The Tauri backend must remain **generic** — it reads manifests and executes what they declare. It does not contain component-specific logic. However, it does understand:
+
+- **Workflow execution** — how to run multi-step sequences from workflow definitions
+- **Container management** — how to build, start, stop containers via compose
+- **Cross-component workflows** — how to route steps to the correct component
+
+The distinction: the app knows HOW to execute workflows generically. It does NOT know WHAT any specific component does internally.
 
 ## Key Files
 
@@ -70,8 +105,12 @@ The contract is defined in `schemas/component.schema.json` with 5 sections:
 | Tauri command handlers | `app/src-tauri/src/commands/*.rs` |
 | Tauri invoke wrappers | `app/src/lib/tauri.ts` |
 | React hooks | `app/src/hooks/*.ts` |
+| Perimeter compose | `compose.yml` |
+| Orchestrator workflows | `config/orchestrator-workflows.yml` |
 | Orchestration tests | `tests/orchestrator-check.sh` |
 | Rust unit tests | `app/src-tauri/src/orchestrator/tests.rs` |
+| Architecture spec | `docs/superpowers/specs/2026-04-15-architecture-v2-perimeter-redesign.md` |
+| Module relationships | `docs/trifecta.md` |
 
 ## Commands
 
@@ -79,25 +118,30 @@ The contract is defined in `schemas/component.schema.json` with 5 sections:
 ```bash
 # Rust backend
 cd app/src-tauri && cargo build
-cd app/src-tauri && cargo test          # 14 unit tests
+cd app/src-tauri && cargo test
 
 # Frontend
 cd app && npm install
 cd app && npm run dev                   # Dev server (Vite)
 
-# Full orchestration validation (39 checks)
+# Full orchestration validation (41 checks)
 bash tests/orchestrator-check.sh
-bash tests/orchestrator-check.sh --fix  # Auto-fix submodule issues
+
+# Container perimeter
+podman compose up -d                    # Start all 4 containers
+podman compose down                     # Stop perimeter
 ```
 
 ### What the Tests Validate
 1. Repository structure (directories, essential files)
-2. JSON Schema validity
-3. All component manifests parse, have valid identity, valid cross-references, valid enum values
+2. JSON Schema validity (6 sections)
+3. All component manifests parse, valid identity, cross-references, enums
 4. Submodule synchronization status
-5. Build artifacts (Cargo.toml, tauri.conf.json, package.json deps, tsconfig)
+5. Build artifacts (Cargo.toml, tauri.conf.json, package.json, tsconfig)
 6. Frontend-backend contract (Rust handlers match frontend invoke calls)
-7. Manifest enum values match what Rust serde expects
+7. Manifest enum values match Rust serde expectations
+8. Prerequisites cross-references valid
+9. Workflow step→command references valid, orchestrator workflow references valid
 
 ## Submodule Discipline
 
@@ -112,40 +156,33 @@ These are independent git checkouts. Changes in one do NOT automatically appear 
 After making changes in a standalone clone:
 ```bash
 cd components/<component>
-git pull                              # Fetch latest from remote
+git pull
 cd ../..
-git add components/<component>        # Update submodule reference
+git add components/<component>
 git commit -m "Update <component> submodule reference"
-```
-
-After making changes in a submodule:
-```bash
-cd components/<component>
-git push                              # Push submodule changes to remote
-cd ../..
-git add components/<component>        # Update parent's reference
-git commit -m "Update <component> submodule reference"
-# Then in standalone clone: git pull
 ```
 
 ## Security Considerations
 
 - **Command injection prevention**: `runner.rs` wraps all interpolated args in single quotes with escaping
 - **Path traversal protection**: `config.rs` validates canonical paths stay within component directory
-- **Regex in probes**: `status.rs` uses the `regex` crate for `stdout_regex` rules (not string contains)
+- **Regex in probes**: `status.rs` uses the `regex` crate for `stdout_regex` rules
 - **Stream deduplication**: `stream.rs` kills old processes before starting new streams
+- **Network isolation**: compose networks are `internal: true` — no default gateway, containers can't reach the internet directly
+- **Zero untrusted content on host**: all downloads, scanning, and feed processing happen inside containers
 
 ## What the App Must NEVER Do
 
-- Contain component-specific logic in Rust or React (the hard constraint)
+- Contain component-specific logic in Rust or React (the generic constraint)
 - Duplicate domain logic that belongs in a submodule
 - Run AI models or agent code directly
-- Expose network services (no remote access, no mobile browser mode)
+- Expose network services (no remote access)
+- Process untrusted content on the host (skills, feeds — always inside containers)
 
 ## What NOT to Do
 
 - Do not add component-specific logic to the Tauri backend — it must remain generic
 - Do not modify `component.yml` files in submodules without also pushing to the component's own remote
 - Do not change the schema without updating all three alignment layers (schema JSON, Rust structs, TS types)
-- Do not commit `node_modules/`, `target/`, or `app/src-tauri/gen/` (covered by .gitignore)
+- Do not commit `node_modules/`, `target/`, `app/src-tauri/gen/`, or `.env` (covered by .gitignore)
 - Do not force-push submodule references — this breaks other clones

@@ -1,0 +1,213 @@
+# Lobster-TrApp: Unified Perimeter Compose
+#
+# Four-container security perimeter for the OpenClaw ecosystem.
+# All untrusted content (agent runtime, SKILL files, social feeds)
+# is processed inside containers, never on the host.
+#
+# Architecture:
+#   vault-agent   — OpenClaw runtime (the cell block)
+#   vault-forge   — Skill scanner & CDR (the workshop)
+#   vault-pioneer — Feed scanner & monitoring (the monitoring station)
+#   vault-proxy   — API key injection, domain allowlist, traffic routing (the gate)
+#
+# Network isolation:
+#   vault-agent   ↔ vault-proxy  (agent-net, internal)
+#   vault-forge   ↔ vault-proxy  (forge-net, internal)
+#   vault-pioneer ↔ vault-proxy  (pioneer-net, internal)
+#   vault-proxy   ↔ internet     (external-net, bridged)
+#
+#   Agent CANNOT reach forge or pioneer. Forge CANNOT reach agent or pioneer.
+#   Pioneer CANNOT reach agent or forge. Only the proxy bridges all networks.
+#
+# Usage:
+#   podman compose up -d          Start the perimeter
+#   podman compose logs -f        Watch all containers
+#   podman compose down           Graceful shutdown
+#
+# Requires: .env file with API keys (see components/openclaw-vault/.env.example)
+
+services:
+  # ─── THE CELL BLOCK ─────────────────────────────────────────────
+  # OpenClaw agent runtime. Heavily restricted. No internet access.
+  # API keys never enter this container — proxy injects them.
+  vault-agent:
+    build:
+      context: ./components/openclaw-vault
+      dockerfile: Containerfile
+    container_name: vault-agent
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,noexec,nosuid,mode=1777
+      - /home/vault/.config:size=64m,noexec,nosuid,mode=1777
+      - /home/vault/workspace:size=1g,noexec,nosuid,mode=1777
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=components/openclaw-vault/config/vault-seccomp.json
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 4g
+    cpus: 2
+    networks:
+      - agent-net
+    depends_on:
+      vault-proxy:
+        condition: service_started
+    volumes:
+      - proxy-ca:/opt/proxy-ca:ro
+      - vault-data:/home/vault/.openclaw
+      # Skills delivered by forge — read-only from agent's perspective
+      - forge-deliveries:/home/vault/workspace/skills:ro
+    environment:
+      - HTTP_PROXY=http://vault-proxy:8080
+      - HTTPS_PROXY=http://vault-proxy:8080
+      - NO_PROXY=localhost,127.0.0.1
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    stdin_open: true
+    tty: true
+
+  # ─── THE GATE ───────────────────────────────────────────────────
+  # mitmproxy sidecar. The ONLY container with internet access.
+  # Holds real API keys. Enforces domain allowlist. Logs everything.
+  # Bridges all internal networks — routes traffic between containers.
+  vault-proxy:
+    image: docker.io/mitmproxy/mitmproxy@sha256:89735e2280557aa7597db3a96edcddd5055a0e30d9db7dfb1bfe12c450c333f1
+    container_name: vault-proxy
+    command: >
+      mitmdump
+        --listen-host 0.0.0.0
+        --listen-port 8080
+        --set block_global=false
+        --set block_private=false
+        --scripts /opt/vault/vault-proxy.py
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    security_opt:
+      - seccomp=components/openclaw-vault/config/vault-proxy-seccomp.json
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - SETUID
+      - SETGID
+      # CHOWN + DAC_OVERRIDE needed by mitmproxy entrypoint to set up
+      # the mitmproxy user and chown the home directory.
+      # These are used only during startup, then dropped by gosu.
+      - CHOWN
+      - DAC_OVERRIDE
+    mem_limit: 2g
+    pids_limit: 128
+    volumes:
+      - ./components/openclaw-vault/proxy/vault-proxy.py:/opt/vault/vault-proxy.py:ro
+      - ./components/openclaw-vault/proxy/allowlist.txt:/opt/vault/allowlist.txt:ro
+      - vault-proxy-logs:/var/log/vault-proxy
+      - proxy-ca:/home/mitmproxy/.mitmproxy
+    networks:
+      - agent-net
+      - forge-net
+      - pioneer-net
+      - external-net
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_VERSION=${ANTHROPIC_API_VERSION:-2023-06-01}
+
+  # ─── THE WORKSHOP ───────────────────────────────────────────────
+  # Skill scanner & CDR pipeline. Downloads untrusted SKILL files
+  # INTO this container, scans with 87 MITRE patterns, rebuilds
+  # from scratch. Clean output delivered to agent via shared volume.
+  # ISOLATED from agent — agent cannot tamper with inspection.
+  vault-forge:
+    build:
+      context: ./components/clawhub-forge
+      dockerfile: Containerfile
+    container_name: vault-forge
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 1g
+    pids_limit: 128
+    networks:
+      - forge-net
+    volumes:
+      # Certified skills are written here — agent reads them (ro)
+      - forge-deliveries:/app/exports
+      # Trust the proxy's CA cert for HTTPS interception
+      - proxy-ca:/opt/proxy-ca:ro
+    environment:
+      # Forge routes downloads through the proxy for allowlist enforcement
+      - HTTP_PROXY=http://vault-proxy:8080
+      - HTTPS_PROXY=http://vault-proxy:8080
+      - NO_PROXY=localhost,127.0.0.1
+      # Trust the mitmproxy CA cert so curl/python can verify HTTPS through the proxy
+      - CURL_CA_BUNDLE=/opt/proxy-ca/mitmproxy-ca-cert.pem
+      - REQUESTS_CA_BUNDLE=/opt/proxy-ca/mitmproxy-ca-cert.pem
+      - SSL_CERT_FILE=/opt/proxy-ca/mitmproxy-ca-cert.pem
+    # Forge is a task runner, not a daemon. It starts, runs a scan/CDR
+    # pipeline when triggered, and can idle between tasks.
+    # Keep alive so the orchestrator can exec commands into it.
+    command: ["bash", "-c", "echo 'vault-forge ready' && sleep infinity"]
+    restart: unless-stopped
+
+  # ─── THE MONITORING STATION ─────────────────────────────────────
+  # Feed scanner & injection pattern matcher. Processes untrusted
+  # Moltbook content inside the container, never on the host.
+  # Filters content before agent sees it.
+  # ISOLATED from agent — agent cannot influence analysis.
+  vault-pioneer:
+    build:
+      context: ./components/moltbook-pioneer
+      dockerfile: Containerfile
+    container_name: vault-pioneer
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    pids_limit: 64
+    volumes:
+      # Trust the proxy's CA cert for HTTPS interception
+      - proxy-ca:/opt/proxy-ca:ro
+    networks:
+      - pioneer-net
+    environment:
+      # Pioneer routes API calls through the proxy
+      - HTTP_PROXY=http://vault-proxy:8080
+      - HTTPS_PROXY=http://vault-proxy:8080
+      - NO_PROXY=localhost,127.0.0.1
+      # Trust the mitmproxy CA cert
+      - CURL_CA_BUNDLE=/opt/proxy-ca/mitmproxy-ca-cert.pem
+      - REQUESTS_CA_BUNDLE=/opt/proxy-ca/mitmproxy-ca-cert.pem
+      - SSL_CERT_FILE=/opt/proxy-ca/mitmproxy-ca-cert.pem
+    # Pioneer is a task runner like forge. Idles between scans.
+    command: ["bash", "-c", "echo 'vault-pioneer ready' && sleep infinity"]
+    restart: unless-stopped
+
+# ─── NETWORK ISOLATION ──────────────────────────────────────────
+# Each component gets its own internal network with the proxy.
+# No cross-talk: agent can't reach forge, forge can't reach pioneer, etc.
+# Only the proxy bridges all networks + has internet access.
+networks:
+  agent-net:
+    internal: true    # No default gateway — agent is trapped here
+  forge-net:
+    internal: true    # No default gateway — forge is trapped here
+  pioneer-net:
+    internal: true    # No default gateway — pioneer is trapped here
+  external-net:
+    driver: bridge    # Internet access for the proxy only
+
+# ─── VOLUMES ────────────────────────────────────────────────────
+volumes:
+  vault-proxy-logs:
+    driver: local
+  proxy-ca:
+    driver: local
+  vault-data:
+    driver: local
+  # Forge writes certified skills here. Agent reads them.
+  # This is the only data path between forge and agent —
+  # no network connection, just a shared filesystem.
+  forge-deliveries:
+    driver: local

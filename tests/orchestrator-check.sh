@@ -73,12 +73,12 @@ python3 -c "
 import json, sys
 schema = json.load(open('schemas/component.schema.json'))
 props = schema.get('properties', {})
-required_sections = ['identity', 'status', 'commands', 'configs', 'health']
+required_sections = ['identity', 'status', 'commands', 'configs', 'health', 'workflows']
 missing = [s for s in required_sections if s not in props]
 if missing:
     print('Missing sections: ' + ', '.join(missing))
     sys.exit(1)
-" 2>/dev/null && pass "Schema has all 5 sections" || fail "Schema missing sections"
+" 2>/dev/null && pass "Schema has all 6 sections" || fail "Schema missing sections"
 
 # =============================================================================
 section "3. Component Manifests"
@@ -466,6 +466,112 @@ if errors:
         print(e)
     sys.exit(1)
 " 2>/dev/null && pass "Prerequisites cross-references valid" || fail "Prerequisites cross-reference errors"
+
+# =============================================================================
+section "9. Workflow Validation"
+# =============================================================================
+
+# Workflow step commands must reference valid command IDs
+python3 -c "
+import yaml, sys, glob
+
+manifests = glob.glob('components/*/component.yml')
+errors = []
+total_workflows = 0
+for m_path in manifests:
+    m = yaml.safe_load(open(m_path))
+    name = m.get('identity', {}).get('id', 'unknown')
+    cmd_ids = {c['id'] for c in m.get('commands', [])}
+    workflows = m.get('workflows', [])
+    total_workflows += len(workflows)
+
+    wf_ids = set()
+    for wf in workflows:
+        wf_id = wf.get('id', '')
+        # Check unique workflow IDs within component
+        if wf_id in wf_ids:
+            errors.append(f'{name}: duplicate workflow id \"{wf_id}\"')
+        wf_ids.add(wf_id)
+
+        # Check step command references
+        step_ids = {s['id'] for s in wf.get('steps', [])}
+        for step in wf.get('steps', []):
+            if step['command'] not in cmd_ids:
+                errors.append(f'{name}: workflow \"{wf_id}\" step \"{step[\"id\"]}\" references unknown command \"{step[\"command\"]}\"')
+            dep = step.get('depends_on')
+            if dep and dep not in step_ids:
+                errors.append(f'{name}: workflow \"{wf_id}\" step \"{step[\"id\"]}\" depends_on unknown step \"{dep}\"')
+
+        # Check trigger enum
+        trigger = wf.get('trigger', 'manual')
+        valid_triggers = ['manual', 'on-demand', 'automatic', 'scheduled']
+        if trigger not in valid_triggers:
+            errors.append(f'{name}: workflow \"{wf_id}\" has invalid trigger \"{trigger}\"')
+
+        # Check shell_requirement enum
+        shell_req = wf.get('shell_requirement', 'any')
+        valid_shells = ['hard', 'split', 'soft', 'any']
+        if shell_req not in valid_shells:
+            errors.append(f'{name}: workflow \"{wf_id}\" has invalid shell_requirement \"{shell_req}\"')
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+print(f'{total_workflows} workflows validated')
+" 2>/dev/null && pass "Workflow step→command references valid" || fail "Workflow cross-reference errors"
+
+# Orchestrator workflows must reference valid component IDs and commands/workflows
+python3 -c "
+import yaml, sys, glob, os
+
+# Load orchestrator workflows
+orch_path = 'config/orchestrator-workflows.yml'
+if not os.path.exists(orch_path):
+    print('No orchestrator workflows file — skipping')
+    sys.exit(0)
+
+orch = yaml.safe_load(open(orch_path))
+orch_wfs = orch.get('workflows', [])
+
+# Load component data
+components = {}
+for m_path in glob.glob('components/*/component.yml'):
+    m = yaml.safe_load(open(m_path))
+    cid = m.get('identity', {}).get('id', 'unknown')
+    components[cid] = {
+        'commands': {c['id'] for c in m.get('commands', [])},
+        'workflows': {w['id'] for w in m.get('workflows', [])},
+    }
+
+errors = []
+for wf in orch_wfs:
+    wf_id = wf.get('id', '')
+    step_ids = {s['id'] for s in wf.get('steps', [])}
+    for step in wf.get('steps', []):
+        comp = step.get('component', '')
+        if comp not in components:
+            errors.append(f'orchestrator workflow \"{wf_id}\" step \"{step[\"id\"]}\" references unknown component \"{comp}\"')
+            continue
+        # Step references either a command or a workflow
+        cmd = step.get('command')
+        wf_ref = step.get('workflow')
+        if cmd and cmd not in components[comp]['commands']:
+            errors.append(f'orchestrator workflow \"{wf_id}\" step \"{step[\"id\"]}\" references unknown command \"{comp}.{cmd}\"')
+        if wf_ref and wf_ref not in components[comp]['workflows']:
+            errors.append(f'orchestrator workflow \"{wf_id}\" step \"{step[\"id\"]}\" references unknown workflow \"{comp}.{wf_ref}\"')
+        if not cmd and not wf_ref:
+            errors.append(f'orchestrator workflow \"{wf_id}\" step \"{step[\"id\"]}\" must have either command or workflow')
+        dep = step.get('depends_on')
+        if dep and dep not in step_ids:
+            errors.append(f'orchestrator workflow \"{wf_id}\" step \"{step[\"id\"]}\" depends_on unknown step \"{dep}\"')
+
+if errors:
+    for e in errors:
+        print(e)
+    sys.exit(1)
+print(f'{len(orch_wfs)} orchestrator workflows validated')
+" 2>/dev/null && pass "Orchestrator workflow references valid" || fail "Orchestrator workflow cross-reference errors"
 
 # =============================================================================
 section "Summary"
