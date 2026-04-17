@@ -10,6 +10,17 @@ import { classifyError } from "@/lib/errors";
 
 type SetupStatus = "pending" | "running" | "done" | "failed";
 
+/** Redact API keys and tokens from build output */
+function sanitizeLine(text: string): string {
+  return text
+    .replace(/(ANTHROPIC_API_KEY=|sk-ant-api03-)[^\s'"]+/g, "$1[REDACTED]")
+    .replace(/(OPENAI_API_KEY=|sk-)[A-Za-z0-9_-]{10,}/g, "$1[REDACTED]")
+    .replace(/(TELEGRAM_BOT_TOKEN=)\S+/g, "$1[REDACTED]")
+    .replace(/(-e\s+ANTHROPIC_API_KEY=)\S+/g, "$1[REDACTED]")
+    .replace(/(-e\s+OPENAI_API_KEY=)\S+/g, "$1[REDACTED]")
+    .replace(/(-e\s+TELEGRAM_BOT_TOKEN=)\S+/g, "$1[REDACTED]");
+}
+
 interface ComponentSetupState {
   status: SetupStatus;
   lines: StreamLine[];
@@ -82,11 +93,15 @@ export default function SetupComponentsStep({
               event.payload.component_id === componentId &&
               event.payload.command_id === commandId
             ) {
+              const sanitized = {
+                ...event.payload,
+                line: sanitizeLine(event.payload.line),
+              };
               setStates((prev) => ({
                 ...prev,
                 [componentId]: {
                   ...prev[componentId],
-                  lines: [...prev[componentId].lines, event.payload],
+                  lines: [...prev[componentId].lines, sanitized],
                 },
               }));
               scrollToBottom(componentId);

@@ -3,6 +3,7 @@ import { useManifests } from "@/hooks/useManifests";
 import { useSettings } from "@/hooks/useSettings";
 import { AppContext } from "@/lib/AppContext";
 import { ToastProvider } from "@/lib/ToastContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import ComponentDetail from "@/pages/ComponentDetail";
@@ -25,6 +26,7 @@ export default function App() {
   return (
     <AppContext.Provider value={{ settings, settingsLoaded, updateSettings }}>
     <ToastProvider>
+    <ErrorBoundary>
       <Routes>
         {/* Setup wizard — outside Layout (no sidebar) */}
         <Route path="/setup" element={<Setup />} />
@@ -47,12 +49,17 @@ export default function App() {
           />
           <Route
             path="/component/:id"
-            element={<ComponentDetail components={components} loading={loading} />}
+            element={
+              <ErrorBoundary fallbackTitle="Component failed to load">
+                <ComponentDetail components={components} loading={loading} />
+              </ErrorBoundary>
+            }
           />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
+    </ErrorBoundary>
     </ToastProvider>
     </AppContext.Provider>
   );

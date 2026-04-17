@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, X, ArrowRight } from "lucide-react";
 import type { DiscoveredComponent } from "@/lib/types";
 import ComponentCard from "@/components/ComponentCard";
 import { SkeletonCard } from "@/components/Skeleton";
@@ -15,6 +16,8 @@ export default function Dashboard({
   loading,
   onRefresh,
 }: DashboardProps) {
+  const [showOnboarding, setShowOnboarding] = useState(true);
+
   // Sort: active components first, placeholder last
   const sorted = [...components].sort((a, b) => {
     if (a.manifest.identity.role === "placeholder") return 1;
@@ -40,6 +43,30 @@ export default function Dashboard({
           Refresh
         </button>
       </div>
+
+      {showOnboarding && components.length > 0 && (
+        <div className="mb-6 p-4 rounded-lg bg-blue-950/30 border border-blue-800/30 relative">
+          <button
+            onClick={() => setShowOnboarding(false)}
+            className="absolute top-3 right-3 text-gray-500 hover:text-gray-300"
+          >
+            <X size={14} />
+          </button>
+          <p className="text-sm text-blue-200 font-medium mb-1">
+            Setup complete — your security perimeter is ready.
+          </p>
+          <p className="text-xs text-gray-400 mb-3">
+            Click a component below to view its dashboard, run workflows, or configure settings.
+            Start with <strong>OpenClaw Vault</strong> to manage your AI assistant.
+          </p>
+          <Link
+            to="/component/openclaw-vault"
+            className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
+          >
+            Open Vault Dashboard <ArrowRight size={12} />
+          </Link>
+        </div>
+      )}
 
       {loading && components.length === 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
