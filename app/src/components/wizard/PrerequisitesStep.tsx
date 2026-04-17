@@ -1,4 +1,4 @@
-import { CheckCircle, XCircle, Loader } from "lucide-react";
+import { CheckCircle, XCircle, Loader, ExternalLink } from "lucide-react";
 import type { PrerequisiteReport } from "@/lib/tauri";
 
 interface PrerequisitesStepProps {
@@ -45,6 +45,38 @@ export default function PrerequisitesStep({
           passed={hasContainer}
           required
         />
+
+        {!hasContainer && (
+          <div className="ml-8 p-3 rounded-lg bg-blue-950/50 border border-blue-800/50">
+            <p className="text-sm text-blue-300 font-medium mb-2">
+              Install a container runtime to continue
+            </p>
+            <p className="text-xs text-gray-400 mb-3">
+              Lobster-TrApp uses containers to keep the AI agent safely separated from your system.
+              Podman is recommended — it's free, open source, and doesn't require admin privileges.
+            </p>
+            <div className="space-y-2">
+              <InstallOption
+                platform="Linux (Ubuntu/Debian)"
+                command="sudo apt install podman podman-compose"
+                link="https://podman.io/docs/installation#installing-on-linux"
+              />
+              <InstallOption
+                platform="macOS"
+                label="Download Podman Desktop"
+                link="https://podman-desktop.io/downloads"
+              />
+              <InstallOption
+                platform="Windows"
+                label="Download Podman Desktop"
+                link="https://podman-desktop.io/downloads"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              After installing, restart Lobster-TrApp and the check will pass automatically.
+            </p>
+          </div>
+        )}
 
         {/* Submodules */}
         <CheckItem
@@ -119,6 +151,37 @@ function CheckItem({
         <p className="text-sm font-medium text-gray-200">{label}</p>
         <p className="text-xs text-gray-500">{detail}</p>
       </div>
+    </div>
+  );
+}
+
+function InstallOption({
+  platform,
+  command,
+  label,
+  link,
+}: {
+  platform: string;
+  command?: string;
+  label?: string;
+  link: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 p-2 rounded bg-gray-900/50">
+      <div className="min-w-0">
+        <p className="text-xs font-medium text-gray-300">{platform}</p>
+        {command && (
+          <code className="text-xs text-blue-400 font-mono">{command}</code>
+        )}
+      </div>
+      <a
+        href={link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="shrink-0 flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
+      >
+        {label || "Guide"} <ExternalLink size={12} />
+      </a>
     </div>
   );
 }
