@@ -40,10 +40,14 @@ export default function SetupComponentsStep({
 }: SetupComponentsStepProps) {
   const { addToast } = useToast();
 
-  // Filter to components that have a setup_command
-  const setupComponents = components.filter(
-    (c) => c.manifest.prerequisites?.setup_command,
-  );
+  // Filter to components that have a setup_command, vault first (it's the perimeter)
+  const setupComponents = components
+    .filter((c) => c.manifest.prerequisites?.setup_command)
+    .sort((a, b) => {
+      const aRuntime = a.manifest.prerequisites?.container_runtime ? 0 : 1;
+      const bRuntime = b.manifest.prerequisites?.container_runtime ? 0 : 1;
+      return aRuntime - bRuntime;
+    });
 
   // Track setup state per component
   const [states, setStates] = useState<Record<string, ComponentSetupState>>(

@@ -124,8 +124,21 @@ pub struct Command {
     pub available_when: Vec<String>,
     #[serde(default = "default_sort_order")]
     pub sort_order: i32,
+    #[serde(default = "default_tier")]
+    pub tier: CommandTier,
     #[serde(default = "default_timeout")]
     pub timeout_seconds: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum CommandTier {
+    User,
+    Advanced,
+}
+
+fn default_tier() -> CommandTier {
+    CommandTier::Advanced
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

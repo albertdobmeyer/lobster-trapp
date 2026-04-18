@@ -257,6 +257,12 @@
             "type": "integer",
             "default": 100
           },
+          "tier": {
+            "type": "string",
+            "enum": ["user", "advanced"],
+            "default": "advanced",
+            "description": "UI tier: user-facing commands shown by default, advanced commands collapsed"
+          },
           "timeout_seconds": {
             "type": "integer",
             "default": 60

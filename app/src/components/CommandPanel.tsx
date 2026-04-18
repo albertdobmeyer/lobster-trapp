@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { Command, OutputDisplay } from "@/lib/types";
 import { COMMAND_GROUP_ORDER, COMMAND_GROUP_LABELS } from "@/lib/types";
 import { useCommand } from "@/hooks/useCommand";
@@ -31,17 +32,26 @@ export default function CommandPanel({
     commandId: string;
     args: Record<string, string>;
   } | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Split commands into user-tier and advanced-tier
+  const userCommands = commands.filter((c) => c.tier === "user");
+  const advancedCommands = commands.filter((c) => c.tier !== "user");
 
   // Group and sort commands
-  const grouped = COMMAND_GROUP_ORDER
-    .map((group) => ({
-      group,
-      label: COMMAND_GROUP_LABELS[group],
-      commands: commands
-        .filter((c) => c.group === group)
-        .sort((a, b) => a.sort_order - b.sort_order),
-    }))
-    .filter((g) => g.commands.length > 0);
+  const groupCommands = (cmds: Command[]) =>
+    COMMAND_GROUP_ORDER
+      .map((group) => ({
+        group,
+        label: COMMAND_GROUP_LABELS[group],
+        commands: cmds
+          .filter((c) => c.group === group)
+          .sort((a, b) => a.sort_order - b.sort_order),
+      }))
+      .filter((g) => g.commands.length > 0);
+
+  const userGrouped = groupCommands(userCommands);
+  const advancedGrouped = groupCommands(advancedCommands);
 
   const isAvailable = (cmd: Command): boolean => {
     if (cmd.available_when.length === 0) return true;
@@ -103,29 +113,50 @@ export default function CommandPanel({
     setPendingArgs({});
   };
 
+  const renderGroup = ({ group, label, commands: cmds }: { group: string; label: string; commands: Command[] }) => (
+    <div key={group}>
+      <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+        {label}
+      </h3>
+      <div className="flex flex-wrap gap-2">
+        {cmds.map((cmd) => (
+          <CommandButton
+            key={cmd.id}
+            command={cmd}
+            disabled={!isAvailable(cmd)}
+            running={
+              (running && activeCommand?.id === cmd.id) ||
+              (streamCommand?.commandId === cmd.id)
+            }
+            onClick={() => handleClick(cmd)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
-      {grouped.map(({ group, label, commands: cmds }) => (
-        <div key={group}>
-          <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-            {label}
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {cmds.map((cmd) => (
-              <CommandButton
-                key={cmd.id}
-                command={cmd}
-                disabled={!isAvailable(cmd)}
-                running={
-                  (running && activeCommand?.id === cmd.id) ||
-                  (streamCommand?.commandId === cmd.id)
-                }
-                onClick={() => handleClick(cmd)}
-              />
-            ))}
-          </div>
+      {/* User-tier commands */}
+      {userGrouped.map(renderGroup)}
+
+      {/* Advanced toggle */}
+      {advancedGrouped.length > 0 && (
+        <div>
+          <button
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-400 transition-colors"
+          >
+            {showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            Advanced ({advancedCommands.length} commands)
+          </button>
+          {showAdvanced && (
+            <div className="mt-4 space-y-6 border-t border-gray-800 pt-4">
+              {advancedGrouped.map(renderGroup)}
+            </div>
+          )}
         </div>
-      ))}
+      )}
 
       {/* Stream output */}
       {streamCommand && (

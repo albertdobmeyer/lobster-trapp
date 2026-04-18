@@ -129,6 +129,7 @@ function makeCommand(overrides: Partial<Command> = {}): Command {
     output: { format: "text", display: "log" },
     available_when: [],
     sort_order: 0,
+    tier: "user",
     timeout_seconds: 30,
     ...overrides,
   };

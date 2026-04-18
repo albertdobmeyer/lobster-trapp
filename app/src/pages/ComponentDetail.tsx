@@ -197,6 +197,44 @@ function ActiveComponentView({
         </div>
       )}
 
+      {/* Contextual guidance for the vault (runtime component) */}
+      {identity.role === "runtime" && (
+        <div className="p-4 rounded-lg bg-gray-900 border border-gray-800">
+          {currentStatus?.state_id === "running" ? (
+            <div>
+              <p className="text-sm text-gray-200 font-medium mb-1">
+                Your assistant is running safely inside a secure sandbox.
+              </p>
+              <p className="text-xs text-gray-400">
+                It can search the web, manage files, and schedule tasks — all within safe boundaries.
+                It cannot access your personal files, passwords, or SSH keys.
+                Talk to it by messaging your Telegram bot.
+              </p>
+            </div>
+          ) : currentStatus?.state_id === "stopped" ? (
+            <div>
+              <p className="text-sm text-gray-200 font-medium mb-1">
+                Your assistant is stopped.
+              </p>
+              <p className="text-xs text-gray-400">
+                Click "Start Securely" below to start it with full security verification,
+                or use the Start button in the commands section for a quick start.
+              </p>
+            </div>
+          ) : currentStatus?.state_id === "not_setup" ? (
+            <div>
+              <p className="text-sm text-gray-200 font-medium mb-1">
+                Your assistant hasn't been set up yet.
+              </p>
+              <p className="text-xs text-gray-400">
+                Run the "Start Securely" workflow below to build the secure container,
+                start your assistant, and verify all 24 security checks pass.
+              </p>
+            </div>
+          ) : null}
+        </div>
+      )}
+
       {/* Workflows */}
       {workflows.length > 0 && (
         <WorkflowPanel workflows={workflows} componentId={componentId} />

@@ -87,6 +87,7 @@ export interface Command {
   output?: Output;
   available_when: string[];
   sort_order: number;
+  tier: "user" | "advanced";
   timeout_seconds: number;
 }
 
