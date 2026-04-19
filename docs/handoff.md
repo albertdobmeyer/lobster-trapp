@@ -1,299 +1,210 @@
-# Handoff — Architecture v2 Perimeter Redesign
+# Handoff — Frontend Reframe & v0.1.0 Release
 
-**Date:** 2026-04-15
-**Author:** Albert + Claude Opus (session 2026-04-14/15)
-**Status:** Phases 1-5 complete, Phases 6-7 pending
+**Date:** 2026-04-19
+**Author:** Albert + Claude Opus (sessions 2026-04-14 through 2026-04-19)
+**Status:** Architecture complete, E2E verified, documentation aligned, frontend reframe spec ready to implement
 
 ---
 
-## What Happened This Session
+## Read These First
 
-We identified and resolved a fundamental architectural flaw: clawhub-forge and moltbook-pioneer were running as bare bash scripts on the user's unprotected host, processing untrusted content (SKILL files with 11.9% malware rate, Moltbook feeds with injection attacks) with zero isolation. The vault container air-gapped the agent, but two other attack vectors were wide open.
+| Document | What It Is | Why You Need It |
+|----------|-----------|-----------------|
+| `docs/specs/2026-04-19-product-identity-spec.md` | **THE NORTHSTAR** — what this product actually is | Without this, you'll build a security dashboard instead of a personal assistant app |
+| `docs/specs/2026-04-19-frontend-reframe-spec.md` | **THE TASK** — exact per-file implementation plan for the UI rewrite | Every string change, every structural change, every new component |
+| `docs/specs/2026-04-19-alignment-roadmap.md` | The path from current state to v0.1.0 release | Phase A (docs) is done. Phase B (frontend) is next. Then C (deploy) and D (release). |
+| `docs/specs/2026-04-18-ux-redesign.md` | Feature inventory + user story mapping | 38 commands, 10 workflows, 17 user stories — the research behind the reframe |
+| `CLAUDE.md` | Project instructions with product identity section at top | Explains the architecture, manifest contract, and the northstar |
+| `GLOSSARY.md` | User-facing terms mapping table | Developer term → user term mapping (openclaw-vault → My Assistant, etc.) |
 
-We redesigned the architecture so that **all components handling untrusted content run inside containers in one isolated perimeter.** Then we implemented the first three phases.
+---
 
-### The Security Model (The Prison Allegory)
+## The One-Sentence Summary
 
-Think of this as a prison labor system. The OpenClaw agents (clawbots) are the inmates — powerful, resourceful, and potentially dangerous, but they work cheap so people want to use them. The question is: how do you let prison workers do useful labor without giving them access to steal your belongings or destroy your property?
+**Lobster-TrApp is a personal AI assistant app for non-technical users, not a security dashboard for developers.** The backend security infrastructure is built and verified (24/24 checks, containers on 7.2GB laptop, Telegram bot responds). The frontend needs to stop showing the plumbing and start showing the product.
 
-- **The Vault** is the prison fence and cell block. The agents run inside it, always contained.
-- **The Forge** is the workshop inside the prison. Untrusted SKILL files (tools the agents use) are scanned and rebuilt here — never brought outside the fence for inspection.
-- **Pioneer** is the monitoring station / visitor room. Untrusted social content from other agents is analyzed here before the agent sees it.
-- **The Proxy** is the gate — the only door in the fence. It holds the real API keys, enforces the domain allowlist, and logs everything.
-- **Claude Code** (or another trusted CLI agent) is the warden — an intelligent middleman between the non-technical human and the dangerous clawbot system. It makes contextual, per-action security decisions.
-- **The Tauri GUI** is the warden's control panel.
+---
 
-The **USP** is the dynamic + intelligent shell. The shell (Hard/Split/Soft) adjusts how much freedom the agents get, and a large reasoning model (Opus) makes those adjustments intelligently based on context. This solves the "impossible" problem: either the agent is too restricted to be useful, or too free to be safe. The intelligent warden bridges both.
+## What's Been Done (This Multi-Session Arc)
 
-### Multi-Agent Trust Chain
+### Architecture (Phases 1-5, commits c89c7ca → 9a5cd78)
+- 4-container perimeter: vault-agent, vault-forge, vault-pioneer, vault-proxy
+- Network isolation verified (containers can't reach each other except through proxy)
+- Rust workflow executor with interpolation, sequencing, success conditions
+- React workflow UI with progress tracking, input forms, danger-level styling
+- Schema + manifest evolution (workflows section, 42 orchestration checks)
 
+### E2E Verification (commits 36f8a44 → f305f5a)
+- Full user journey tested on dev laptop (7.2GB RAM, AMD A12-9720P, Podman rootless, no virtualization)
+- Setup wizard: all 6 steps work, all 3 components set up, 24/24 security checks pass
+- Telegram bot (Hum): responds, creates files in sandboxed workspace, pairing works
+- **Bugs fixed:** forge missing `setup` Makefile target, vault proxy timing, config integrity hash
+
+### Blocker Fixes (commit 88edf4f)
+- Prerequisites step: Podman install guidance with platform-specific links
+- Config step: API key entry form (Anthropic + Telegram) with guidance links and validation
+- Telegram pairing: `approve-pairing` command added to vault manifest for GUI access
+
+### UX Foundation (commits ea27736 → 27c9c2f)
+- Agent hallucination mitigation: CONSTRAINTS.md injected via entrypoint
+- Build output sanitization: API keys redacted from setup wizard stream
+- Dashboard onboarding banner with vault link
+- ErrorBoundary component (created + wired into App.tsx)
+- Two-tier command system: `tier: user|advanced` field in schema/Rust/TypeScript
+- Vault commands tagged: Start, Stop Assistant, Security Check, Connect Telegram → user tier
+- CommandPanel: user commands visible, advanced collapsed behind toggle
+- Landing page: simplified language throughout (removed MITRE ATT&CK, seccomp, etc.)
+
+### Documentation Alignment (commits a0e4804 → faf878b)
+- Product identity spec written (the fundamental reframe)
+- Alignment roadmap (Phase A-D to v0.1.0)
+- UX redesign spec (feature inventory + user stories)
+- Frontend reframe spec (exact per-file implementation plan)
+- README.md: assistant-first framing
+- CLAUDE.md: product identity section at top
+- GLOSSARY.md: user-facing terms mapping table
+
+---
+
+## What Needs to Be Done Next
+
+### Phase B: Frontend Reframe (THE IMMEDIATE TASK)
+
+The spec is at `docs/specs/2026-04-19-frontend-reframe-spec.md`. It details exact changes for 8 files:
+
+| File | Key Change |
+|------|-----------|
+| `app/src/components/Sidebar.tsx` | "Components" header → remove. Component names → role-based labels (My Assistant, Skills, Network) |
+| `app/src/pages/Dashboard.tsx` | Component grid → assistant-centric layout. Prominent status card for runtime component. Telegram guidance. |
+| `app/src/components/wizard/WelcomeStep.tsx` | "security-first desktop GUI for the OpenClaw ecosystem" → "Let's set up your personal AI assistant" |
+| `app/src/components/wizard/SetupComponentsStep.tsx` | "Set Up Components" → "Setting Up Your Assistant". Hide raw build output behind toggle. |
+| `app/src/components/wizard/CompleteStep.tsx` | "All Set!" → "Your Assistant is Ready!" + Telegram link |
+| `app/src/pages/ComponentDetail.tsx` | Role-based headers. Simplified security badge. Developer tools collapsed. |
+| `app/src/components/ComponentCard.tsx` | Role-based names. Remove version/description/role noise. |
+| New: `app/src/lib/labels.ts` | Shared role→label mapping functions |
+
+**No backend changes needed.** This is purely a presentation layer change.
+
+### Phase C: Landing Page Go-Live (~30 min after Phase B)
+1. Update `docs/index.html` meta tags (title, description, OG tags)
+2. Deploy to Hetzner: `scp docs/index.html docs/bg-hero.png root@hetzner:/var/www/lobster-trapp.com/html/`
+3. This replaces the "coming soon" page with the real landing page
+
+### Phase D: Tag v0.1.0 (~30 min after Phase C)
+1. Full test suite: `bash tests/orchestrator-check.sh` + `cargo test` + `npm test`
+2. `git tag v0.1.0 && git push --tags`
+3. Verify CI builds binaries for all platforms
+4. Verify release artifacts on GitHub Releases
+
+---
+
+## Dev Environment
+
+The dev laptop is fully set up for testing:
+
+- **Rust 1.95.0** via rustup (`source ~/.cargo/env` needed in new shells)
+- **Podman 4.9.3** + podman-compose 1.0.6 (rootless, no virtualization needed on Linux)
+- **Tauri system deps:** libwebkit2gtk-4.1-dev, libayatana-appindicator3-dev, librsvg2-dev, patchelf, libgtk-3-dev
+- **Note:** Use `libayatana-appindicator3-dev` NOT `libappindicator3-dev` on Ubuntu 24.04
+
+**Build commands:**
+```bash
+source ~/.cargo/env
+cd app/src-tauri && cargo build          # First build: ~6 min. Incremental: ~3 sec.
+cd app && npm run tauri dev              # Full app (Rust backend + React frontend)
+cd app && npm run dev                    # Frontend only (no Tauri backend — IPC errors expected)
 ```
-TIER 1: TRUSTED — Human + Claude Code (warden, full host access)
-TIER 2: INFRASTRUCTURE — Lobster-TrApp (enforces boundaries mechanically)
-TIER 3: CONTAINED — OpenClaw agents (do the work, within boundaries)
+
+**Container commands:**
+```bash
+podman compose up -d                     # Start 4-container perimeter
+podman compose down                      # Stop perimeter
+podman exec openclaw-vault sh            # Shell into agent container
 ```
 
-## What Was Built (Phases 1-3)
+**The Tauri app may still be running** from the last session. Check with `pgrep -f lobster-trapp`. Kill with `pkill -f lobster-trapp` before rebuilding.
 
-### Phase 1: Containerized Forge and Pioneer
-- `components/clawhub-forge/Containerfile` — forge container (233MB, python:3.10-slim, bash toolchain)
-- `components/moltbook-pioneer/Containerfile` — pioneer container (153MB, python:3.10-slim)
-- Both run as non-root users, all scanning pipelines verified inside containers
-- Forge: 10/10 scanner self-test, certify pipeline, scan/verify/export all pass
-- Pioneer: 48/48 tests pass, health check passes
+**Containers may still be running.** Check with `podman ps`. The vault containers (openclaw-vault, vault-proxy) persist across app restarts.
 
-### Phase 2: Unified 4-Container Compose with Network Isolation
-- `compose.yml` at repo root — 4 services: vault-agent, vault-forge, vault-pioneer, vault-proxy
-- 4 internal networks: agent-net, forge-net, pioneer-net, external-net
-- **Verified isolation:**
-  - Agent can only reach proxy (agent-net)
-  - Forge can only reach proxy (forge-net)
-  - Pioneer can only reach proxy (pioneer-net)
-  - Forge/pioneer cannot reach each other or the agent
-  - Direct TCP to external IPs: "Network is unreachable" (internal networks have no gateway)
-  - Proxy correctly blocks non-allowed domains (403) and allows allowed domains (200)
-- Forge delivers certified skills via shared volume (`forge-deliveries`, write in forge, read-only in agent)
-- Proxy CA cert shared with forge/pioneer for HTTPS through the proxy
-- Proxy needs CHOWN + DAC_OVERRIDE capabilities for mitmproxy entrypoint (rootless Podman)
+---
 
-### Phase 3: Schema and Manifest Evolution
-- `schemas/component.schema.json` — new `workflows` section added (steps, inputs, triggers, shell requirements, success conditions, output rendering)
-- `components/clawhub-forge/component.yml` — 3 workflows: vet-skill, safe-download, full-check
-- `components/moltbook-pioneer/component.yml` — 3 workflows + new `export-patterns` command: scan-recent-feed, export-patterns, safety-check
-- `components/openclaw-vault/component.yml` — 4 workflows + new `install-skill` command: secure-start, switch-to-hard, switch-to-split, full-verify
-- `config/orchestrator-workflows.yml` — 4 cross-component workflows: install-skill, first-run-setup, full-audit, enable-feeds
-- `tests/orchestrator-check.sh` — section 9 added (2 new checks), now 41 total checks, all passing
+## Key Architecture Concepts
 
-## What Was Built (Phases 4-5)
+### The Four Repos
+| Repo | Audience | Purpose |
+|------|----------|---------|
+| **lobster-trapp** (this repo) | Non-technical end users | The GUI — everything the user sees and touches |
+| **openclaw-vault** (submodule) | Developers | The runtime containment (vault-agent + vault-proxy) |
+| **clawhub-forge** (submodule) | Developers | The skill security scanner |
+| **moltbook-pioneer** (submodule) | Developers | The social network monitor (API currently down) |
 
-### Phase 4: Backend Workflow Executor (c670e9a)
+### The Manifest-Driven Architecture
+Each submodule has a `component.yml` that declares its commands, workflows, health probes, configs, and status states. The Rust backend reads these manifests generically. The React frontend renders them. **This architecture stays.** We're adding a presentation layer on top, not replacing the engine.
 
-- `app/src-tauri/src/orchestrator/manifest.rs` — 8 new structs: `Workflow`, `WorkflowStep`, `WorkflowInput`, `WorkflowOutput`, `SuccessCondition`, `WorkflowTrigger`, `ShellRequirement`, `WorkflowDisplayMode`
-- `app/src-tauri/src/orchestrator/workflow.rs` — full executor: step sequencing with `depends_on`, `{{input.x}}` and `{{steps.prev.output}}` interpolation, success condition checking, abort-on-failure
-- `app/src-tauri/src/commands/workflow_cmds.rs` — Tauri commands: `list_workflows`, `execute_workflow`
-- `app/src/lib/types.ts` — TypeScript types mirroring all Rust workflow structs
-- `app/src/lib/tauri.ts` — invoke wrappers: `listWorkflows`, `executeWorkflow`
+### The Two-Tier Command System (already implemented)
+Commands have a `tier` field: `user` (visible by default) or `advanced` (collapsed behind toggle). The vault has 4 user-tier commands: Start, Stop Assistant, Security Check, Connect Telegram. Everything else is advanced.
 
-### Phase 5: Frontend Workflow UI (9a5cd78)
+### User-Facing Term Mapping (GLOSSARY.md)
+| Developer | User |
+|-----------|------|
+| openclaw-vault | My Assistant |
+| clawhub-forge | Skills |
+| moltbook-pioneer | Network |
+| container | secure sandbox |
+| Hard/Split/Soft Shell | deferred for v0.1.0 |
 
-- `app/src/hooks/useWorkflow.ts` — React hook for execution with state management and toast notifications
-- `app/src/components/WorkflowPanel.tsx` — full UI: workflow buttons, input forms, confirmation dialogs, step-by-step progress with pass/fail/running icons
-- `app/src/pages/ComponentDetail.tsx` — workflows section rendered above commands
-- Danger-level button styling, shell requirement display, collapsible step details
+---
 
-All tests passing: 147/147 frontend, 41/41 orchestrator checks, 0 TypeScript errors.
+## Test Suites
 
-## What Was Done (Phase 6) — Doc Cleanup (dbadc53)
+```bash
+bash tests/orchestrator-check.sh         # 42 checks (manifest validation, cross-refs)
+cd app/src-tauri && cargo test            # Rust unit tests
+cd app && npm test                        # 147 frontend tests
+cd app && npx tsc --noEmit                # TypeScript type checking
+cd app && npx playwright test             # 2 E2E smoke tests
+```
 
-All documentation aligned with architecture v2:
+All should pass. If frontend tests fail after the reframe, it's likely mock data that needs the `tier` field or updated string expectations.
 
-- `README.md` — rewritten: product pitch, prison allegory table, 4-container architecture, updated counts
-- `docs/index.html` — Pioneer card added, hero subtitle updated, ecosystem grid 2→3 cols, flow SVG widened with Pioneer
-- `docs/trifecta.md` — status section updated (Phases 4/5 now implemented)
-- `docs/product-assessment.md` — dated v2 addendum, Gear→Shell terminology note
-- `docs/roadmap-v4-finalization.md` — v2 cross-reference blockquote, test count fix
-- All 3 component `CLAUDE.md` files — containerization/perimeter context added (submodule commits pushed)
+---
 
-## E2E User Journey Audit (2026-04-16)
+## What NOT to Do
 
-We attempted a full end-to-end walkthrough of the non-technical user journey. This audit revealed that while the **architecture is sound** (Phases 1-5), the **user-facing experience has critical gaps** that block a v0.1.0 release.
+- Don't change the Rust backend — the manifest-driven architecture is correct
+- Don't change component.yml manifests — tier tags are already set
+- Don't change compose.yml — the perimeter is proven
+- Don't expose developer concepts in user-facing UI (see GLOSSARY.md mapping)
+- Don't create new documentation files (PROGRESS.md, SUMMARY.md, etc.)
+- Don't add features — this is a presentation reframe, not a feature sprint
 
-### Dev Machine State
-- No Rust toolchain installed → cannot build the Tauri desktop app
-- No Podman or Docker installed → cannot run the 4-container perimeter
-- 7.2GB RAM, no hardware virtualization (AMD A12-9720P)
-- Podman CAN run on this machine (Linux containers use kernel namespaces, not VMs) but RAM is tight for 4 containers
-- **Implication**: Even the developer can't run the full stack locally. A non-technical user faces even more friction.
-
-### What We Tested
-- **Landing page** (`docs/index.html`): Structure is solid, visual design polished. All 3 components shown. Download button auto-detects platform.
-- **Setup wizard** (browser-only via `npm run dev`): Welcome step renders correctly. Prerequisites step shows spinner then fails with Tauri IPC errors (expected without Rust backend).
-
-### Landing Page Findings (Step 0)
-**Works:**
-- Clean visual design, all 3 ecosystem cards (Vault, Forge, Pioneer)
-- Download button detects platform, per-platform installer links
-- Flow diagram shows You → Forge → Pioneer → Vault → Lobster-TrApp
-- Honest disclaimer: "Security tool, not a security guarantee"
-
-**Friction for non-technical users:**
-- Language is too technical ("MITRE ATT&CK", "seccomp profiles", "read-only filesystem")
-- No explanation of what OpenClaw IS — assumes user already knows
-- Step 2 says "Discover Components" and "manifest files" — meaningless to non-technical users
-- "Requires Podman or Docker" — user doesn't know what these are
-- All download links go to the same GitHub Releases page (not direct file links)
-- Hero visual shows developer jargon ("seccomp + PID limits + non-root")
-
-### Setup Wizard Findings (Steps 2a-2f)
-Based on code review of all wizard step components:
-
-**Step 2a (Welcome):** Clean, no issues. Auto-redirects first-time users here.
-
-**Step 2b (Prerequisites) — BLOCKER #1:**
-- Checks for Podman/Docker, submodules, component manifests
-- If Podman/Docker not found: shows red X + "Docker or Podman required"
-- **NO install button, NO instructions, NO link to Podman docs**
-- User is completely stuck. This breaks the "no terminal required" promise.
-- Need: platform-specific install guidance or bundled installer
-
-**Step 2c (Submodules):**
-- Detects/clones git submodules. "Clone All Submodules" button works.
-- But: binary installer from GitHub Releases doesn't include submodules
-- Cloning requires git (non-technical users may not have git)
-- SSH clone failures show cryptic "Permission denied (publickey)" errors
-
-**Step 2d (Config) — BLOCKER #2:**
-- Shows missing config files, offers "Create" button to copy `.env.example` → `.env`
-- But `.env` contains PLACEHOLDER values — user must manually edit them
-- **Does NOT prompt for API key or Telegram bot token**
-- **No guidance on WHERE to get an Anthropic API key or HOW to create a Telegram bot**
-- User creates configs with dummy values → agent won't work → no error explanation
-
-**Step 2e (Setup Components):**
-- Runs `make setup` for each component (builds container images)
-- Shows raw Podman/Docker build output (very verbose, confusing for non-technical users)
-- No progress percentage — user doesn't know if it's stuck or working
-- Build failures show "Failed (exit N)" with no explanation or remediation
-
-**Step 2f (Complete):**
-- Offers "Start" buttons for each component + "Go to Dashboard"
-- "Start" button runs command silently — no feedback if it fails
-- User might skip starting and go to dashboard without running anything
-
-### Dashboard Findings (Step 3)
-Based on code review:
-- Shows grid of 3 component cards with status badges
-- **No "what's next?" onboarding guidance** after setup
-- **No "Start All" button** — user must navigate to each component individually
-- Component descriptions are technical ("Skill development workbench and security scanner")
-- If containers aren't running: shows "Not Set Up" with no actionable guidance
-- Empty state: "No components detected yet — Run the setup wizard" (confusing if wizard already ran)
-
-### Agent Capabilities Findings (Steps 4-5)
-Based on code review of shell configs and tool manifest:
-
-| Shell Level | Practical Use | Tools | Web? | Files? | Scheduling? |
-|------------|--------------|-------|------|--------|-------------|
-| **Hard** | Chat only | 0 | No | No | No |
-| **Split** | File ops with per-action approval | 11 | No | Yes (approved) | No |
-| **Soft** | Autonomous assistant | 17 | Search only | Yes (auto) | Yes (approved) |
-
-- Agent is controlled via **Telegram only** — no in-app chat
-- GUI doesn't explain how to talk to the agent after setup
-- Soft Shell (the useful one) is not fully exposed as a GUI command
-- Only 3-4 domains in allowlist by default (Anthropic, OpenAI, Telegram, GitHub)
-- No email integration, no browser tool, no host file access
-- **The agent works INSIDE the container** — user needs to understand this mental model
-
-### Hard Constraints (Things the Agent Can NEVER Do)
-- Access SSH keys, passwords, keyrings
-- Delete files (rm stripped from image)
-- Run interpreters (Python, Node, Bash, Ruby stripped)
-- Modify its own security config
-- Spawn sub-agents
-- Reach unapproved domains
-- Break out of container
-
-## What Needs to Be Done
-
-### Blockers (must fix before v0.1.0)
-
-1. **Prerequisites step: Podman/Docker install guidance**
-   - Add platform-specific instructions or "Install Podman" button
-   - At minimum: link to podman.io with simple instructions
-   - Files: `app/src/components/wizard/PrerequisitesStep.tsx`
-
-2. **Config step: API key and Telegram bot entry**
-   - Add form fields for Anthropic API key and Telegram bot token
-   - Guide user through getting these (links to console.anthropic.com, BotFather)
-   - Validate keys before proceeding
-   - Files: `app/src/components/wizard/ConfigStep.tsx`
-
-3. **Dev environment: Install Rust + Podman on dev machine**
-   - Need Rust to build Tauri app for testing
-   - Need Podman to test 4-container perimeter
-   - Podman works without virtualization on Linux (kernel namespaces)
-
-### Friction (should fix before v0.1.0)
-
-4. **Setup component step: Better progress indication**
-   - Replace raw build output with progress bar or phase indicators
-   - Human-readable error messages when builds fail
-
-5. **Dashboard: Post-setup onboarding**
-   - "Your setup is complete! Click a component to get started" guidance
-   - "Start All" button or orchestrator workflow trigger
-
-6. **Landing page: Simplify language**
-   - Replace technical jargon with plain language
-   - Explain what OpenClaw IS before explaining how we secure it
-
-7. **Error handling: Actionable messages**
-   - Replace "Failed (exit N)" with "Container build failed — check your internet connection and try again"
-   - Add ErrorBoundary component (created but not wired in: `app/src/components/ErrorBoundary.tsx`)
-
-### Post-v0.1.0
-
-8. **Claude Code CLI/MCP integration (Phase 7)**
-   - CLI interface: `lobster-trapp status/shell/install-skill/logs`
-   - MCP server: expose tools for Claude Code to manage containers and workflows
-   - Warden logic: contextual approval/denial, anomaly detection, plain-language reporting
-
-## Key Design Documents
-
-| Document | Purpose |
-|----------|---------|
-| `docs/specs/2026-04-19-product-identity-spec.md` | **THE NORTHSTAR** — what the product actually is |
-| `docs/specs/2026-04-19-alignment-roadmap.md` | How to get from current state to v0.1.0 release |
-| `docs/specs/2026-04-18-ux-redesign.md` | Feature inventory + user story mapping |
-| `docs/superpowers/specs/2026-04-15-architecture-v2-perimeter-redesign.md` | The full v2 design spec |
-| `docs/trifecta.md` | Three-module relationship doc |
-| `CLAUDE.md` | Project instructions for AI assistants (includes product identity) |
-| `GLOSSARY.md` | Terminology + user-facing terms mapping |
-| `config/orchestrator-workflows.yml` | Cross-component workflow definitions |
+---
 
 ## Current CI Status
 
-All phases through 5 are committed (latest: 9a5cd78). Rust and TypeScript types now include full workflow structs (updated in Phase 4). All tests pass:
-- `bash tests/orchestrator-check.sh` — 41 checks passing
-- `cd app/src-tauri && cargo test` — passing (manifest structs include workflows)
-- `cd app && npm test` — 147 tests passing (mock manifests updated with `workflows: []`)
+CI builds for Linux x64, macOS ARM, macOS Intel, Windows x64. Updater is configured with signing keys in GitHub Secrets. All test jobs pass. The `build-and-release` job produces draft releases on tag push.
 
-## Files Changed This Session
+---
 
-**New files:**
-- `components/clawhub-forge/Containerfile`
-- `components/moltbook-pioneer/Containerfile`
-- `compose.yml`
-- `config/orchestrator-workflows.yml`
-- `docs/superpowers/specs/2026-04-15-architecture-v2-perimeter-redesign.md`
-- `docs/handoff.md` (this file)
+## Landing Page
 
-**Modified files:**
-- `schemas/component.schema.json` — added workflows section
-- `components/clawhub-forge/component.yml` — added workflows
-- `components/moltbook-pioneer/component.yml` — added workflows + export-patterns command
-- `components/openclaw-vault/component.yml` — added workflows + install-skill command
-- `tests/orchestrator-check.sh` — added section 9 (workflow validation)
-- `docs/trifecta.md` — rewritten for perimeter model
-- `CLAUDE.md` — reframed
-- `GLOSSARY.md` — new terms
+- **Live:** lobster-trapp.com currently shows `docs/coming-soon.html`
+- **Ready:** `docs/index.html` is the full landing page with download links
+- **Deploy:** `scp docs/index.html docs/bg-hero.png root@hetzner:/var/www/lobster-trapp.com/html/`
+- **SSH:** `ssh hetzner` (root@46.225.175.242, key at ~/.ssh/hetzner_linuxlaptop)
 
-**Phase 4 new files (c670e9a):**
-- `app/src-tauri/src/orchestrator/workflow.rs`
-- `app/src-tauri/src/commands/workflow_cmds.rs`
+---
 
-**Phase 4 modified files (c670e9a):**
-- `app/src-tauri/src/orchestrator/manifest.rs` — workflow structs added
-- `app/src-tauri/src/orchestrator/error.rs` — workflow error variants
-- `app/src/lib/types.ts` — TypeScript workflow types
-- `app/src/lib/tauri.ts` — invoke wrappers
+## Success Criteria for v0.1.0
 
-**Phase 5 new files (9a5cd78):**
-- `app/src/hooks/useWorkflow.ts`
-- `app/src/components/WorkflowPanel.tsx`
+A non-technical user who has never heard of OpenClaw, containers, or security hardening should be able to:
 
-**Phase 5 modified files (9a5cd78):**
-- `app/src/pages/ComponentDetail.tsx` — workflow panel integration
+1. Visit lobster-trapp.com and understand: "This gives me a personal AI assistant"
+2. Download and install in under 5 minutes
+3. Complete the setup wizard without confusion
+4. Send their first Telegram message to their assistant within 10 minutes
+5. Never see the words: container, seccomp, proxy, manifest, compose, vault, forge, pioneer, or component.yml
 
-All changes committed.
+---
+
+*"The security harness is not the product. It's the ENABLER. The product is: an always-on AI assistant accessible from any messaging app, that runs locally, and that you can trust."*
