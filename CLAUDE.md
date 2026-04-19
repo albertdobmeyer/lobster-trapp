@@ -1,12 +1,25 @@
-# Lobster-TrApp — Security Infrastructure for AI Agents
+# Lobster-TrApp — Your Personal AI Assistant, Safe on Any Computer
+
+## Product Identity (Northstar)
+
+**Lobster-TrApp is the safe front door to the OpenClaw ecosystem for non-technical users.**
+
+The product is NOT a security dashboard. The security is invisible infrastructure — like a lock on a front door. The user walks through the door and uses their AI assistant. They never think about the lock.
+
+- **What users see:** "My personal AI assistant, controlled from Telegram"
+- **What we build:** A 4-container security perimeter that makes this safe
+- **Northstar:** "Your own personal AI assistant, safe on any computer"
+- **Design spec:** `docs/specs/2026-04-19-product-identity-spec.md`
+
+**UI Rule:** The frontend (this parent repo) must NEVER expose developer concepts to end users. No containers, proxies, manifests, shell levels, or component IDs in user-facing text. Map developer terms to user terms (see GLOSSARY.md "User-Facing Terms").
 
 ## What This Is
 
-Lobster-TrApp is a **security infrastructure** that lets non-technical users safely run OpenClaw (an autonomous AI agent) on their personal computer. It wraps the entire OpenClaw ecosystem in a containerized perimeter where all untrusted content — the agent itself, downloaded skills, social network feeds — is processed inside hardened containers, never on the user's host machine.
+Lobster-TrApp is a **desktop GUI** that lets non-technical users safely run OpenClaw (an autonomous AI agent) on their personal computer. Behind a friendly interface, it wraps the entire OpenClaw ecosystem in a containerized perimeter where all untrusted content — the agent itself, downloaded skills, social network feeds — is processed inside hardened containers, never on the user's host machine.
 
-**You are working in the parent orchestrator.** This repo bundles three component repos as submodules, provides the Tauri desktop GUI, defines the manifest contract, and manages the container perimeter.
+**You are working in the parent repo (the frontend).** This repo bundles three backend component repos as submodules, provides the Tauri desktop GUI, defines the manifest contract, and manages the container perimeter. The submodules are invisible infrastructure — the user never sees them.
 
-## What the Product Does
+## What the User Experiences
 
 A non-technical user downloads Lobster-TrApp, enters an API key, connects Telegram, and gets a safe AI assistant they can talk to from their phone. The security is invisible — they don't know about containers, proxies, or shell levels. They just have an assistant that works.
 

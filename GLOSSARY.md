@@ -4,6 +4,32 @@ Official terminology for the Lobster-TrApp ecosystem. Use these terms consistent
 
 ---
 
+## User-Facing Terms (Frontend Only)
+
+The parent repo (lobster-trapp) is the only thing non-technical users see. These mappings define how developer concepts appear in the GUI. **Never show the developer term in user-facing UI.**
+
+| Developer Term | User-Facing Term | Where Used |
+|---|---|---|
+| openclaw-vault | **My Assistant** | Sidebar, dashboard, component detail |
+| clawhub-forge | **Skills** / **Skill Store** | Sidebar, dashboard |
+| moltbook-pioneer | **Agent Network** | Sidebar, dashboard |
+| Hard Shell | **Chat Only** | Mode descriptions (post-v0.1.0) |
+| Split Shell | **Supervised** | Mode descriptions (post-v0.1.0) |
+| Soft Shell | *(default — no name shown)* | Hidden, this is the default experience |
+| Component | *(invisible)* | Never shown to users |
+| Manifest / component.yml | *(invisible)* | Never shown to users |
+| Container / Podman / Docker | **Secure sandbox** | Wizard, status messages |
+| Perimeter | *(invisible)* | Never shown to users |
+| Proxy / vault-proxy | *(invisible)* | Never shown to users |
+| Workflow | **Action** | Button labels |
+| Command (user tier) | **Quick action** | Button labels |
+| Command (advanced tier) | *(behind "Developer Tools" toggle)* | Hidden by default |
+| compose.yml | *(invisible)* | Never shown to users |
+| Health probe | **Status badge** | Dashboard indicators |
+| 24-point verification | **"Safe" / "Warning"** badge | Single badge, details expandable |
+
+---
+
 ## Shell System (Security Levels)
 
 The shell is the security boundary around the OpenClaw agent. Inspired by lobster biology — a harder shell means more protection but less flexibility. The **intelligent warden** (Claude Code / Opus) adjusts the shell based on task context, so the user doesn't need to understand security.

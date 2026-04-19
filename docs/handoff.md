@@ -243,11 +243,13 @@ Based on code review of shell configs and tool manifest:
 
 | Document | Purpose |
 |----------|---------|
+| `docs/specs/2026-04-19-product-identity-spec.md` | **THE NORTHSTAR** — what the product actually is |
+| `docs/specs/2026-04-19-alignment-roadmap.md` | How to get from current state to v0.1.0 release |
+| `docs/specs/2026-04-18-ux-redesign.md` | Feature inventory + user story mapping |
 | `docs/superpowers/specs/2026-04-15-architecture-v2-perimeter-redesign.md` | The full v2 design spec |
-| `.claude/plans/quirky-mixing-sunbeam.md` | The implementation plan (Phases 1-7) |
-| `docs/trifecta.md` | Updated three-module relationship doc |
-| `CLAUDE.md` | Updated project instructions for AI assistants |
-| `GLOSSARY.md` | Updated terminology |
+| `docs/trifecta.md` | Three-module relationship doc |
+| `CLAUDE.md` | Project instructions for AI assistants (includes product identity) |
+| `GLOSSARY.md` | Terminology + user-facing terms mapping |
 | `config/orchestrator-workflows.yml` | Cross-component workflow definitions |
 
 ## Current CI Status
