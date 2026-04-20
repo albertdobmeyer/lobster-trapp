@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { CheckCircle, XCircle, Loader2, Play } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Play, ChevronDown, ChevronRight } from "lucide-react";
 import type { DiscoveredComponent } from "@/lib/types";
 import type { StreamLine, StreamEnd } from "@/lib/types";
+import { getSetupLabel } from "@/lib/labels";
 import { startStream, stopStream } from "@/lib/tauri";
 import AnsiLine from "@/components/renderers/AnsiLine";
 import { useToast } from "@/lib/ToastContext";
@@ -65,19 +66,12 @@ export default function SetupComponentsStep({
   );
 
   const unlistenersRef = useRef<Array<() => void>>([]);
-  const outputRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Cleanup listeners on unmount
   useEffect(() => {
     return () => {
       unlistenersRef.current.forEach((fn) => fn());
     };
-  }, []);
-
-  // Auto-scroll output containers
-  const scrollToBottom = useCallback((componentId: string) => {
-    const el = outputRefs.current[componentId];
-    if (el) el.scrollTop = el.scrollHeight;
   }, []);
 
   const runSetup = useCallback(
@@ -108,7 +102,6 @@ export default function SetupComponentsStep({
                   lines: [...prev[componentId].lines, sanitized],
                 },
               }));
-              scrollToBottom(componentId);
             }
           },
         );
@@ -150,7 +143,7 @@ export default function SetupComponentsStep({
         });
       }
     },
-    [addToast, scrollToBottom],
+    [addToast],
   );
 
   const handleStop = useCallback(
@@ -186,11 +179,11 @@ export default function SetupComponentsStep({
   return (
     <div className="max-w-2xl mx-auto py-8">
       <h2 className="text-2xl font-bold text-gray-100 mb-2">
-        Set Up Components
+        Setting Up Your Assistant
       </h2>
       <p className="text-gray-500 text-sm mb-6">
-        Run the initial setup for each component. Container builds may take a
-        few minutes.
+        This may take a few minutes. We're building a secure environment for
+        your assistant.
       </p>
 
       <div className="space-y-4">
@@ -198,88 +191,15 @@ export default function SetupComponentsStep({
           const id = comp.manifest.identity.id;
           const commandId = comp.manifest.prerequisites!.setup_command!;
           const state = states[id];
-          const isRequired = comp.manifest.prerequisites?.container_runtime;
-
           return (
-            <div
+            <SetupComponentRow
               key={id}
-              className="rounded-lg bg-gray-900 border border-gray-800 overflow-hidden"
-            >
-              <div className="flex items-center gap-3 p-4">
-                <StatusIcon status={state.status} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-200">
-                    {comp.manifest.identity.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {state.status === "pending" && "Ready to set up"}
-                    {state.status === "running" && "Setting up..."}
-                    {state.status === "done" && "Setup complete"}
-                    {state.status === "failed" &&
-                      `Failed (exit ${state.exitCode})`}
-                    {isRequired && (
-                      <span className="ml-2 text-amber-500">required</span>
-                    )}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {state.status === "pending" && (
-                    <button
-                      onClick={() => runSetup(id, commandId)}
-                      disabled={anyRunning}
-                      className="btn bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5 disabled:opacity-50"
-                    >
-                      <Play size={14} />
-                      Set Up
-                    </button>
-                  )}
-                  {state.status === "running" && (
-                    <button
-                      onClick={() => handleStop(id, commandId)}
-                      className="text-xs px-3 py-1 rounded bg-red-900 hover:bg-red-800 text-red-200"
-                    >
-                      Stop
-                    </button>
-                  )}
-                  {state.status === "failed" && (
-                    <button
-                      onClick={() => runSetup(id, commandId)}
-                      disabled={anyRunning}
-                      className="btn bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1.5 disabled:opacity-50"
-                    >
-                      <Play size={14} />
-                      Retry
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Stream output */}
-              {(state.status === "running" || state.lines.length > 0) && (
-                <div
-                  ref={(el) => {
-                    outputRefs.current[id] = el;
-                  }}
-                  className="border-t border-gray-800 bg-gray-950 p-3 font-mono text-xs text-gray-400 max-h-64 overflow-y-auto"
-                >
-                  {state.lines.length === 0 && state.status === "running" && (
-                    <span className="text-gray-600">
-                      Waiting for output...
-                    </span>
-                  )}
-                  {state.lines.map((line, i) => (
-                    <div
-                      key={i}
-                      className={
-                        line.stream === "stderr" ? "text-red-400" : ""
-                      }
-                    >
-                      <AnsiLine text={line.line} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+              comp={comp}
+              state={state}
+              anyRunning={anyRunning}
+              onRun={() => runSetup(id, commandId)}
+              onStop={() => handleStop(id, commandId)}
+            />
           );
         })}
       </div>
@@ -288,7 +208,7 @@ export default function SetupComponentsStep({
         <div className="flex items-center gap-3 p-4 rounded-lg bg-green-900/20 border border-green-800">
           <CheckCircle size={20} className="text-green-400" />
           <p className="text-sm text-green-300">
-            No components require setup.
+            Everything is already set up.
           </p>
         </div>
       )}
@@ -305,6 +225,126 @@ export default function SetupComponentsStep({
           Continue
         </button>
       </div>
+    </div>
+  );
+}
+
+function SetupComponentRow({
+  comp,
+  state,
+  anyRunning,
+  onRun,
+  onStop,
+}: {
+  comp: DiscoveredComponent;
+  state: ComponentSetupState;
+  anyRunning: boolean;
+  onRun: () => void;
+  onStop: () => void;
+}) {
+  const [showDetails, setShowDetails] = useState(false);
+  const outputRef = useRef<HTMLDivElement | null>(null);
+  const label = getSetupLabel(comp.manifest.identity.role);
+
+  // Auto-scroll when new lines arrive and details are visible
+  useEffect(() => {
+    if (showDetails && outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  }, [state.lines.length, showDetails]);
+
+  // Auto-show details while running
+  useEffect(() => {
+    if (state.status === "running") setShowDetails(true);
+  }, [state.status]);
+
+  const statusText = (() => {
+    switch (state.status) {
+      case "pending":
+        return "Ready";
+      case "running":
+        return "Setting up...";
+      case "done":
+        return "Ready to go";
+      case "failed":
+        return "Something went wrong — click Retry";
+    }
+  })();
+
+  return (
+    <div className="rounded-lg bg-gray-900 border border-gray-800 overflow-hidden">
+      <div className="flex items-center gap-3 p-4">
+        <StatusIcon status={state.status} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-200">{label}</p>
+          <p className="text-xs text-gray-500">{statusText}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {state.status === "pending" && (
+            <button
+              onClick={onRun}
+              disabled={anyRunning}
+              className="btn bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <Play size={14} />
+              Set Up
+            </button>
+          )}
+          {state.status === "running" && (
+            <button
+              onClick={onStop}
+              className="text-xs px-3 py-1 rounded bg-red-900 hover:bg-red-800 text-red-200"
+            >
+              Stop
+            </button>
+          )}
+          {state.status === "failed" && (
+            <button
+              onClick={onRun}
+              disabled={anyRunning}
+              className="btn bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <Play size={14} />
+              Retry
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Collapsible build output */}
+      {state.lines.length > 0 && (
+        <>
+          <button
+            onClick={() => setShowDetails((v) => !v)}
+            className="w-full flex items-center gap-1.5 px-4 py-2 border-t border-gray-800 text-xs text-gray-500 hover:text-gray-300"
+          >
+            {showDetails ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            {showDetails ? "Hide details" : "Show details"}
+          </button>
+          {showDetails && (
+            <div
+              ref={outputRef}
+              className="bg-gray-950 p-3 font-mono text-xs text-gray-400 max-h-64 overflow-y-auto"
+            >
+              {state.lines.map((line, i) => (
+                <div
+                  key={i}
+                  className={line.stream === "stderr" ? "text-red-400" : ""}
+                >
+                  <AnsiLine text={line.line} />
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Show spinner placeholder while running with no output yet */}
+      {state.lines.length === 0 && state.status === "running" && (
+        <div className="border-t border-gray-800 bg-gray-950 p-3 text-xs text-gray-600">
+          Waiting for output...
+        </div>
+      )}
     </div>
   );
 }

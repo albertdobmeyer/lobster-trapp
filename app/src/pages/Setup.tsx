@@ -112,7 +112,7 @@ export default function Setup() {
           />
         )}
         {step === "complete" && (
-          <CompleteStep components={components} onFinish={handleFinish} />
+          <CompleteStep onFinish={handleFinish} />
         )}
       </div>
     </div>

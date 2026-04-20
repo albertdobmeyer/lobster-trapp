@@ -65,30 +65,19 @@ describe("ComponentCard", () => {
     );
 
     expect(screen.getByText("Coming Soon")).toBeInTheDocument();
-    expect(screen.getByText("MoltBook Pioneer")).toBeInTheDocument();
-    // Should not have a link wrapping the card
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
-  test("active component renders identity.name as a link", () => {
+  test("active component renders role-based label as a link", () => {
     render(
       <MemoryRouter>
         <ComponentCard component={activeComponent} />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("OpenClaw Vault")).toBeInTheDocument();
+    // Should show "My Assistant" not "OpenClaw Vault"
+    expect(screen.getByText("My Assistant")).toBeInTheDocument();
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute("href", "/component/openclaw-vault");
-  });
-
-  test("active component shows role", () => {
-    render(
-      <MemoryRouter>
-        <ComponentCard component={activeComponent} />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("runtime")).toBeInTheDocument();
   });
 });

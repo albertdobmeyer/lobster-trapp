@@ -12,7 +12,7 @@ test.describe("Navigation and routing", () => {
   test("settings page has controls", async ({ page }) => {
     await page.goto("/settings");
     await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
-    await expect(page.getByText(/monorepo path/i).first()).toBeVisible();
+    await expect(page.getByText(/app data location/i).first()).toBeVisible();
     await expect(page.getByRole("slider")).toBeVisible();
     await expect(page.getByRole("button", { name: "Re-run Setup Wizard" })).toBeVisible();
   });
@@ -36,8 +36,8 @@ test.describe("Navigation and routing", () => {
 
   test("direct navigation to /component/unknown-id shows not-found state", async ({ page }) => {
     await page.goto("/component/unknown-id-that-does-not-exist");
-    // Should show "Component not found" (not infinite skeleton)
-    await expect(page.getByText("Component not found")).toBeVisible();
+    // Should show "Page not found" (not infinite skeleton)
+    await expect(page.getByText("Page not found")).toBeVisible();
     await expect(page.getByRole("link", { name: "Back to Dashboard" })).toBeVisible();
   });
 
@@ -57,7 +57,7 @@ test.describe("Navigation and routing", () => {
     await expect(dashboard.or(setup)).toBeVisible();
     // If on dashboard, the empty state should have a wizard link
     if (await dashboard.isVisible()) {
-      await expect(page.getByText("No components detected yet")).toBeVisible();
+      await expect(page.getByText("No assistant detected")).toBeVisible();
       await expect(wizardLink).toBeVisible();
     }
   });

@@ -14,14 +14,14 @@ export default function WelcomeStep({ onNext }: WelcomeStepProps) {
         Welcome to Lobster-TrApp
       </h1>
       <p className="text-gray-400 mb-8">
-        Your security-first desktop GUI for the OpenClaw ecosystem.
-        Let's check that everything is set up correctly.
+        Let's set up your personal AI assistant.
+        It'll run safely on your computer — you control it from Telegram.
       </p>
       <button
         onClick={onNext}
         className="btn bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 text-base"
       >
-        Let's get started
+        Get Started
       </button>
     </div>
   );

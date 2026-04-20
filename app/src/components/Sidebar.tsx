@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { LayoutDashboard, Settings } from "lucide-react";
 import type { DiscoveredComponent } from "@/lib/types";
+import { getUserLabel } from "@/lib/labels";
 import { DynamicIcon } from "./DynamicIcon";
 
 interface SidebarProps {
@@ -14,7 +15,6 @@ export default function Sidebar({ components }: SidebarProps) {
         <h1 className="text-lg font-bold text-gray-100 tracking-tight">
           Lobster-TrApp
         </h1>
-        <p className="text-xs text-gray-500 mt-0.5">OpenClaw Orchestrator</p>
       </div>
 
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
@@ -33,12 +33,6 @@ export default function Sidebar({ components }: SidebarProps) {
           Dashboard
         </NavLink>
 
-        <div className="pt-3 pb-1">
-          <p className="px-3 text-xs font-medium text-gray-600 uppercase tracking-wider">
-            Components
-          </p>
-        </div>
-
         {components.map((c) => (
           <NavLink
             key={c.manifest.identity.id}
@@ -56,7 +50,7 @@ export default function Sidebar({ components }: SidebarProps) {
               size={18}
               color={c.manifest.identity.color}
             />
-            {c.manifest.identity.name}
+            {getUserLabel(c.manifest.identity.role)}
           </NavLink>
         ))}
       </nav>

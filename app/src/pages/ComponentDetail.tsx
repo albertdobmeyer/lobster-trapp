@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import type { DiscoveredComponent } from "@/lib/types";
+import { getDetailLabel } from "@/lib/labels";
 import { useComponentStatus } from "@/hooks/useComponentStatus";
 import { useHealth } from "@/hooks/useHealth";
 import { useAppContext } from "@/lib/AppContext";
@@ -31,7 +32,6 @@ export default function ComponentDetail({ components, loading }: ComponentDetail
   }, [id, updateSettings]);
 
   if (!component) {
-    // Still loading — show skeleton instead of instant "not found"
     if (loading) {
       return (
         <div className="space-y-6">
@@ -50,7 +50,7 @@ export default function ComponentDetail({ components, loading }: ComponentDetail
 
     return (
       <div className="text-center py-20">
-        <p className="text-gray-400">Component not found</p>
+        <p className="text-gray-400">Page not found</p>
         <Link to="/" className="text-blue-400 hover:text-blue-300 text-sm mt-2 inline-block">
           Back to Dashboard
         </Link>
@@ -79,6 +79,8 @@ export default function ComponentDetail({ components, loading }: ComponentDetail
 }
 
 function PlaceholderView({ identity }: { identity: DiscoveredComponent["manifest"]["identity"] }) {
+  const label = getDetailLabel(identity.role);
+
   return (
     <div>
       <Link
@@ -96,8 +98,8 @@ function PlaceholderView({ identity }: { identity: DiscoveredComponent["manifest
         >
           <DynamicIcon name={identity.icon} size={32} color={identity.color} />
         </div>
-        <h1 className="text-2xl font-bold text-gray-300">{identity.name}</h1>
-        <p className="text-gray-500 mt-2">{identity.description}</p>
+        <h1 className="text-2xl font-bold text-gray-300">{label}</h1>
+        <p className="text-gray-500 mt-2">Coming soon.</p>
         <span className="inline-block mt-4 px-3 py-1 rounded-full bg-gray-800 text-gray-500 text-sm">
           Coming Soon
         </span>
@@ -126,6 +128,16 @@ function ActiveComponentView({
   const { status: currentStatus, loading: statusLoading } =
     useComponentStatus(componentId);
   const healthValues = useHealth(componentId, health);
+  const [showDevTools, setShowDevTools] = useState(false);
+
+  const label = getDetailLabel(identity.role);
+  const userCommands = commands.filter((c) => c.tier === "user");
+  const hasDevContent =
+    workflows.length > 0 || commands.length > userCommands.length || configs.length > 0;
+
+  // Simplified security badge from health values
+  const securityHealth = healthValues.find((h) => h.id === "security-audit");
+  const securityOk = securityHealth?.color === "green";
 
   return (
     <div className="space-y-8">
@@ -153,11 +165,11 @@ function ActiveComponentView({
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-100">
-                {identity.name}
+                {label}
               </h1>
-              <p className="text-sm text-gray-500">
-                v{identity.version} &middot; {identity.role}
-              </p>
+              {identity.role === "runtime" && (
+                <p className="text-sm text-gray-500">Running safely</p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -168,47 +180,21 @@ function ActiveComponentView({
                 loading={statusLoading}
               />
             )}
-            {identity.repo && (
-              <a
-                href={identity.repo}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-500 hover:text-gray-300"
-              >
-                <ExternalLink size={16} />
-              </a>
-            )}
           </div>
         </div>
-        <p className="text-gray-400 mt-2">{identity.description}</p>
       </div>
 
-      {/* Health badges */}
-      {healthValues.length > 0 && (
-        <div>
-          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-            Health
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {healthValues.map((hv) => (
-              <HealthBadge key={hv.id} health={hv} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Contextual guidance for the vault (runtime component) */}
+      {/* Contextual guidance */}
       {identity.role === "runtime" && (
         <div className="p-4 rounded-lg bg-gray-900 border border-gray-800">
           {currentStatus?.state_id === "running" ? (
             <div>
               <p className="text-sm text-gray-200 font-medium mb-1">
-                Your assistant is running safely inside a secure sandbox.
+                Talk to your assistant by messaging your bot on Telegram.
               </p>
               <p className="text-xs text-gray-400">
-                It can search the web, manage files, and schedule tasks — all within safe boundaries.
-                It cannot access your personal files, passwords, or SSH keys.
-                Talk to it by messaging your Telegram bot.
+                It can search the web, manage files, and schedule tasks — all within
+                safe boundaries. Your personal files and passwords are protected.
               </p>
             </div>
           ) : currentStatus?.state_id === "stopped" ? (
@@ -217,38 +203,68 @@ function ActiveComponentView({
                 Your assistant is stopped.
               </p>
               <p className="text-xs text-gray-400">
-                Click "Start Securely" below to start it with full security verification,
-                or use the Start button in the commands section for a quick start.
+                Click Start below to bring it back online.
               </p>
             </div>
           ) : currentStatus?.state_id === "not_setup" ? (
             <div>
               <p className="text-sm text-gray-200 font-medium mb-1">
-                Your assistant hasn't been set up yet.
+                Your assistant needs to be set up first.
               </p>
               <p className="text-xs text-gray-400">
-                Run the "Start Securely" workflow below to build the secure container,
-                start your assistant, and verify all 24 security checks pass.
+                Go back to the setup wizard to get started.
               </p>
             </div>
           ) : null}
         </div>
       )}
 
-      {/* Workflows */}
-      {workflows.length > 0 && (
-        <WorkflowPanel workflows={workflows} componentId={componentId} />
+      {identity.role === "network" && (
+        <div className="p-4 rounded-lg bg-gray-900 border border-gray-800">
+          <p className="text-sm text-gray-200 font-medium mb-1">
+            Agent Network — coming soon
+          </p>
+          <p className="text-xs text-gray-400">
+            The Moltbook API is currently unavailable. This feature will be enabled in a future update.
+          </p>
+        </div>
       )}
 
-      {/* Commands */}
-      {commands.length > 0 && (
+      {/* Simplified security badge */}
+      {securityHealth && (
+        <div className="flex items-center gap-2">
+          <span
+            className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+              securityOk
+                ? "bg-green-900/30 text-green-400"
+                : "bg-amber-900/30 text-amber-400"
+            }`}
+          >
+            {securityOk ? "\u2713 Safe" : "\u26A0 Check needed"}
+          </span>
+        </div>
+      )}
+
+      {/* Non-security health badges */}
+      {healthValues.filter((h) => h.id !== "security-audit").length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {healthValues
+            .filter((h) => h.id !== "security-audit")
+            .map((hv) => (
+              <HealthBadge key={hv.id} health={hv} />
+            ))}
+        </div>
+      )}
+
+      {/* User-tier commands as quick actions */}
+      {userCommands.length > 0 && (
         <div>
           <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-            Commands
+            Actions
           </h2>
           <div className="card p-4">
             <CommandPanel
-              commands={commands}
+              commands={userCommands}
               componentId={componentId}
               currentState={currentStatus?.state_id ?? null}
             />
@@ -256,15 +272,58 @@ function ActiveComponentView({
         </div>
       )}
 
-      {/* Configs */}
-      {configs.length > 0 && (
+      {/* Developer tools — collapsed */}
+      {hasDevContent && (
         <div>
-          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
-            Configuration
-          </h2>
-          <div className="card p-4">
-            <ConfigPanel configs={configs} componentId={componentId} />
-          </div>
+          <button
+            onClick={() => setShowDevTools((v) => !v)}
+            className="flex items-center gap-2 text-xs font-medium text-gray-500 uppercase tracking-wider hover:text-gray-300"
+          >
+            {showDevTools ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            Developer Tools
+          </button>
+
+          {showDevTools && (
+            <div className="space-y-6 mt-4">
+              {/* Version info */}
+              <p className="text-xs text-gray-600">
+                v{identity.version} &middot; {identity.role}
+              </p>
+
+              {/* Workflows */}
+              {workflows.length > 0 && (
+                <WorkflowPanel workflows={workflows} componentId={componentId} />
+              )}
+
+              {/* All commands */}
+              {commands.length > 0 && (
+                <div>
+                  <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+                    All Commands
+                  </h2>
+                  <div className="card p-4">
+                    <CommandPanel
+                      commands={commands}
+                      componentId={componentId}
+                      currentState={currentStatus?.state_id ?? null}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Configs */}
+              {configs.length > 0 && (
+                <div>
+                  <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+                    Configuration
+                  </h2>
+                  <div className="card p-4">
+                    <ConfigPanel configs={configs} componentId={componentId} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { CheckCircle, XCircle, Loader, ExternalLink } from "lucide-react";
 import type { PrerequisiteReport } from "@/lib/tauri";
+import { getSetupLabel } from "@/lib/labels";
 
 interface PrerequisitesStepProps {
   report: PrerequisiteReport | null;
@@ -18,7 +19,7 @@ export default function PrerequisitesStep({
     return (
       <div className="text-center py-12">
         <Loader size={32} className="animate-spin text-blue-400 mx-auto mb-4" />
-        <p className="text-gray-400">Checking prerequisites...</p>
+        <p className="text-gray-400">Checking your computer...</p>
       </div>
     );
   }
@@ -31,16 +32,16 @@ export default function PrerequisitesStep({
 
   return (
     <div className="max-w-lg mx-auto py-8">
-      <h2 className="text-2xl font-bold text-gray-100 mb-6">Prerequisites</h2>
+      <h2 className="text-2xl font-bold text-gray-100 mb-6">System Check</h2>
 
       <div className="space-y-4">
         {/* Container runtime */}
         <CheckItem
-          label="Container runtime"
+          label="Secure sandbox"
           detail={
             hasContainer
               ? `${report.container_runtime.name} — ${report.container_runtime.version}`
-              : "Docker or Podman required"
+              : "Needs to be installed"
           }
           passed={hasContainer}
           required
@@ -80,33 +81,42 @@ export default function PrerequisitesStep({
 
         {/* Submodules */}
         <CheckItem
-          label="Component submodules"
+          label="Assistant modules"
           detail={
             !allSubmodulesCloned
-              ? "Some submodules missing or have no manifest"
+              ? "Some modules are missing"
               : report.components.length < report.submodules.length
-                ? `${report.components.length} of ${report.submodules.length} components loaded (some failed to parse)`
-                : `${report.components.length} components found`
+                ? `${report.components.length} of ${report.submodules.length} modules loaded`
+                : `${report.components.length} modules found`
           }
           passed={allSubmodulesCloned && report.components.length >= report.submodules.length}
           required
         />
 
         {/* Per-component checks */}
-        {report.components.map((c) => (
+        {report.components.map((c) => {
+          // Map known component IDs to user-facing role labels
+          const roleMap: Record<string, string> = {
+            "openclaw-vault": "runtime",
+            "clawhub-forge": "toolchain",
+            "moltbook-pioneer": "network",
+          };
+          const label = getSetupLabel(roleMap[c.component_id] ?? c.component_name);
+          return (
           <CheckItem
             key={c.component_id}
-            label={c.component_name}
+            label={label}
             detail={
               c.missing_config_files.length > 0
-                ? `Missing: ${c.missing_config_files.map((f) => f.path).join(", ")}`
+                ? "Needs configuration"
                 : c.check_passed === false
-                  ? "Check command failed"
+                  ? "Check failed"
                   : "Ready"
             }
             passed={c.missing_config_files.length === 0 && c.check_passed !== false}
           />
-        ))}
+          );
+        })}
       </div>
 
       <div className="flex items-center justify-between mt-8">

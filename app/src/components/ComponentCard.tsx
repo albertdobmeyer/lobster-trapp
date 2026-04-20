@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { ExternalLink } from "lucide-react";
 import type { DiscoveredComponent } from "@/lib/types";
+import { getUserLabel } from "@/lib/labels";
 import { useComponentStatus } from "@/hooks/useComponentStatus";
 import { DynamicIcon } from "./DynamicIcon";
 import StatusBadge from "./StatusBadge";
@@ -18,6 +18,8 @@ export default function ComponentCard({ component }: ComponentCardProps) {
     isPlaceholder ? 60000 : 10000,
   );
 
+  const label = getUserLabel(identity.role);
+
   if (isPlaceholder) {
     return (
       <div className="card p-5 opacity-60">
@@ -33,16 +35,12 @@ export default function ComponentCard({ component }: ComponentCardProps) {
                 color={identity.color}
               />
             </div>
-            <div>
-              <h3 className="font-medium text-gray-300">{identity.name}</h3>
-              <p className="text-xs text-gray-600">v{identity.version}</p>
-            </div>
+            <h3 className="font-medium text-gray-300">{label}</h3>
           </div>
           <span className="text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-500">
             Coming Soon
           </span>
         </div>
-        <p className="mt-3 text-sm text-gray-500">{identity.description}</p>
       </div>
     );
   }
@@ -64,12 +62,9 @@ export default function ComponentCard({ component }: ComponentCardProps) {
               color={identity.color}
             />
           </div>
-          <div>
-            <h3 className="font-medium text-gray-100 group-hover:text-white">
-              {identity.name}
-            </h3>
-            <p className="text-xs text-gray-500">v{identity.version}</p>
-          </div>
+          <h3 className="font-medium text-gray-100 group-hover:text-white">
+            {label}
+          </h3>
         </div>
         {status && (
           <StatusBadge
@@ -77,13 +72,6 @@ export default function ComponentCard({ component }: ComponentCardProps) {
             states={status.states}
             loading={loading}
           />
-        )}
-      </div>
-      <p className="mt-3 text-sm text-gray-400">{identity.description}</p>
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-xs text-gray-600 capitalize">{identity.role}</span>
-        {identity.repo && (
-          <ExternalLink size={14} className="text-gray-600 group-hover:text-gray-400" />
         )}
       </div>
     </Link>

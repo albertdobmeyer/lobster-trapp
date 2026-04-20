@@ -3,11 +3,17 @@ import { MemoryRouter } from "react-router-dom";
 import Dashboard from "./Dashboard";
 import type { DiscoveredComponent } from "@/lib/types";
 
-// Mock ComponentCard to isolate Dashboard logic
-vi.mock("@/components/ComponentCard", () => ({
-  default: ({ component }: { component: DiscoveredComponent }) => (
-    <div data-testid="component-card">{component.manifest.identity.name}</div>
-  ),
+// Mock hooks used by Dashboard's sub-components
+vi.mock("@/hooks/useComponentStatus", () => ({
+  useComponentStatus: () => ({ status: null, loading: false, refresh: vi.fn() }),
+}));
+
+vi.mock("@/components/DynamicIcon", () => ({
+  DynamicIcon: () => <span data-testid="dynamic-icon" />,
+}));
+
+vi.mock("@/components/StatusBadge", () => ({
+  default: () => <span data-testid="status-badge" />,
 }));
 
 const makeComponent = (
@@ -22,6 +28,8 @@ const makeComponent = (
       version: "0.1.0",
       description: `${name} description`,
       role,
+      icon: "Shield",
+      color: "#10B981",
     },
     commands: [],
     configs: [],
@@ -39,26 +47,24 @@ describe("Dashboard", () => {
       </MemoryRouter>,
     );
 
-    // Skeleton cards have the pulse animation class
     const skeletons = container.querySelectorAll(".animate-pulse");
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  test("shows 'No components found' when not loading and empty", () => {
+  test("shows empty state when not loading and no components", () => {
     render(
       <MemoryRouter>
         <Dashboard components={[]} loading={false} onRefresh={vi.fn()} />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("No components detected yet")).toBeInTheDocument();
+    expect(screen.getByText("No assistant detected")).toBeInTheDocument();
   });
 
-  test("renders correct number of cards when components provided", () => {
+  test("renders assistant card for runtime component", () => {
     const components = [
       makeComponent("openclaw-vault", "OpenClaw Vault", "runtime"),
       makeComponent("clawhub-forge", "ClawHub Forge", "toolchain"),
-      makeComponent("moltbook-pioneer", "MoltBook Pioneer", "placeholder"),
     ];
 
     render(
@@ -67,25 +73,8 @@ describe("Dashboard", () => {
       </MemoryRouter>,
     );
 
-    const cards = screen.getAllByTestId("component-card");
-    expect(cards).toHaveLength(3);
-  });
-
-  test("sorts placeholders last", () => {
-    const components = [
-      makeComponent("moltbook-pioneer", "MoltBook Pioneer", "placeholder"),
-      makeComponent("openclaw-vault", "OpenClaw Vault", "runtime"),
-    ];
-
-    render(
-      <MemoryRouter>
-        <Dashboard components={components} loading={false} onRefresh={vi.fn()} />
-      </MemoryRouter>,
-    );
-
-    const cards = screen.getAllByTestId("component-card");
-    expect(cards[0]).toHaveTextContent("OpenClaw Vault");
-    expect(cards[1]).toHaveTextContent("MoltBook Pioneer");
+    expect(screen.getByText("Your AI Assistant")).toBeInTheDocument();
+    expect(screen.getByText("Skills")).toBeInTheDocument();
   });
 
   test("shows Dashboard heading", () => {

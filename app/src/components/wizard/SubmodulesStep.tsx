@@ -22,9 +22,9 @@ export default function SubmodulesStep({
 
   return (
     <div className="max-w-lg mx-auto py-8">
-      <h2 className="text-2xl font-bold text-gray-100 mb-2">Submodules</h2>
+      <h2 className="text-2xl font-bold text-gray-100 mb-2">Assistant Modules</h2>
       <p className="text-gray-500 text-sm mb-6">
-        Components are loaded as git submodules.
+        Checking that all parts of your assistant are installed.
       </p>
 
       <div className="space-y-3">
@@ -43,9 +43,9 @@ export default function SubmodulesStep({
               <p className="text-xs text-gray-500">
                 {sub.cloned
                   ? sub.has_manifest
-                    ? "Cloned with manifest"
-                    : "Cloned but missing component.yml"
-                  : "Not cloned"}
+                    ? "Installed"
+                    : "Partially installed"
+                  : "Not installed"}
               </p>
             </div>
           </div>
@@ -53,7 +53,7 @@ export default function SubmodulesStep({
 
         {report.submodules.length === 0 && (
           <p className="text-gray-500 text-sm">
-            No submodules found in components/ directory.
+            No modules found. Try re-running the setup wizard.
           </p>
         )}
       </div>
@@ -72,7 +72,7 @@ export default function SubmodulesStep({
           ) : (
             <>
               <Download size={14} />
-              Clone All Submodules
+              Install Missing Modules
             </>
           )}
         </button>

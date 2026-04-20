@@ -69,10 +69,10 @@ export default function Settings() {
         <div className="card p-4">
           <h3 className="font-medium text-gray-200 mb-2 flex items-center gap-2">
             <FolderOpen size={16} />
-            Monorepo Path
+            App Data Location
           </h3>
           <p className="text-sm text-gray-500 mb-3">
-            Override the auto-detected monorepo root directory. Leave empty for auto-detection.
+            Override where your assistant's files are stored. Leave empty to use the default location.
           </p>
           <input
             type="text"
@@ -90,7 +90,7 @@ export default function Settings() {
             Status Refresh Interval
           </h3>
           <p className="text-sm text-gray-500 mb-3">
-            How often to poll component status and health probes (in seconds).
+            How often to check if your assistant is running (in seconds).
           </p>
           <div className="flex items-center gap-3">
             <input
@@ -115,7 +115,7 @@ export default function Settings() {
             Setup Wizard
           </h3>
           <p className="text-sm text-gray-500 mb-3">
-            Re-run the first-time setup wizard to check prerequisites and configure components.
+            Re-run the first-time setup wizard to set up your assistant again.
           </p>
           <button
             onClick={async () => {
@@ -171,13 +171,7 @@ export default function Settings() {
             </p>
             <p>
               <span className="text-gray-500">Architecture:</span>{" "}
-              Manifest-driven generic renderer
-            </p>
-            <p className="pt-2">
-              Components self-describe via{" "}
-              <code className="text-gray-300">component.yml</code> manifests.
-              The GUI discovers and renders dashboards generically — no
-              hardcoded knowledge of individual components.
+              Self-describing modules
             </p>
           </div>
         </div>

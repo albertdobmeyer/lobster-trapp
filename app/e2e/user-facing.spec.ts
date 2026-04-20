@@ -1,0 +1,167 @@
+import { test, expect } from "@playwright/test";
+
+/**
+ * Non-technical user experience tests.
+ *
+ * These tests verify the frontend reframe: a user should never see
+ * developer jargon. Every page is checked for banned terms and for
+ * the presence of user-friendly language.
+ */
+
+// Developer terms that must NEVER appear in user-visible text.
+// (They can still exist in HTML attributes, data-testid, URLs, etc.)
+const BANNED_TERMS = [
+  "OpenClaw Orchestrator",
+  "OpenClaw Vault",
+  "ClawHub Forge",
+  "Moltbook Pioneer",
+  "MoltBook Pioneer",
+  "container_runtime",
+  "component.yml",
+  "compose.yml",
+  "seccomp",
+  "MITRE ATT&CK",
+  "proxy",
+  "manifest",
+  "Monorepo",
+  "monorepo",
+  "health probes",
+  "configure components",
+  "Checking prerequisites",
+  "submodule",
+  "Submodule",
+];
+
+/** Get visible text from the page, ignoring script/style/meta content */
+async function getVisibleText(page: import("@playwright/test").Page): Promise<string> {
+  return page.evaluate(() => {
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node) {
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          const tag = parent.tagName.toLowerCase();
+          if (["script", "style", "noscript"].includes(tag))
+            return NodeFilter.FILTER_REJECT;
+          // Skip invisible elements
+          const style = window.getComputedStyle(parent);
+          if (style.display === "none" || style.visibility === "hidden")
+            return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      },
+    );
+    const parts: string[] = [];
+    while (walker.nextNode()) {
+      const val = walker.currentNode.textContent?.trim();
+      if (val) parts.push(val);
+    }
+    return parts.join(" ");
+  });
+}
+
+function assertNoBannedTerms(text: string, pageName: string) {
+  for (const term of BANNED_TERMS) {
+    expect(text, `Banned term "${term}" found on ${pageName}`).not.toContain(
+      term,
+    );
+  }
+}
+
+test.describe("Non-technical user experience", () => {
+  test("setup wizard welcome uses friendly language", async ({ page }) => {
+    await page.goto("/setup");
+    await expect(
+      page.getByRole("heading", { name: /welcome/i }),
+    ).toBeVisible();
+
+    // Must contain assistant-first language
+    await expect(page.getByText(/personal AI assistant/i)).toBeVisible();
+    await expect(page.getByText(/safely|safe/i).first()).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /get started/i }),
+    ).toBeVisible();
+
+    // No developer jargon
+    const text = await getVisibleText(page);
+    assertNoBannedTerms(text, "Setup Welcome");
+    expect(text).not.toMatch(/ecosystem/i);
+    expect(text).not.toMatch(/security-first desktop GUI/i);
+  });
+
+  test("dashboard uses assistant-first language", async ({ page }) => {
+    await page.goto("/");
+
+    // Either shows dashboard or redirects to setup wizard — both are valid
+    const dashboard = page.getByRole("heading", { name: "Dashboard" });
+    const setup = page.getByText(/welcome/i);
+    await expect(dashboard.or(setup)).toBeVisible();
+
+    const text = await getVisibleText(page);
+    assertNoBannedTerms(text, "Dashboard");
+
+    // If on dashboard with empty state
+    if (await dashboard.isVisible()) {
+      // Empty state should say "assistant" not "components"
+      const emptyState = page.getByText("No assistant detected");
+      const onboarding = page.getByText(/assistant/i);
+      await expect(emptyState.or(onboarding)).toBeVisible();
+    }
+  });
+
+  test("settings page has no developer jargon in user-visible text", async ({
+    page,
+  }) => {
+    await page.goto("/settings");
+    await expect(
+      page.getByRole("heading", { name: "Settings" }),
+    ).toBeVisible();
+
+    const text = await getVisibleText(page);
+    assertNoBannedTerms(text, "Settings");
+  });
+
+  test("component detail (unknown) says 'Page not found' not 'Component not found'", async ({
+    page,
+  }) => {
+    await page.goto("/component/unknown-id");
+    await expect(page.getByText("Page not found")).toBeVisible();
+
+    const text = await getVisibleText(page);
+    assertNoBannedTerms(text, "Component Detail 404");
+  });
+
+  test("sidebar shows role-based labels, not component names", async ({
+    page,
+  }) => {
+    await page.goto("/settings"); // Settings page always has sidebar
+
+    // Sidebar should contain "Lobster-TrApp" title
+    await expect(
+      page.getByRole("heading", { name: "Lobster-TrApp" }),
+    ).toBeVisible();
+
+    // Must NOT show "OpenClaw Orchestrator" subtitle
+    await expect(page.getByText("OpenClaw Orchestrator")).not.toBeVisible();
+
+    // Must NOT show "Components" section header
+    const sidebar = page.locator("aside");
+    const sidebarText = await sidebar.textContent();
+    expect(sidebarText).not.toContain("COMPONENTS");
+    expect(sidebarText).not.toContain("Components");
+  });
+
+  test("no banned terms on any reachable page", async ({ page }) => {
+    const pages = ["/", "/setup", "/settings"];
+
+    for (const url of pages) {
+      await page.goto(url);
+      // Wait for content to render
+      await page.waitForTimeout(500);
+      const text = await getVisibleText(page);
+      assertNoBannedTerms(text, url);
+    }
+  });
+});
