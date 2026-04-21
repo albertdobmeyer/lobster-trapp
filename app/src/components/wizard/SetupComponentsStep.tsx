@@ -26,6 +26,7 @@ interface ComponentSetupState {
   status: SetupStatus;
   lines: StreamLine[];
   exitCode: number | null;
+  attempts: number;
 }
 
 interface SetupComponentsStepProps {
@@ -59,6 +60,7 @@ export default function SetupComponentsStep({
           status: "pending",
           lines: [],
           exitCode: null,
+          attempts: 0,
         };
       }
       return initial;
@@ -76,10 +78,15 @@ export default function SetupComponentsStep({
 
   const runSetup = useCallback(
     async (componentId: string, commandId: string) => {
-      // Update status to running
+      // Update status to running, increment attempt counter
       setStates((prev) => ({
         ...prev,
-        [componentId]: { status: "running", lines: [], exitCode: null },
+        [componentId]: {
+          status: "running",
+          lines: [],
+          exitCode: null,
+          attempts: (prev[componentId]?.attempts ?? 0) + 1,
+        },
       }));
 
       try {
@@ -267,7 +274,9 @@ function SetupComponentRow({
       case "done":
         return "Ready to go";
       case "failed":
-        return "Something went wrong — click Retry";
+        return state.attempts <= 1
+          ? "Didn't finish cleanly — this usually works on a second try"
+          : "Still not working — see details below or check your internet connection";
     }
   })();
 
@@ -302,10 +311,10 @@ function SetupComponentRow({
             <button
               onClick={onRun}
               disabled={anyRunning}
-              className="btn bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1.5 disabled:opacity-50"
+              className="btn bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5 disabled:opacity-50"
             >
               <Play size={14} />
-              Retry
+              Try Again
             </button>
           )}
         </div>
