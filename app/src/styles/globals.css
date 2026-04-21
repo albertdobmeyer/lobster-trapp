@@ -4,14 +4,94 @@
 
 @layer base {
   :root {
-    --color-bg: #030712;
-    --color-surface: #111827;
-    --color-border: #1f2937;
+    /* Neutral primitives */
+    --color-neutral-50: #f9fafb;
+    --color-neutral-100: #f3f4f6;
+    --color-neutral-200: #e5e7eb;
+    --color-neutral-300: #d1d5db;
+    --color-neutral-400: #9ca3af;
+    --color-neutral-500: #6b7280;
+    --color-neutral-600: #4b5563;
+    --color-neutral-700: #374151;
+    --color-neutral-800: #1f2937;
+    --color-neutral-850: #111827;
+    --color-neutral-900: #0b1120;
+    --color-neutral-950: #030712;
+
+    /* Brand */
+    --color-primary-50: #fff5f0;
+    --color-primary-200: #ffcbb0;
+    --color-primary-400: #ff8a5c;
+    --color-primary-500: #ff6b35;
+    --color-primary-600: #e55527;
+    --color-primary-700: #b84520;
+
+    /* Accent — calm blue (trust) */
+    --color-info-400: #60a5fa;
+    --color-info-500: #3b82f6;
+    --color-info-600: #2563eb;
+
+    /* Semantic */
+    --color-success-400: #34d399;
+    --color-success-500: #10b981;
+    --color-warning-400: #fbbf24;
+    --color-warning-500: #f59e0b;
+    --color-danger-400: #f87171;
+    --color-danger-500: #ef4444;
+
+    /* Surface aliases */
+    --bg-app: var(--color-neutral-950);
+    --bg-base: var(--color-neutral-900);
+    --bg-surface: var(--color-neutral-850);
+    --bg-raised: var(--color-neutral-800);
+    --bg-overlay: rgba(3, 7, 18, 0.92);
+
+    /* Text aliases */
+    --text-primary: var(--color-neutral-200);
+    --text-secondary: var(--color-neutral-400);
+    --text-muted: var(--color-neutral-500);
+    --text-inverse: var(--color-neutral-900);
+
+    /* Border aliases */
+    --border-subtle: var(--color-neutral-800);
+    --border-default: var(--color-neutral-700);
+    --border-strong: var(--color-neutral-600);
+
+    /* Interactive */
+    --accent-primary: var(--color-primary-500);
+    --accent-primary-hover: var(--color-primary-600);
+    --accent-secondary: var(--color-info-500);
+    --accent-secondary-hover: var(--color-info-600);
+
+    /* Status */
+    --status-safe: var(--color-success-500);
+    --status-warning: var(--color-warning-500);
+    --status-danger: var(--color-danger-500);
+    --status-info: var(--color-info-500);
+
+    /* Typography */
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter",
+      system-ui, sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+      "Inter", system-ui, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Menlo", monospace;
+
+    /* Motion */
+    --duration-fast: 150ms;
+    --duration-base: 250ms;
+    --duration-slow: 400ms;
+    --duration-celebratory: 600ms;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   body {
-    @apply bg-gray-950 text-gray-100 antialiased;
-    font-family: system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Custom scrollbar */
@@ -20,41 +100,131 @@
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-gray-900;
+    background-color: var(--bg-base);
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-700 rounded-full;
+    background-color: var(--border-default);
+    border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-600;
+    background-color: var(--border-strong);
+  }
+
+  /* Focus ring baseline */
+  :focus-visible {
+    outline: 2px solid var(--accent-secondary);
+    outline-offset: 2px;
   }
 }
 
 @layer components {
+  /* Cards — user mode defaults emphasize radius + elevation; dev variant is dense */
   .card {
-    @apply bg-gray-900 border border-gray-800 rounded-lg;
+    @apply bg-neutral-850 border border-neutral-800 rounded-lg;
+  }
+  .card-raised {
+    @apply bg-neutral-800 border border-neutral-800 rounded-xl shadow-md p-8;
+  }
+  .card-hero {
+    @apply bg-neutral-850 border border-neutral-800 rounded-2xl shadow-xl p-8;
+  }
+  .card-interactive {
+    @apply card cursor-pointer transition-colors duration-150 hover:border-neutral-700;
+  }
+  .card-dev {
+    @apply bg-neutral-850 border border-neutral-800 rounded-md p-4;
   }
 
+  /* Buttons */
   .btn {
-    @apply px-4 py-2 rounded-md font-medium text-sm transition-colors duration-150;
+    @apply inline-flex items-center justify-center gap-2 font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-info-500/40;
   }
+  .btn-sm {
+    @apply text-xs px-3 py-1.5 rounded-sm;
+  }
+  .btn-md {
+    @apply text-sm px-4 py-2 rounded-md;
+  }
+  .btn-lg {
+    @apply text-base px-6 py-3 rounded-md;
+  }
+  .btn-xl {
+    @apply text-lg px-8 py-4 rounded-md;
+  }
+  .btn-primary {
+    @apply bg-primary-500 hover:bg-primary-600 text-white;
+  }
+  .btn-secondary {
+    @apply bg-info-500 hover:bg-info-600 text-white;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-neutral-200 hover:bg-neutral-850;
+  }
+  .btn-danger {
+    @apply bg-danger-500 hover:bg-danger-400 text-white;
+  }
+  .btn-link {
+    @apply bg-transparent text-primary-500 hover:text-primary-400 underline-offset-4 hover:underline px-0 py-0;
+  }
+
+  /* Legacy intent variants — kept to avoid breaking existing screens; prefer btn-primary etc. */
   .btn-safe {
-    @apply bg-gray-700 hover:bg-gray-600 text-gray-100;
+    @apply bg-neutral-700 hover:bg-neutral-600 text-neutral-100;
   }
   .btn-caution {
-    @apply bg-amber-600 hover:bg-amber-500 text-white;
+    @apply bg-warning-500 hover:bg-warning-400 text-white;
   }
   .btn-destructive {
-    @apply bg-red-600 hover:bg-red-500 text-white;
+    @apply bg-danger-500 hover:bg-danger-400 text-white;
   }
-  .btn:disabled {
-    @apply opacity-50 cursor-not-allowed;
+
+  /* Status pills */
+  .pill {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border;
+  }
+  .pill-safe {
+    @apply bg-success-500/10 text-success-400 border-success-500/20;
+  }
+  .pill-warning {
+    @apply bg-warning-500/10 text-warning-400 border-warning-500/20;
+  }
+  .pill-danger {
+    @apply bg-danger-500/10 text-danger-400 border-danger-500/20;
+  }
+  .pill-info {
+    @apply bg-info-500/10 text-info-400 border-info-500/20;
+  }
+  .pill-neutral {
+    @apply bg-neutral-800 text-neutral-400 border-neutral-700;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full bg-neutral-900 border border-neutral-700 rounded-md px-3 py-2 text-sm text-neutral-200 placeholder:text-neutral-500 transition-colors duration-150 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .input-error {
+    @apply border-danger-500 focus:border-danger-500 focus:ring-danger-500/30;
   }
 }
 
 @layer utilities {
   .animate-slide-in {
     animation: slide-in 0.2s ease-out;
+  }
+
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-in,
+    .animate-slide-up,
+    .animate-slide-in,
+    .animate-celebrate {
+      animation: none !important;
+    }
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
