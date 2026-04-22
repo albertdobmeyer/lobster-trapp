@@ -1,72 +1,83 @@
 import { Component, type ReactNode } from "react";
-import { AlertTriangle, RotateCcw, Home } from "lucide-react";
+import { classifyError } from "@/lib/errors";
+import FriendlyRetry from "./failure/FriendlyRetry";
+import ContactSupport from "./failure/ContactSupport";
 
 interface Props {
   children: ReactNode;
+  /** Optional title override surfaced through to the failure component. */
   fallbackTitle?: string;
+  /** When true, skip Level 2 and go straight to ContactSupport. Defaults to false. */
+  forceContactSupport?: boolean;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
+  /** Set to true when the user clicks "Get help" from FriendlyRetry. */
+  escalated: boolean;
 }
 
+/**
+ * Spec 06 cascade:
+ *   Level 1 (silent retry) — handled at the operation level by hooks/wrappers.
+ *   Level 2 FriendlyRetry — shown for retryable / transient classifications.
+ *   Level 3 ContactSupport — shown for unrecoverable classifications, after Level 2 escalation,
+ *                            or always when forceContactSupport is set.
+ */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, escalated: false };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
+  componentDidCatch(error: Error, info: { componentStack?: string | null }) {
+    // Surface to the dev console; never to the end user.
+    if (typeof console !== "undefined") {
+      console.error("ErrorBoundary caught:", error, info?.componentStack);
+    }
+  }
+
   handleRetry = () => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false, error: null, escalated: false });
   };
 
-  handleGoHome = () => {
-    window.location.hash = "/";
-    this.setState({ hasError: false, error: null });
+  handleEscalate = () => {
+    this.setState({ escalated: true });
   };
 
   render() {
-    if (this.state.hasError) {
-      const title = this.props.fallbackTitle ?? "Something went wrong";
+    if (!this.state.hasError || !this.state.error) {
+      return this.props.children;
+    }
+
+    const classified = classifyError(this.state.error);
+    const useLevel3 =
+      this.props.forceContactSupport ||
+      this.state.escalated ||
+      !classified.retryable;
+
+    if (useLevel3) {
       return (
-        <div className="flex items-center justify-center min-h-[300px] p-6">
-          <div className="max-w-md text-center">
-            <AlertTriangle size={36} className="text-amber-500 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-gray-200 mb-2">{title}</h2>
-            <p className="text-sm text-gray-400 mb-1">
-              This part of the app encountered an error. Your data is safe.
-            </p>
-            {this.state.error && (
-              <p className="text-xs text-gray-600 font-mono mt-2 mb-4 break-all">
-                {this.state.error.message}
-              </p>
-            )}
-            <div className="flex items-center justify-center gap-3 mt-4">
-              <button
-                onClick={this.handleRetry}
-                className="btn btn-safe flex items-center gap-2"
-              >
-                <RotateCcw size={14} />
-                Try again
-              </button>
-              <button
-                onClick={this.handleGoHome}
-                className="btn flex items-center gap-2"
-              >
-                <Home size={14} />
-                Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
+        <ContactSupport
+          classified={classified}
+          onRetry={classified.retryable ? this.handleRetry : undefined}
+          titleOverride={this.props.fallbackTitle}
+        />
       );
     }
 
-    return this.props.children;
+    return (
+      <FriendlyRetry
+        classified={classified}
+        onRetry={this.handleRetry}
+        onGetHelp={this.handleEscalate}
+        titleOverride={this.props.fallbackTitle}
+      />
+    );
   }
 }

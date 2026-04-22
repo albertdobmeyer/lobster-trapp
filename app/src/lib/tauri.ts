@@ -193,3 +193,12 @@ export async function executeWorkflow(
     inputs,
   });
 }
+
+/**
+ * Returns a redacted diagnostic bundle as plain text. Safe to copy to clipboard
+ * or paste into a support email — secrets, IP addresses, and usernames are
+ * stripped server-side. See `app/src-tauri/src/commands/diagnostics.rs`.
+ */
+export async function generateDiagnosticBundle(): Promise<string> {
+  return invoke<string>("generate_diagnostic_bundle");
+}

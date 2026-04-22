@@ -23,6 +23,7 @@ thiserror = "1"
 tauri-plugin-notification = "2.3.3"
 tauri-plugin-clipboard-manager = "2.3.2"
 tauri-plugin-autostart = "2.5.1"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

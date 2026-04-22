@@ -147,6 +147,7 @@ pub fn run() {
             commands::prerequisites::create_config_from_template,
             commands::workflow_cmds::list_workflows,
             commands::workflow_cmds::execute_workflow,
+            commands::diagnostics::generate_diagnostic_bundle,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

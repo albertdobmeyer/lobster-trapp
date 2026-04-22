@@ -4,13 +4,15 @@ import { useSettings } from "@/hooks/useSettings";
 import { AppContextProvider } from "@/lib/AppContext";
 import { ToastProvider } from "@/lib/ToastContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import Layout from "@/components/Layout";
+import UserLayout from "@/components/UserLayout";
 import ModeSwitcher from "@/components/ModeSwitcher";
-import Dashboard from "@/pages/Dashboard";
-import ComponentDetail from "@/pages/ComponentDetail";
-import Settings from "@/pages/Settings";
 import Setup from "@/pages/Setup";
 import NotFound from "@/pages/NotFound";
+import Home from "@/pages/user/Home";
+import SecurityMonitor from "@/pages/user/SecurityMonitor";
+import Discover from "@/pages/user/Discover";
+import Preferences from "@/pages/user/Preferences";
+import Help from "@/pages/user/Help";
 import DevLayout from "@/layouts/DevLayout";
 import DevOverview from "@/pages/dev/DevOverview";
 import DevComponents from "@/pages/dev/DevComponents";
@@ -24,12 +26,13 @@ import DevPreferences from "@/pages/dev/DevPreferences";
 
 export default function App() {
   const { settings, loaded: settingsLoaded, update: updateSettings } = useSettings();
-  const { components, loading, refresh } = useManifests();
+  // Manifests are still discovered (used by dev mode + setup wizard); user mode no longer needs them at the top level.
+  useManifests();
 
   if (!settingsLoaded) {
     return (
-      <div className="flex items-center justify-center h-screen bg-neutral-900">
-        <div className="text-neutral-500 text-sm">Loading...</div>
+      <div className="flex h-screen items-center justify-center bg-neutral-900">
+        <div className="text-sm text-neutral-500">Loading...</div>
       </div>
     );
   }
@@ -66,8 +69,8 @@ export default function App() {
               <Route path="/dev/*" element={<Navigate to="/" replace />} />
             )}
 
-            {/* User mode — existing Layout + screens, Phase E.2 will rebuild the inner pages */}
-            <Route element={<Layout components={components} />}>
+            {/* User mode — UserLayout shell with five icon-sidebar routes */}
+            <Route element={<UserLayout />}>
               <Route
                 index
                 element={
@@ -76,23 +79,16 @@ export default function App() {
                   ) : !settings.wizardCompleted ? (
                     <Navigate to="/setup" replace />
                   ) : (
-                    <Dashboard
-                      components={components}
-                      loading={loading}
-                      onRefresh={refresh}
-                    />
+                    <Home />
                   )
                 }
               />
-              <Route
-                path="/component/:id"
-                element={
-                  <ErrorBoundary fallbackTitle="Component failed to load">
-                    <ComponentDetail components={components} loading={loading} />
-                  </ErrorBoundary>
-                }
-              />
-              <Route path="/settings" element={<Settings />} />
+              <Route path="/security" element={<SecurityMonitor />} />
+              <Route path="/discover" element={<Discover />} />
+              <Route path="/preferences" element={<Preferences />} />
+              <Route path="/help" element={<Help />} />
+              {/* Back-compat: /settings used to be the user-mode preferences route. */}
+              <Route path="/settings" element={<Navigate to="/preferences" replace />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

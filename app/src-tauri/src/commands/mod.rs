@@ -1,4 +1,5 @@
 pub mod config;
+pub mod diagnostics;
 pub mod execute;
 pub mod health;
 pub mod manifest_cmds;
