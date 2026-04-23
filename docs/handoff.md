@@ -1,24 +1,25 @@
 # Handoff — Active Mission
 
-**Last updated:** 2026-04-22 (end of session that landed E.2.0)
+**Last updated:** 2026-04-23 (end of session that landed E.2.1 and FF-merged to main)
 **Current mission:** UI/UX rebuild — Phase E.2 user-mode screens
-**Branch:** `feat/phase-e-ui-rebuild`
-**Last commit:** `dc1ec3d feat(ui): Phase E.2.0 — user layout, failure UX, diagnostic bundle`
-**Pick up at:** **Phase E.2.1 — 4-step onboarding wizard** (spec 07)
+**Branch:** **`main`** — see "Workflow change" below, this is new
+**Last commit:** `4ac2aa6 feat(ui): Phase E.2.1 — 4-step onboarding wizard`
+**Pick up at:** **Phase E.2.2 — Home Dashboard** (spec 08)
 
 ---
 
 ## ⚠️ Read this whole file before touching code
 
-This handoff is intentionally verbose. The new session has no prior context. Skipping ahead loses load-bearing detail and risks rebuilding things E.2.0 already shipped, missing established patterns, or misinterpreting the user's stated priorities. Total reading time: ~10 minutes. Worth it.
+This handoff is intentionally verbose. The new session has no prior context. Skipping ahead loses load-bearing detail and risks rebuilding things E.2.1 already shipped, duplicating patterns that are already established, or misinterpreting the user's stated priorities. Reading time: ~10 minutes. Worth it.
 
 After this file, read in this order before opening any source file:
 
-1. **The plan**: `~/.claude/plans/scalable-sprouting-creek.md` — full 7-day E.2 roadmap with progress table
+1. **The plan**: `~/.claude/plans/scalable-sprouting-creek.md` — full E.2 roadmap with progress table
 2. **Project memory**: `~/.claude/projects/-home-albertd-Repositories-lobster-trapp/memory/MEMORY.md` and the files it indexes
-3. **Phase E spec set**: `docs/specs/ui-rebuild-2026-04-21/00-HANDOFF.md` (the umbrella) plus the per-screen spec for whatever sub-phase you're working on
-4. **The current sub-phase spec**: `docs/specs/ui-rebuild-2026-04-21/user-mode/07-onboarding.md` for E.2.1
-5. **Top-level project context**: `CLAUDE.md` at the repo root and `~/.claude/CLAUDE.md` (user's global)
+3. **Phase E spec set**: `docs/specs/ui-rebuild-2026-04-21/00-HANDOFF.md` (umbrella) plus spec 08 for E.2.2
+4. **Automation strategy spec**: `docs/specs/ui-rebuild-2026-04-21/05-automation-strategy.md` — relevant because E.2.2 adds a background task (activity tracker)
+5. **The current sub-phase spec**: `docs/specs/ui-rebuild-2026-04-21/user-mode/08-home-dashboard.md`
+6. **Top-level project context**: `CLAUDE.md` at the repo root and `~/.claude/CLAUDE.md` (user's global)
 
 Only then start touching code.
 
@@ -26,13 +27,31 @@ Only then start touching code.
 
 ## What this project is
 
-Lobster-TrApp is a **desktop GUI** (Tauri 2 + React 18) that wraps the OpenClaw ecosystem in a 4-container security perimeter for **non-technical users**. The user (we call her "Karen" in specs) downloads an installer, enters an API key, connects Telegram, and gets a safe AI assistant she can chat with from her phone. The security is **invisible infrastructure** — she never sees containers, manifests, components, or shell levels.
+Lobster-TrApp is a **desktop GUI** (Tauri 2 + React 18) that wraps the OpenClaw ecosystem in a 4-container security perimeter for **non-technical users**. The user (specs call her "Karen") downloads an installer, enters an API key, connects Telegram, and gets a safe AI assistant she can chat with from her phone. The security is **invisible infrastructure** — she never sees containers, manifests, components, or shell levels.
 
-This repo is the **parent**: it bundles three submodules (`openclaw-vault`, `clawhub-forge`, `moltbook-pioneer`), defines the manifest contract, and provides the GUI. The submodules are also independent public repos for tech-savvy users who want to run them standalone — but lobster-trapp is the main user-facing product.
+This repo is the **parent**: it bundles three submodules (`openclaw-vault`, `clawhub-forge`, `moltbook-pioneer`), defines the manifest contract, and provides the GUI. The submodules are independent public repos for tech-savvy users; lobster-trapp is the main user-facing product.
 
 **Status:** ~95% complete. Hetzner-hosted, landing page live at lobster-trapp.com. Preparing to ship v0.2.0. The remaining work is the UI/UX rebuild that splits the single mixed-audience interface into two modes (user / developer) inside the same Tauri app.
 
-**Important user signal from this session:** The user has explicitly said the app is 95% done, has infinite time / tokens, wants methodical step-by-step execution across multiple sessions, **no compromises, no flattening of the plan, no simplification**. The goal is the full plan implemented and certified working. Treat this as a strict mandate.
+**User signal (reconfirmed this session):** Full scope, no compromises, no flattening of the plan. Methodical step-by-step execution across multiple sessions. "Infinite time, as many tokens as it needs." Treat as a strict mandate.
+
+---
+
+## Workflow change — IMPORTANT, new this session
+
+**`feat/phase-e-ui-rebuild` was FF-merged into `main` on 2026-04-23.** The feature branch has been deleted. All E.2.2–E.2.8 commits land **directly on `main`**. Reasoning the user agreed to:
+
+- Solo development; no external reviewer gating on one big PR
+- Release is tag-gated not HEAD-gated — v0.1.0 is tagged, v0.2.0 isn't cut until we're ready, so partial / placeholder screens sitting on main HEAD are fine
+- Long-lived feature branches create drift; commit-on-main keeps diff size small and easy to revert
+
+**What this means for you:**
+- Don't create `feat/*` branches as a reflex. Spin one up only if a specific sub-phase needs isolation for a truly risky refactor (and discuss it first).
+- Each sub-phase is one commit (or 2–3 when split per the plan — E.2.2 is split into `a` backend + `b` frontend).
+- Don't push to `origin/main` unless the user explicitly asks. Local `main` is ahead of `origin/main` by 8 commits (E.1.1 through E.2.1); user pushes when ready.
+- No PR is planned. When E.2.8 is green, user tags `v0.2.0` from main.
+
+Previous handoffs still reference the feat branch. That's stale — ignore it. This handoff is authoritative.
 
 ---
 
@@ -52,11 +71,11 @@ Phase E — UI rebuild (split modes):
   E.1.5 Tauri plugins            ✅ done — commit fa7285a
   E.1.6 system tray              ✅ done — commit fa7285a
 
-  E.2.0 shared infrastructure    ✅ done — commit dc1ec3d (just landed)
-  E.2.1 onboarding wizard        ⏭ next — start here
-  E.2.2 home dashboard           pending  (backend + frontend)
+  E.2.0 shared infrastructure    ✅ done — commit dc1ec3d
+  E.2.1 onboarding wizard        ✅ done — commit 4ac2aa6 ← LATEST
+  E.2.2 home dashboard           ⏭ next — start here
   E.2.3 security monitor         pending  (backend + frontend)
-  E.2.4 preferences              pending
+  E.2.4 preferences              pending  (unblocks /settings e2e fixes)
   E.2.5 help & support           pending  (30 FAQ entries)
   E.2.6 discover gallery         pending  (15 use-case cards)
   E.2.7 dynamic tray status      pending
@@ -68,328 +87,374 @@ Phase E — UI rebuild (split modes):
 
 ---
 
-## Scope decisions locked in by the user (do not re-litigate)
+## Scope decisions locked in — do not re-litigate
 
 | Question | Decision |
 |---|---|
-| Backend scope | **Full backend as specified** — every Rust command in the specs gets built. Activity tracker (parses vault-proxy JSONL logs), incidents, spending calculator, alerts engine, validate_api_key, generate_diagnostic_bundle (already done), autostart commands, assistant_status aggregator. No stubs. |
+| Backend scope | **Full backend as specified** — every Rust command in the specs gets built. Activity tracker (parses vault-proxy JSONL logs), incidents, spending calculator, alerts engine, validate_api_key, generate_diagnostic_bundle (done), derive_telegram_bot_url (done), autostart commands, assistant_status aggregator, pause/resume. No stubs. |
 | Discover gallery | **Ship in v0.2.0** (E.2.6). |
 | FAQ depth | **Write all 30 answers** in E.2.5 — full content, not stubs. |
-| Smoke-test E.1 first | Done 2026-04-22. Tray menu + ⌘⇧D toggle + welcome dialog + dev-mode placeholders all working. |
-
-The user explicitly chose "Full backend as specified" over the recommended "Minimal real backend + graceful empty states." So if you find yourself reaching for a stub, **stop**. Build the real thing.
+| Merge strategy | **Commit-on-main directly** after E.2.1 landed. No feature branch. |
+| Smoke-testing | Each sub-phase runs automated verification before committing. Manual smoke runs when memory permits (see memory note below). |
 
 ---
 
-## What just landed in E.2.0 (commit `dc1ec3d`)
+## What just landed in E.2.1 (commit `4ac2aa6`)
 
-These are now load-bearing. **Do not rebuild them.** Read these files before writing anything that might overlap:
+These are now load-bearing. **Do not rebuild them.** Read these files before writing anything that might overlap.
 
 ### New files
 
 ```
-app/src/components/UserLayout.tsx           — 80px icon-rail shell, max-w-6xl centered main
-app/src/components/UserSidebar.tsx          — 5 NavLinks: Home / Security / Discover / Preferences / Help
-app/src/components/failure/FriendlyRetry.tsx    — Spec 06 Level 2 screen
-app/src/components/failure/ContactSupport.tsx   — Spec 06 Level 3 screen (uses generate_diagnostic_bundle)
-app/src/pages/user/UserPlaceholder.tsx      — Reusable "Coming in Phase E.2.X" card
-app/src/pages/user/Home.tsx                 — Currently a UserPlaceholder; replaced in E.2.2
-app/src/pages/user/SecurityMonitor.tsx      — Currently a UserPlaceholder; replaced in E.2.3
-app/src/pages/user/Discover.tsx             — Currently a UserPlaceholder; replaced in E.2.6
-app/src/pages/user/Preferences.tsx          — Currently a UserPlaceholder; replaced in E.2.4
-app/src/pages/user/Help.tsx                 — Currently a UserPlaceholder; replaced in E.2.5
-app/src/content/faqs.ts                     — Type defs + FAQ_CATEGORIES; FAQS=[] until E.2.5
-app/src/content/use-cases.ts                — Type defs + USE_CASE_CATEGORIES; USE_CASES=[] until E.2.6
-app/src-tauri/src/commands/diagnostics.rs   — generate_diagnostic_bundle() + redact() with 7 unit tests
+Frontend
+app/src/components/wizard/ConnectStep.tsx       — replaces ConfigStep; two key cards, paste-swap, masked pre-populate
+app/src/components/wizard/HowToModal.tsx        — generic text-only walkthrough modal (reused in E.2.4)
+app/src/components/wizard/InstallStep.tsx       — merges Prereq+Submodules+SetupComponents; 4-item checklist, withRetry, streaming, Telegram prefetch
+app/src/components/wizard/ReadyStep.tsx         — replaces CompleteStep; celebration SVG, auto-advance, Telegram deep-link
+app/src/components/wizard/WizardProgress.tsx    — shared 4-dot progress bar for steps 2–4
+app/src/lib/wizardUtils.ts                      — withRetry, parseEnvKeys, maskKey, identifyPastedKey, isAnthropicKeyLike, isTelegramTokenLike, upsertEnvVar
+app/src/lib/wizardUtils.test.ts                 — 21 unit tests for the above
+app/src/hooks/useWizardProgress.ts              — wraps useSettings for setupProgress read/write
+app/e2e/wizard.spec.ts                          — 4 Playwright tests (Welcome render, Welcome→Connect, paste-swap, no-jargon)
+
+Backend
+app/src-tauri/src/commands/telegram.rs          — derive_telegram_bot_url(token) + 4 unit tests
 ```
 
 ### Modified files
 
 ```
-app/src/App.tsx                  — UserLayout wraps the 5 user-mode routes; / falls through to Home placeholder; /settings redirects to /preferences for back-compat
-app/src/components/ErrorBoundary.tsx — Refactored to classifyError() then route to FriendlyRetry (Level 2) or ContactSupport (Level 3); takes optional `forceContactSupport` prop
-app/src/lib/errors.ts            — Extended with severity axis + userMessage/suggestedAction/technicalDetails; added 5 new patterns (connectivity, authentication, resource, permissions, generic-not-found fallback). Existing category enum + retryable preserved.
-app/src/lib/errors.test.ts       — 20 tests (was 11), covering both legacy + new axes
-app/src/lib/settings.ts          — New fields: setupProgress, favoriteUseCaseIds, dismissedAlerts, plus SetupStep + SetupProgress + DismissedAlerts types
-app/src/lib/tauri.ts             — Added generateDiagnosticBundle() wrapper
-app/src-tauri/Cargo.toml         — Added chrono = "0.4" (default-features = false, features = ["clock", "std"])
-app/src-tauri/Cargo.lock         — chrono + transitive deps
-app/src-tauri/src/commands/mod.rs — Added pub mod diagnostics
-app/src-tauri/src/lib.rs         — Registered commands::diagnostics::generate_diagnostic_bundle in invoke_handler
+app/src/pages/Setup.tsx                         — 4-step STEP_ORDER; consumes setupProgress for crash-resume
+app/src/components/wizard/WelcomeStep.tsx       — verbatim spec copy, inline hero SVG, slide-up entrance
+app/src/lib/tauri.ts                            — added deriveTelegramBotUrl wrapper
+app/src/lib/settings.ts                         — added telegramBotUrl: string | null field + default
+app/src/styles/globals.css                      — added missing fade-in / slide-up / celebrate / pulse-ring keyframes
+
+app/src-tauri/Cargo.toml                        — added reqwest = "0.11" with default-features=false, features=["json", "rustls-tls"]
+app/src-tauri/Cargo.lock                        — reqwest + transitive deps
+app/src-tauri/src/commands/mod.rs               — pub mod telegram
+app/src-tauri/src/lib.rs                        — registered derive_telegram_bot_url in invoke_handler
 ```
 
-### Old files NOT yet deleted (intentional — removed in later phases)
+### Deleted files
 
 ```
-app/src/components/Layout.tsx          — orphaned (no imports), deleted in E.2.4 cleanup
-app/src/components/Sidebar.tsx         — orphaned, deleted in E.2.4 cleanup
-app/src/pages/Dashboard.tsx            — orphaned, replaced by user/Home.tsx in E.2.2
-app/src/pages/ComponentDetail.tsx      — orphaned, replaced by dev/DevComponentDetail in E.3
-app/src/pages/Settings.tsx             — orphaned, dev mode rebuilds in E.3 / user mode replaces in E.2.4
-app/src/components/wizard/PrerequisitesStep.tsx  — used by Setup.tsx; deleted in E.2.1 (logic moves into InstallStep)
-app/src/components/wizard/SubmodulesStep.tsx     — used by Setup.tsx; deleted in E.2.1 (logic moves into InstallStep)
+app/src/components/wizard/PrerequisitesStep.tsx    — logic merged into InstallStep sub-step A
+app/src/components/wizard/SubmodulesStep.tsx       — logic merged into InstallStep sub-step B
+app/src/components/wizard/ConfigStep.tsx           — replaced by ConnectStep (redesigned UX)
+app/src/components/wizard/SetupComponentsStep.tsx  — logic merged into InstallStep sub-step C (streaming)
+app/src/components/wizard/CompleteStep.tsx         — replaced by ReadyStep (celebration entrance)
 ```
 
-Don't pre-delete these in E.2.1; the wizard refactor will need to read them while extracting their logic into InstallStep.
+### What the wizard does now (mental model)
 
-### What you'll see if you run `npm run tauri dev` right now
+1. Welcome: one click → Get Started.
+2. Connect: Anthropic key + Telegram token, paste-swap auto-corrects mis-targeted pastes, masked pre-populate from existing `.env`, Skip allowed.
+3. Install: 4-item checklist (Check / Download / Build / Safety). Sub-step A is prereq check (missing runtime → tailored per-OS install card, not FriendlyRetry). Sub-steps B/C/D wrapped in `withRetry(2)`. Sub-step C streams `vault.setup` → `vault.start` → `forge.setup` sequentially (pioneer skipped — Meta). Sub-step D runs `vault.full-verify` + `forge.full-check` in parallel (this is the "24-point" audit). Post-Safety prefetches Telegram bot URL into `settings.telegramBotUrl`.
+4. Ready: celebration SVG, Open Telegram uses cached URL, 5-second auto-advance with Stay-here cancel.
 
-- App opens to `/setup` (if `wizardCompleted: false`) or `/` Home placeholder (if true).
-- New 80px icon sidebar on the left with 5 rails. Each rail navigates to a styled placeholder card announcing which sub-phase will replace it.
-- ⌘⇧D still toggles dev mode. Dev sidebar (240px wide) and placeholder pages still work.
-- System tray menu still has "Assistant status — initializing" / Open Dashboard / Quit. (Dynamic status comes in E.2.7.)
+### What was NOT verified in E.2.1
+
+**Manual smoke test was skipped.** When E.2.1 committed, memory was at 855 MiB free / 3.4 GiB swap. The user's `~/.claude/CLAUDE.md` forbids starting dev servers (Tauri dev, heavy builds) when swap > 500 MB, and the container-build portion of InstallStep needs real Podman + real secure-start to exercise. Automated verification (tsc clean, vitest 175/175, cargo test 28/28, cargo build clean, orchestrator 42/42, wizard playwright 4/4) all passed.
+
+**What this means for you:** before going deep into E.2.2, it's worth running a manual smoke on E.2.1 if memory permits. The path E.2.2 builds on (containers running, `.env` populated, vault-proxy logging) is exactly what InstallStep sets up. Finding a bug there now is cheaper than finding it while debugging Home. An 11-step smoke matrix appears in the E.2.1 commit body (`git show 4ac2aa6`) — or just run `npm run tauri dev` fresh, wipe settings, walk through welcome → connect → install → ready.
 
 ---
 
-## E.2.1 — Onboarding Wizard (spec 07): your job for the next session
+## Pre-existing Playwright regressions on main — DO NOT try to fix in E.2.2
+
+5 e2e specs fail on main. Confirmed pre-existing (from E.2.0's UserLayout refactor, NOT from E.2.1 — verified this session by stashing E.2.1 and running the suite against b480607):
+
+| Spec | Test | Fails because |
+|---|---|---|
+| `e2e/navigation.spec.ts:12` | settings page has controls | expects old sidebar structure |
+| `e2e/navigation.spec.ts:20` | unknown route shows 404 page with navigation | expects old sidebar |
+| `e2e/smoke.spec.ts:21` | navigation to /settings works | expects old `<h1>Settings</h1>` |
+| `e2e/user-facing.spec.ts:114` | settings page has no developer jargon | expects old sidebar text |
+| `e2e/user-facing.spec.ts:136` | sidebar shows role-based labels | expects old `<h1>Lobster-TrApp</h1>` in sidebar |
+
+These all target the `/settings` route and the old `Layout`/`Sidebar.tsx` structure. E.2.0 replaced that with `UserLayout` + icon rail. The fix lives in **E.2.4** when Preferences replaces the user-mode Settings page. Updating the tests earlier would create dead-code (they'd test placeholders). **Leave them alone in E.2.2.**
+
+If you run `npx playwright test` during E.2.2 verification, expect 20 passed / 5 failed. Your new tests should be added to the passed count, not replace the failing ones.
+
+---
+
+## E.2.2 — Home Dashboard (spec 08): your job for the next session
 
 ### The target
 
-Take a user from "just installed Lobster-TrApp" to "running assistant + Telegram open" in **under 3 minutes with 4 clicks**.
+Karen's landing page after setup. Shows: assistant status, spending so far this month, recent activity, proactive alerts, tip of the day. Every piece is live data from real Rust commands — no stubs.
 
+Per the plan's commit strategy E.2.2 splits into two commits:
+- `feat(backend): Phase E.2.2a — assistant status + spending + activity + alerts commands`
+- `feat(ui): Phase E.2.2b — home dashboard with hero card + stat tiles + tip + alerts`
+
+Doing backend first means cargo errors surface before they can block UI work.
+
+### Prereq: compose.yml bind mount for vault-proxy logs
+
+The activity tracker needs to tail `/var/log/vault-proxy/requests.jsonl`, which lives **inside** the `vault-proxy` container. Plan's risk note (ll.289–291) evaluated three options:
+
+- **(a) Bind mount in `compose.yml`** — recommended
+- (b) `podman exec tail -f` — brittle, doesn't survive container restarts (the E.2.1 handoff warned about this explicitly)
+- (c) Subscribe to container stdout via podman API — cleanest in theory, most code
+
+Use (a). Add to `compose.yml`:
+
+```yaml
+services:
+  vault-proxy:
+    volumes:
+      - ./logs/vault-proxy:/var/log/vault-proxy
 ```
-Step 1: Welcome    (1 click — Get Started)
-Step 2: Connect    (2 inputs — Anthropic API key + Telegram bot token; Skip is allowed)
-Step 3: Install    (0 inputs — runs prereq check + submodule init + container build + safety audit, all auto-retried)
-Step 4: Ready      (1 click — Open Telegram via deep-link to the user's bot)
-```
 
-The current wizard at `app/src/pages/Setup.tsx` is **6 steps and ~25 clicks**. Your job is to collapse it to 4 steps and ~4 clicks while preserving all functional outcomes (prereqs verified, submodules initialised, components built, .env populated).
+Also:
+- Create `logs/.gitkeep` and add `logs/` to `.gitignore` (the directory itself needs to exist so the bind mount works)
+- Verify `components/openclaw-vault/proxy/vault-proxy.py:52` writes to `/var/log/vault-proxy/requests.jsonl` — if it's a different path, update the mount target to match, don't change the submodule
+- After the mount is added, `podman compose down && podman compose up -d` to get the volume mounted (do NOT destroy data by mistake — the existing containers have been running 2+ days)
+- This is a user-triggered step (podman may need sudo in some setups); present the exact commands to the user rather than trying to execute via Bash tool
 
-### Files to create
+### Files to create — Backend (E.2.2a)
 
 | File | Purpose |
 |---|---|
-| `app/src/components/wizard/WizardProgress.tsx` | Shared 4-dot progress bar (●──●──○──○ visual). Visible on steps 2–4. |
-| `app/src/components/wizard/ConnectStep.tsx` | Replaces `ConfigStep.tsx`. Two key cards (Anthropic + Telegram), inline regex validation with green checkmark, paste-swap auto-detection, "Show me how to get one" link opening HowToModal, pre-population from existing `.env` (masked), Skip button to continue with empty keys. |
-| `app/src/components/wizard/HowToModal.tsx` | Reusable modal with screenshots + numbered steps. Used in ConnectStep and (later in E.2.4) in Preferences key-change flow. Build it generic. |
-| `app/src/components/wizard/InstallStep.tsx` | Merges `PrerequisitesStep.tsx` + `SubmodulesStep.tsx` + `SetupComponentsStep.tsx`. 4-item friendly checklist ("Checked your computer / Downloaded the AI parts / Building your assistant / Testing safety checks"). Auto-retry per spec 05 (max 2 retries, exponential-ish backoff). Show technical details collapsed by default. Live ETA. Parallelise where safe. |
-| `app/src/components/wizard/ReadyStep.tsx` | Renamed from `CompleteStep.tsx` (or built fresh — your call). Celebration illustration, scale + fade-in spring entrance, "Open Telegram" deep-link, "Go to dashboard" secondary, 5-second auto-advance countdown. Respect `prefers-reduced-motion`. |
+| `app/src-tauri/src/commands/assistant_status.rs` | `get_assistant_status()` returns `running \| paused \| error \| not_setup \| offline \| api_key_invalid` by composing vault-agent container state + vault-proxy readiness + API key validity. Read container state via `podman ps --filter name=vault-` (same pattern as `diagnostics.rs::collect_container_status`). Cache key-validity for 1 hour in the store to avoid paid API calls per poll. |
+| `app/src-tauri/src/commands/spending.rs` | `get_spending_summary() -> SpendingSummary { month_cents, month_limit_cents, day_avg_cents }`. Reads day entries from Tauri store keyed `spending:{YYYY-MM}:{DD}` each `{ tokens_in, tokens_out, cost_cents, calls }`. Aggregates for the current month. |
+| `app/src-tauri/src/pricing.rs` | Anthropic model price constants. Prices are per-million-tokens — hold them as `u64` millicents (sub-cent precision), NOT f64. Include a `// TODO: fetch from API when available` comment. Cover: claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 (the three in the repo CLAUDE.md). Unknown-model fallback: use most-expensive rate + log warning (conservative — never under-report). |
+| `app/src-tauri/src/commands/activity.rs` | `get_activity_timeline(start_date, end_date) -> Vec<ActivityEvent>` reads from store key `activity_log:{YYYY-MM-DD}`. Also `append_activity_event(event)` (called by `activity_tracker.rs`). Event shape per spec 08 — `{ id, timestamp, type: "telegram.message.received" \| "agent.tool.web_fetch" \| "agent.reasoning.start" \| ..., summary, conversation_id? }`. |
+| `app/src-tauri/src/activity_tracker.rs` | **Background task** started from `lib.rs::run()`. Tails `./logs/vault-proxy/requests.jsonl` (after the bind mount). Parses each JSON line, classifies into one of the event types per spec, calls `append_activity_event`. Emits `activity:appended` Tauri event for live UI updates. Use `tokio::fs::File` + `BufReader::lines()`. Handle file-not-yet-created by retrying with backoff. Handle log rotation by re-opening on EOF after a delay. |
+| `app/src-tauri/src/commands/alerts.rs` | `get_active_alerts() -> Vec<Alert>` evaluated every 60s (separate background task). Conditions: spending over threshold, api key invalid, container crashed. Returns active alerts from an in-memory `Mutex<Vec<Alert>>`. Reads `dismissedAlerts` from settings to filter per-session dismissals. |
+| `app/src-tauri/src/commands/assistant_control.rs` | `pause_assistant()`, `resume_assistant()`, `retry_assistant_start()`. Wraps `podman compose stop vault-agent` / `start` / `restart`. Use the `run_shell` helper in `runner.rs` — don't shell out directly. |
 
-### Files to modify
+### Registration chores (E.2.2a)
 
-| File | Change |
+- `app/src-tauri/src/commands/mod.rs` — add `pub mod assistant_status; pub mod spending; pub mod activity; pub mod alerts; pub mod assistant_control; pub mod pricing;`
+- `app/src-tauri/src/lib.rs` —
+  - Add `mod activity_tracker;`
+  - In `run()`, before `.invoke_handler`, start two background tasks using `tauri::async_runtime::spawn`: the activity tracker and the alerts evaluator
+  - Register all 8 new commands (get_assistant_status, get_spending_summary, get_activity_timeline, get_active_alerts, pause_assistant, resume_assistant, retry_assistant_start — plus any helpers) in `invoke_handler![]`
+- `app/src/lib/tauri.ts` — add typed wrappers for each
+
+### Files to create — Frontend (E.2.2b)
+
+| File | Purpose |
 |---|---|
-| `app/src/pages/Setup.tsx` | Rewrite `STEP_ORDER` to `["welcome", "connect", "install", "ready"]`. Replace step state with `setupProgress` from settings (already wired in E.2.0 — just consume it). On mount, resume at `setupProgress.step` if non-null. On step advance, `updateSettings({ setupProgress: { step, completedSteps, skippedKeys } })`. On completion, `updateSettings({ wizardCompleted: true, setupProgress: null })`. |
-| `app/src/components/wizard/WelcomeStep.tsx` | Use new copy from spec 07 § Step 1. Add hero illustration placeholder (real SVG comes in E.4). Slide-up + fade-in entrance animation. |
+| `app/src/pages/user/Home.tsx` | Replaces the current `UserPlaceholder`. Layout per spec 08: ProactiveAlertsBanner (conditional) → HeroStatusCard → three StatTiles → TipOfTheDay/ActionCard. |
+| `app/src/components/user/HeroStatusCard.tsx` | 6 state variants: running / paused / warning / error / not_setup / api_key_invalid. Illustration + title + subline + two action buttons. api_key_invalid state links to /preferences (back-compat route, will become native in E.2.4). |
+| `app/src/components/user/StatTile.tsx` | Reusable 3×: Security, Activity, Spending. Title + big value + sub-line, optional progress bar, optional colored accent border when concerning. |
+| `app/src/components/user/TipOfTheDay.tsx` | Deterministic pick: `dayOfYear % USE_CASES.length`. "Try this" opens Telegram with prefilled prompt. **Gracefully handle `USE_CASES.length === 0`** — show "Try sending your first message" fallback (use-cases don't populate until E.2.6). |
+| `app/src/components/user/ProactiveAlertsBanner.tsx` | Stacks multiple alerts, dismiss-per-session writes to `settings.dismissedAlerts` (already wired). |
+| `app/src/hooks/useAssistantStatus.ts` | Polls `get_assistant_status()` every 10s. Also listens to a `status-changed` Tauri event (emit from backend on container state transitions). |
+| `app/src/hooks/useSpendingSummary.ts` | Polls every 30s. |
+| `app/src/hooks/useActivitySummary.ts` | Listens to `activity:appended` event for live updates. |
+| `app/src/hooks/useAlerts.ts` | Polls every 60s. |
 
-### Files to delete
+### Routing update
 
-| File | After what |
-|---|---|
-| `app/src/components/wizard/PrerequisitesStep.tsx` | After InstallStep absorbs its logic |
-| `app/src/components/wizard/SubmodulesStep.tsx` | After InstallStep absorbs its logic |
-| `app/src/components/wizard/ConfigStep.tsx` | After ConnectStep replaces it |
-| `app/src/components/wizard/SetupComponentsStep.tsx` | After InstallStep replaces it |
-| `app/src/components/wizard/CompleteStep.tsx` | After ReadyStep replaces it |
+`app/src/App.tsx` — the `/` index route currently renders `UserPlaceholder` (pending Home). Point it at the new `Home.tsx`. Verify via the existing tests that dev-mode redirect (`/` → `/dev` when `mode === "developer"`) still works.
 
-Verify nothing else imports them (`grep -rn "from \"@/components/wizard/PrerequisitesStep\"" src/` etc.) before deleting.
+### Event types for the activity tracker
 
-### Settings infrastructure already in place — do not duplicate
+From spec 08 § "Activity Event Types" — implement at minimum:
 
-`app/src/lib/settings.ts` already has these fields, added by E.2.0:
+- `telegram.message.received`
+- `telegram.message.sent`
+- `agent.reasoning.start`
+- `agent.reasoning.complete`
+- `agent.tool.web_fetch`
+- `agent.tool.skill.{skill_id}`
+- `security.request.blocked` (route to incidents in E.2.3)
+- `api.call.completed` (used to update spending)
 
-```ts
-setupProgress: SetupProgress | null;   // SetupProgress = { step, completedSteps, skippedKeys? }
-SetupStep = "welcome" | "connect" | "install" | "ready"
-```
+Classify by inspecting the JSON line's `event_type` or `action` field (check `components/openclaw-vault/proxy/vault-proxy.py:52` to see the actual schema — don't guess).
 
-`useSettings` (`app/src/hooks/useSettings.ts`) already shallow-merges saved partials with `DEFAULT_SETTINGS`, so users on the old wizard who already had `wizardCompleted: false` will get `setupProgress: null` automatically. No migration needed.
+### Pricing calculation
 
-### Auto-retry pattern (spec 05)
+When classifying `api.call.completed`, multiply tokens × rate. Store sub-cent precision internally (e.g. `cost_millicents: u64`) and only display rounded cents. Model → rate map goes in `pricing.rs`; if the model isn't recognized, fall back to the most expensive rate and log a warning (conservative — prevents under-reporting).
 
-Wrap container builds and other transient-failure-prone operations:
+### Acceptance criteria (spec 08)
 
-```ts
-async function withRetry<T>(op: () => Promise<T>, maxRetries = 2): Promise<T> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await op();
-    } catch (err) {
-      if (attempt === maxRetries) throw err;
-      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-    }
-  }
-  throw new Error("unreachable");
-}
-```
-
-User sees "Building your assistant…" the whole time — no indication of retry. Only after final failure surfaces a Level 2 (FriendlyRetry) screen via the existing `errors.ts` + `FriendlyRetry` component.
-
-**Use the existing classifyError pipeline** — it now distinguishes severities. The catch block in InstallStep should `classifyError(err)`, render FriendlyRetry, and use its `onGetHelp` callback to escalate to Level 3 ContactSupport. Both components are at `app/src/components/failure/`.
-
-### Paste-swap detection
-
-In ConnectStep, listen for paste events on both key inputs. Detect:
-
-- Anthropic key: starts with `sk-ant-`
-- Telegram token: matches `/^\d{6,12}:[A-Za-z0-9_-]{30,}$/`
-
-If user pastes an Anthropic key into the Telegram field (or vice versa), auto-move the value to the correct field and announce via `aria-live="polite"`: "That looks like an Anthropic key; moved to the right field."
-
-### Telegram bot deep-link derivation (ReadyStep)
-
-The Telegram bot token has format `{bot_id}:{secret}`. To get the bot's `@username` for deep-linking, call:
-
-```
-GET https://api.telegram.org/bot{TOKEN}/getMe
-```
-
-Response includes `result.username`. If username is "MyAssistantBot", deep-link is `https://t.me/MyAssistantBot?text=Hi`. The `text=` query param pre-fills a "Hi" message so when Telegram opens, the user just hits send.
-
-Fallback if getMe fails or token is missing: open generic `https://telegram.org` and show toast "Set up Telegram first to chat with your assistant."
-
-This call should be made **server-side** (new Tauri command) to avoid CSP / CORS issues — the existing CSP at `app/src-tauri/tauri.conf.json` only allows `connect-src ipc: http://ipc.localhost`. So either add a new Rust command `derive_telegram_bot_url(token)` that does the fetch, or relax the CSP. **Prefer the Rust command** — it's cleaner and the user's token shouldn't be in browser memory longer than necessary.
-
-### What "Install" actually does
-
-The InstallStep needs to run these in order (B and C can parallelise; D waits for C):
-
-| Sub-step | What | Existing API |
-|---|---|---|
-| A — Check your computer | Podman/Docker detection, disk space, network | `checkPrerequisites()` already exists at `app/src/lib/tauri.ts` |
-| B — Download the AI parts | `git submodule update --init --recursive` | `initSubmodules()` already exists |
-| C — Build your assistant | `podman compose build` for vault + forge containers | Use existing `runCommand()` to invoke each component's `setup` command. **Skip pioneer** — see Pitfalls section below. |
-| D — Test safety checks | Run the 24-point safety audit workflow | `executeWorkflow()` with workflow id from `config/orchestrator-workflows.yml` |
-
-Wrap each in `withRetry()`. Surface combined progress to the friendly checklist. "Show technical details" expands to a scrolling pre with the raw stdout/stderr.
-
-### Acceptance criteria (from spec 07)
-
-- [ ] Total time from "Get Started" to "Your assistant is ready!": **under 3 minutes** with valid keys
-- [ ] Clicks from Welcome to Ready: **4 total**
-- [ ] Zero raw Podman output visible unless "Show technical details" toggled
-- [ ] Zero developer terminology in any step ("container", "manifest", "submodule", "podman", "component" all banned)
-- [ ] Wizard resumes from last step on app crash mid-wizard
-- [ ] All failure states route through Level 2 FriendlyRetry before Level 3 ContactSupport
+- [ ] HeroStatusCard renders all 6 state variants cleanly
+- [ ] Status changes within 3s of a backend container state change (tested manually with `podman stop vault-agent`)
+- [ ] Sending a Telegram message populates ActivityTimeline within 3s
+- [ ] Spending calculation matches Anthropic console to within 1 cent (spot-check with one real conversation)
+- [ ] Triggering 80% threshold surfaces a ProactiveAlertsBanner AND emits a system notification
+- [ ] Pause/Resume from HeroStatusCard works end-to-end
+- [ ] No developer terminology anywhere on the screen (no container, proxy, manifest, podman, vault, forge)
 - [ ] UX rubric ≥ 9/10 on every applicable principle
-
-### Verbatim copy (use these exact strings)
-
-Spec 07 § "Copy / Text Bank (Final)" lists 30 strings. Use them verbatim. Do not paraphrase. Examples:
-- `welcome.title` = "Welcome to Lobster-TrApp"
-- `welcome.subtitle` = "Your personal AI assistant, safe on your computer. Let's get you set up — it takes about 3 minutes."
-- `connect.subtitle` = "Your assistant needs two things to work. Enter them once and you're done. Nothing leaves your computer."
-- `install.step.check` = "Check your computer"
-- `install.step.download` = "Download the AI parts"
-- `install.step.build` = "Build your assistant"
-- `install.step.safety` = "Test safety checks"
-- `ready.title` = "Your assistant is ready! 🎉"
 
 ---
 
 ## Critical context the new instance won't intuit
 
-### Pitfalls discovered this session
+### Patterns established in E.2.1 that E.2.2 should reuse
 
-1. **Pioneer is dead.** `moltbook-pioneer` was acquired by Meta and its API is deferred indefinitely. The submodule still exists in the repo for historical/structural reasons but **do not build the pioneer container** in InstallStep. Build only vault and forge. Pioneer-related UI (e.g. Installed Skills card in Security Monitor) will show static "All clean — 0 skills installed" placeholders until further notice.
+- **Rust HTTP calls**: `reqwest = "0.11"` with `default-features = false, features = ["json", "rustls-tls"]` is now a Cargo dep. See `app/src-tauri/src/commands/telegram.rs` for the recipe: `#[tauri::command] pub async fn foo() -> Result<T, String>`, `reqwest::Client::builder().timeout(...).build()`, parse with `.json::<MyResponse>()`. No CSP changes needed because Rust-side HTTP isn't governed by webview `connect-src`.
+- **withRetry pattern**: `app/src/lib/wizardUtils.ts::withRetry(op, maxRetries=2, onRetry?)`. Linear backoff (2s, 4s). Use for any transient-failure-prone op you call from the UI (network, container commands). Don't wrap user-action-required failures (missing runtime, invalid input).
+- **Error cascade**: classifyError → FriendlyRetry (Level 2, retryable) → ContactSupport (Level 3, unretryable or post-retry). Both components at `app/src/components/failure/`. Example wiring in `InstallStep.tsx` lines ~270–310.
+- **Inline SVG illustrations**: hand-rolled using design tokens is the current convention. See `WelcomeStep.tsx` (lobster + shield) and `ReadyStep.tsx` (confetti + waving lobster). E.4 will swap these for unDraw assets. For E.2.2 HeroStatusCard illustrations you can (a) hand-roll more lobster moods or (b) reuse Lucide icons at 2× scale with colored accent circles. (b) is faster and still distinctive enough.
+- **Animations**: `globals.css` now has `animate-fade-in`, `animate-slide-up`, `animate-celebrate`, `animate-pulse-ring`, `animate-slide-in` — all auto-respect `prefers-reduced-motion`. Don't define more unless you really need them.
+- **Settings persistence**: `useSettings().update(partial)` does optimistic in-memory + async store write. `telegramBotUrl: string | null` field exists (E.2.1 added it); `favoriteUseCaseIds`, `dismissedAlerts`, `setupProgress` already wired.
+- **Tauri invoke wrapper pattern**: add Rust command → register in `commands/mod.rs` + `lib.rs::run()` invoke_handler → add typed wrapper in `app/src/lib/tauri.ts`. The `telegram.rs` + `deriveTelegramBotUrl` pair is the canonical E.2.1 reference.
+- **Toast feedback**: `useToast().addToast({ type, title, message, duration })` for any user-initiated action that succeeds or fails.
+- **Clipboard writes**: use `writeText` from `@tauri-apps/plugin-clipboard-manager`. The `navigator.clipboard.writeText` path is blocked by CSP.
+- **Card classes**: `.card`, `.card-raised`, `.card-hero`, `.card-interactive`, `.card-dev` — all in `globals.css`.
 
-2. **vault-proxy logs already exist.** E.2.3 will need to parse them. They live at `/var/log/vault-proxy/requests.jsonl` *inside the vault-proxy container*. Implementation file: `components/openclaw-vault/proxy/vault-proxy.py:52`. To consume from the host, mount the log file as a bind mount in `compose.yml`. Don't try to `podman exec tail -f` — it doesn't survive container restarts.
+### Pitfalls specific to E.2.2
 
-3. **Permission-denied trap in error patterns.** When extending `errors.ts`, the bare phrase `permission denied` appears in many higher-level wrappers (e.g. `Config write error: permission denied`). The permissions pattern uses `\bEACCES\b|\bEPERM\b` — match only the OS error tokens, not the bare phrase. Otherwise more-specific patterns lose to a greedy permissions match. (Bit me in E.2.0 — fixed by tightening the regex.)
+1. **Background task lifecycle.** The activity tracker and alerts evaluator are long-running loops. Start them from `lib.rs::run()` via `tauri::async_runtime::spawn`. Use a `tokio::sync::watch` or `tokio::sync::oneshot` channel to signal shutdown so `app.on_window_event` can cleanly stop them on close. Don't busy-loop — use `tokio::time::sleep(Duration::from_secs(n))`.
 
-4. **`cd` doesn't persist between Bash tool calls.** Each Bash invocation gets a fresh shell. Either chain commands with `&&`, or use absolute paths. The user's CLAUDE.md prefers absolute paths.
+2. **Log file doesn't exist at first startup.** The bind mount `./logs/vault-proxy/requests.jsonl` won't exist until vault-proxy has served at least one request. Activity tracker must handle this: `match File::open(path).await { Ok(f) => tail(f), Err(_) => sleep(5s).then(retry) }`.
 
-5. **Cargo not on PATH by default.** Always prefix with `source ~/.cargo/env &&` or chain `cd app/src-tauri && source ~/.cargo/env && cargo ...`.
+3. **Log rotation / truncation.** If vault-proxy rotates the log (deletes and recreates), `BufReader` holds the old inode. Handle by checking `file.metadata().len() < last_known_len` → re-open. Rare but possible over long sessions.
 
-6. **Bash exit code 144 from `pkill`.** When killing tauri-dev process trees, the bash process itself can exit 144 due to SIGUSR1 propagation. Doesn't mean the kill failed. Re-check with `ps aux` to verify.
+4. **Pricing precision.** Anthropic quotes like "$3.00 per million input tokens, $15.00 per million output tokens". Store as `u64` millicents (1/1000 of a cent). For Haiku 4.5 the cost of a 1-token reply is ~0.001 cents — integer cents would round everything to $0.00. Millicents give 3 decimal precision which is plenty. Only round when displaying.
 
-7. **Memory is tight.** User's machine has 7.2 GiB total RAM. After E.2.0 with no dev server: ~843 MiB free, swap at 3.2 GiB. Always kill `tauri dev` between iterations. CLAUDE.md (global) lists the cleanup commands.
+5. **Activity store key sharding.** `activity_log:{YYYY-MM-DD}` keys. Don't store all events in one giant key — 30 days × 100 events/day = 3000-element Vec rewriting on every append. Per-day keys cap it at ~100 events rewritten per append. If spec 08 says otherwise, follow the spec.
 
-8. **Lucide icon TypeScript quirk.** When typing nav config arrays with Lucide icons, import `type LucideIcon` from `lucide-react` rather than typing as `React.ComponentType<{size?: number}>`. The latter fails strict type-check because Lucide's actual type is `ForwardRefExoticComponent<...>`. See `app/src/components/UserSidebar.tsx` for the pattern.
+6. **HeroStatusCard variant for `api_key_invalid`.** The primary CTA should open `/preferences`. Today `/preferences` is a `UserPlaceholder` (E.2.4 replaces it). That's fine — tapping it still navigates and the placeholder says "Coming in Phase E.2.4". Don't stub a working key-change flow inside the placeholder just to satisfy this link.
 
-9. **Tauri tray needs `tray-icon` Cargo feature.** Already enabled in E.1 (`tauri = { version = "2", features = ["tray-icon"] }`) — don't revert it if you bump tauri.
+7. **TipOfTheDay when use-cases list is empty.** `app/src/content/use-cases.ts` currently exports `USE_CASES = []` (stubbed in E.2.0, populated in E.2.6). TipOfTheDay must render a fallback — don't throw or render nothing. Fallback copy: "Try sending your first message to your assistant."
 
-10. **The CSP locks down `connect-src` to ipc.** Any frontend code that needs to fetch from a real URL (like `api.telegram.org`) must do so via a Rust command, not from React directly. See the Telegram bot deep-link section above.
+8. **Assistant status aggregation has race conditions.** Container state, proxy readiness, and key validity are three async reads. If you poll each, you get partial pictures. Two options: (a) poll them in parallel with `tokio::join!` and synthesize the enum from the combined result; (b) run a single `podman-compose ps` call and parse all at once. (a) is more code but gives better error granularity (you can tell the user "API key invalid" separately from "container crashed"). Recommend (a).
+
+9. **`api_key_invalid` state needs a cheap test.** Don't run models.list on every poll — that's a paid API call. Cache validity for 1 hour in the store. Only revalidate on: app startup, settings write, user-triggered retry. Invalid → cache for 10 minutes then recheck.
+
+10. **Spending calc should come from activity log, not from Anthropic.** Don't try to hit the Anthropic billing API (not a real endpoint). Instead: every `api.call.completed` event from vault-proxy's log includes `tokens_in`, `tokens_out`, `model`. Multiply by rate, sum per-day, aggregate per-month. This is also why the activity tracker needs to be robust — spending depends on it.
 
 ### Architectural invariants — do not violate
 
-- The Tauri Rust backend stays **manifest-driven and generic**. It does not contain component-specific logic. (Read repo CLAUDE.md "The Generic Architecture Constraint" for full statement.)
-- The user-facing UI **never exposes developer concepts**: no "container", "proxy", "manifest", "compose", "vault", "forge", "pioneer", "seccomp", "component.yml", "podman", "submodule", "shell level", "Rust", "invoke", "Tauri command". Map terms via `app/src/lib/labels.ts` (already exists) or just use friendly synonyms. Spec 02 has the canonical list.
-- Manifest schema changes touch THREE alignment layers and break things if any one is missed: `schemas/component.schema.json`, `app/src-tauri/src/orchestrator/manifest.rs`, `app/src/lib/types.ts`. Don't change schemas in E.2 unless absolutely necessary.
-- Per the user's CLAUDE.md: don't create PROGRESS.md / IMPLEMENTATION.md / SUMMARY.md files. (This `handoff.md` is allowed because it already exists in the repo and is the canonical "current state and next steps" doc, referenced from the repo CLAUDE.md.)
+- Tauri Rust backend stays **manifest-driven and generic**. The commands you're adding in E.2.2 are generic in that they operate on the perimeter as a whole, not on specific component internals. Good.
+- User-facing UI **never exposes developer concepts**: container, proxy, manifest, compose, vault, forge, pioneer, seccomp, component.yml, podman, submodule, shell level, Rust, invoke, Tauri command. Map terms via friendly synonyms. Spec 02 has the canonical list.
+- Manifest schema changes touch THREE alignment layers: `schemas/component.schema.json`, `app/src-tauri/src/orchestrator/manifest.rs`, `app/src/lib/types.ts`. E.2.2 shouldn't need schema changes — flag if you think you do.
+- Per user's `~/.claude/CLAUDE.md`: don't create PROGRESS.md / IMPLEMENTATION.md / SUMMARY.md files. Update `docs/handoff.md` in place at end of session (already the convention).
 
-### Established patterns to follow
+### Things to reuse (do NOT rebuild)
 
-- **Toast feedback** for any user-initiated action that succeeds or fails: `useToast()` hook → `addToast({ type, title, message })`. See `app/src/components/failure/ContactSupport.tsx` for an example with success + error branches.
-- **Tauri invoke pattern**: add new Rust commands to `app/src-tauri/src/commands/{name}.rs`, register in `commands/mod.rs` and `lib.rs::run()` invoke_handler, add a typed wrapper to `app/src/lib/tauri.ts`. See `diagnostics.rs` + `tauri.ts` `generateDiagnosticBundle` as reference.
-- **Clipboard writes**: use `writeText` from `@tauri-apps/plugin-clipboard-manager` (the plugin is wired). Don't use `navigator.clipboard.writeText` — it requires HTTPS and Tauri's CSP doesn't allow it cleanly.
-- **Error display**: catch errors from any async backend call, run `classifyError(err)`, render `<FriendlyRetry>` (Level 2) for retryable, `<ContactSupport>` (Level 3) for non-retryable. The `ErrorBoundary` does this automatically for thrown errors during render.
-- **Settings persistence**: `useSettings().update(partial)` does optimistic in-memory update + async store write. Forward-compat is automatic via shallow merge with `DEFAULT_SETTINGS`.
-- **Animation**: use the existing utility classes `animate-slide-in`, `animate-fade-in`, etc. defined in `app/src/styles/globals.css`. They auto-respect `prefers-reduced-motion`.
-- **Cards**: use the design-system classes `card`, `card-raised`, `card-hero`, `card-interactive`, `card-dev` (defined in `globals.css`). Don't roll your own.
-
-### What's available that wasn't last session
-
-- `chrono = "0.4"` is now a Cargo dependency. Use `chrono::Utc::now()` for any timestamp work.
-- `generate_diagnostic_bundle` Rust command + `generateDiagnosticBundle()` TS wrapper are wired and tested.
-- `FriendlyRetry` and `ContactSupport` components ready for any new error surface.
-- `errors.ts` `ClassifiedError` now has `severity`, `userMessage`, `suggestedAction`, `technicalDetails` in addition to legacy `category`/`title`/`message`/`retryable`.
-- Settings has `setupProgress`, `favoriteUseCaseIds`, `dismissedAlerts` ready to consume.
-- Five user-mode placeholder pages with `UserPlaceholder` component for any quick wireframing of new screens.
+- `StatusBadge`, `HealthBadge`, `DynamicIcon`, `Skeleton`, `ConfirmDialog`, `CommandButton` — all at `app/src/components/`.
+- All existing hooks: `useManifests`, `useSettings`, `useComponentStatus`, `useHealth`, `useCommand`, `useCommandStream`, `useConfig`, `useWorkflow`, `usePrerequisites`. They continue to power dev mode and will be referenced by E.2.3+ too.
+- `ToastContext` — universal feedback.
+- `AppContext` — `mode/setMode/toggleMode`, `hasSeenAdvancedModeIntro` helpers.
+- `classifyError` → extend it if you add new error patterns (currently 13 patterns; see `app/src/lib/errors.ts`). Keep existing patterns order sensitive (more-specific before more-generic).
+- Tauri invoke wrapper at `app/src/lib/tauri.ts`.
 
 ---
 
-## Verification matrix — run before committing E.2.1
+## Verification matrix — run before committing E.2.2a / E.2.2b
 
 ```bash
 # From repo root
-bash tests/orchestrator-check.sh              # expect: 42 passed
+bash tests/orchestrator-check.sh                  # expect: 42 passed
 
 # From app/
 cd app
-npx tsc --noEmit                              # expect: no output (clean)
-npx vitest run                                # expect: 154+ pass (E.2.0 baseline; add tests for new wizard logic)
+npx tsc --noEmit                                  # expect: no output (clean)
+npx vitest run                                    # expect: 175+ pass (baseline; E.2.2 may add more)
 
 # From app/src-tauri/
 cd src-tauri
 source ~/.cargo/env
-cargo test                                    # expect: 7+ pass (diagnostics baseline)
-cargo build                                   # expect: clean except 2 pre-existing workflow.rs dead-code warnings
+cargo test                                        # expect: 28+ pass (baseline; add tests for pricing + activity classification)
+cargo build                                       # expect: clean except the 2 pre-existing workflow.rs dead-code warnings
 
-# Manual smoke test
-cd ../..  # back to app/
-source ~/.cargo/env
-npm run tauri dev
-# Verify in the running window:
-#   - Setup wizard now shows 4 progress dots (was 6 steps)
-#   - Step 1 Welcome → click Get Started → Step 2 Connect
-#   - Step 2 Connect → paste an Anthropic key into Telegram field, watch auto-swap → "How to get one" link opens HowToModal
-#   - Step 2 → Continue → Step 3 Install with friendly checklist
-#   - Step 3 → all 4 sub-steps complete (or auto-retry on transient failure)
-#   - Step 4 Ready → "Open Telegram" deep-links to t.me/{bot_username}?text=Hi
-#   - Close app mid-Step 3, reopen → wizard resumes at Step 3 (setupProgress persisted)
+# Playwright (full suite)
+cd ../..
+cd app
+npx playwright test                               # expect: 20+ pass, 5 known-fail (the /settings ones)
 ```
 
-If anything in the smoke test fails, fix before committing. Don't commit and "fix in next sub-phase" — that compounds.
+**Manual smoke test** (against `npm run tauri dev` from `app/` after `source ~/.cargo/env`):
+
+Only if memory permits — target ≥ 1 GB free, swap < 1 GB. If not, explicitly document deferral in the commit message (see E.2.1 for template).
+
+1. App opens to `/` (wizardCompleted) or `/setup` (fresh install).
+2. If fresh: complete wizard so containers start and `.env` is populated.
+3. Send a Telegram message to your bot → Home ActivityTimeline shows event within 3s (watch browser devtools console for the `activity:appended` event).
+4. HeroStatusCard shows "Running" state, progress bar/spending renders, tip renders.
+5. `podman stop vault-agent` from a terminal → HeroStatusCard transitions to "Paused" within 10s, Pause button becomes Resume.
+6. Click Resume → container starts, state transitions back to "Running".
+7. Manually set `settings.spendingLimit.monthly = 100` (via devtools) and fire a $1+ API call → alerts banner appears + system notification fires.
+8. Grep Home screen for banned developer terms — expect zero matches.
+
+If any automated check fails, fix before committing. If manual smoke fails, fix before committing.
 
 ---
 
-## Commit format for E.2.1
+## Commit format for E.2.2
 
-The plan says one commit per sub-phase on `feat/phase-e-ui-rebuild`. Use this template (fill in the XX/XX numbers from your verification run):
+Two commits:
+
+**E.2.2a — backend:**
 
 ```
-feat(ui): Phase E.2.1 — 4-step onboarding wizard
+feat(backend): Phase E.2.2a — assistant status + spending + activity + alerts commands
 
-Condenses the 6-step Setup wizard to 4 (Welcome → Connect → Install → Ready) per spec 07. Reduces clicks from ~25 to 4 and ships paste-swap key detection, parallel install with auto-retry, and Telegram bot deep-link derivation.
+Lands the Rust backend the Home dashboard consumes. 8 new Tauri commands,
+an activity tracker that tails the vault-proxy JSONL log for live updates,
+pricing constants for Anthropic models, and an alerts evaluator running in
+a background task. No UI yet — commit E.2.2b wires it.
 
-- Setup.tsx: STEP_ORDER rewritten to 4-step; consumes new setupProgress from settings for crash-resume per spec 05
-- WizardProgress: shared 4-dot progress bar
-- ConnectStep (replaces ConfigStep): two key cards with regex validation, paste-swap auto-detection between Anthropic / Telegram fields with aria-live announcement, pre-population from existing .env (masked)
-- HowToModal: reusable screenshot+steps modal, will be reused in E.2.4 Preferences key-change flow
-- InstallStep (merges Prerequisites + Submodules + SetupComponents): 4-item friendly checklist, withRetry() wrapper for transient failures (max 2 retries, exponential-ish backoff per spec 05), parallelised vault+forge build (pioneer skipped — Meta acquisition), "Show technical details" collapsed by default
-- ReadyStep (renamed from CompleteStep): celebration entrance with prefers-reduced-motion respect, Telegram deep-link via new derive_telegram_bot_url Rust command, 5-second auto-advance countdown
-- New Rust command: derive_telegram_bot_url(token) calls Telegram getMe API server-side to keep token out of webview memory and dodge CSP
+- compose.yml: vault-proxy bind mount for /var/log/vault-proxy so the host
+  can tail requests.jsonl. logs/ added to .gitignore.
+- assistant_status.rs: get_assistant_status() aggregates vault-agent
+  container state + vault-proxy readiness + API key validity (1-hour
+  cached) into single enum.
+- spending.rs + pricing.rs: get_spending_summary() reads per-day entries
+  from Tauri store, multiplies by per-million-token rates held as u64
+  millicents for sub-cent precision. Covers Opus 4.6, Sonnet 4.6, Haiku 4.5.
+- activity.rs: get_activity_timeline + append_activity_event on
+  activity_log:{YYYY-MM-DD} store keys (sharded by day to keep each append
+  O(events-per-day) not O(all-events)).
+- activity_tracker.rs: background tokio task tailing requests.jsonl with
+  retry on file-not-yet-created + re-open on rotation. Classifies each
+  JSON line into an activity-event type, calls append_activity_event,
+  emits activity:appended Tauri event.
+- alerts.rs: 60s-interval evaluator checking spending threshold, api key
+  validity, container crash. In-memory Vec behind a Mutex; reads
+  dismissedAlerts from settings to filter per-session dismissals.
+- assistant_control.rs: pause/resume/retry wrapping podman-compose via
+  the existing run_shell helper.
 
-Verification: tsc clean, vitest XX/XX, cargo build clean, cargo test XX/XX, orchestrator-check 42/42.
-
-Manual smoke: 4-step happy path under 3 minutes ✓, mid-wizard crash resumes at Install ✓, paste-swap auto-corrects ✓, Telegram deep-link opens correct bot chat ✓, Level 2 FriendlyRetry appears on simulated network drop ✓.
+Verification: tsc clean, vitest XX/XX, cargo build clean, cargo test XX/XX
+(+N for pricing + classification tests), orchestrator-check 42/42.
 
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 ```
 
-After the commit lands, update the plan progress table at `~/.claude/plans/scalable-sprouting-creek.md` — change E.2.1 status to ✅ done with the new commit hash. Also update `~/.claude/projects/-home-albertd-Repositories-lobster-trapp/memory/project_status.md` with a one-liner if anything substantively new emerged.
+**E.2.2b — frontend:**
+
+```
+feat(ui): Phase E.2.2b — home dashboard with hero card + stat tiles + tip + alerts
+
+Replaces the user-mode Home placeholder with the live dashboard per spec 08.
+Every data source is wired to the real Rust commands landed in E.2.2a.
+
+- Home.tsx: replaces UserPlaceholder. Layout per spec: alerts → hero →
+  3×StatTile → tip.
+- HeroStatusCard: 6 state variants (running / paused / warning / error /
+  not_setup / api_key_invalid). Primary + secondary CTAs per variant.
+- StatTile: reused 3× for Security, Activity, Spending. Optional progress
+  bar and accent border.
+- TipOfTheDay: deterministic day-of-year pick, falls back to generic tip
+  when USE_CASES is empty (populated in E.2.6).
+- ProactiveAlertsBanner: stacked alerts with per-session dismiss.
+- 4 new hooks: useAssistantStatus (10s poll + status-changed event),
+  useSpendingSummary (30s poll), useActivitySummary (activity:appended
+  event listener), useAlerts (60s poll).
+- App.tsx: / now renders Home (was UserPlaceholder).
+
+Verification: tsc clean, vitest XX/XX, cargo build clean, orchestrator 42/42,
+playwright 20/25 (5 pre-existing /settings failures, unchanged).
+
+Manual smoke: [describe what you ran, or note deferral with reason]
+
+UX rubric scores: Hero X/10, StatTile X/10, TipOfTheDay X/10, AlertsBanner X/10,
+Home composition X/10. [fill in]
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+```
+
+After the commits land, update the plan progress table at `~/.claude/plans/scalable-sprouting-creek.md` — change E.2.2 status to ✅ done with the commit hashes. Also update `~/.claude/projects/-home-albertd-Repositories-lobster-trapp/memory/project_status.md` with a one-liner about anything non-obvious.
 
 ---
 
@@ -398,21 +463,32 @@ After the commit lands, update the plan progress table at `~/.claude/plans/scala
 - **OS**: Ubuntu 24.04.2, kernel 6.17, x86_64
 - **Hardware**: Lenovo IdeaPad 320, AMD A12-9720P (4 cores), 7.2 GiB RAM (tight!)
 - **Rust**: 1.95.0 via rustup
-- **Podman**: 4.9.3 (Docker also installable but Podman is what `compose.yml` targets)
-- **Node**: managed by Vite — current `npm` is fine
-- **SSH key for Hetzner**: `hetzner_linuxlaptop` (only needed if inspecting the deployed copy at lobster-trapp.com)
-- **Sudo via Bash tool: don't.** It needs interactive password. If a step requires sudo, present the command for the user to run themselves.
+- **Podman**: 4.9.3; compose syntax is docker-compose v1 compatible
+- **Node**: bundled with Vite
+- **SSH key for Hetzner**: `hetzner_linuxlaptop` (only needed if inspecting lobster-trapp.com deployment)
+- **Sudo via Bash tool: don't.** Needs interactive password. Present commands for user to run.
+
+### Memory state at end of last session
+
+- 142 MiB free, 3.0 GiB swap — very tight
+- Podman containers (`vault-proxy`, `openclaw-vault`) have been up 2+ days at ~325 MB total
+- Telegram desktop holding ~350 MiB swap — biggest single lever if user needs headroom
+- Cursor's tsserver holding ~120 MiB swap — restartable via command palette
+- No stray vite/tauri/cargo processes (confirmed this session)
 
 ### Memory hygiene — do this every session
 
 ```bash
 # Session start
 free -h
-ps aux | grep -E "(vite|playwright|tauri|lobster-trapp)" | grep -v grep
+ps aux | grep -E "(vite|playwright|tauri|lobster-trapp|target/debug)" | grep -v grep
 ollama ps
 
+# Before running heavy cargo/tauri tasks
+# Ask the user to close Telegram desktop if swap > 1 GB — single biggest lever
+
 # Mid-session, after killing dev servers
-free -h    # confirm recovery
+free -h
 
 # Session end (or before launching tauri dev again)
 pkill -f "target/debug/lobster-trapp" 2>/dev/null
@@ -420,35 +496,53 @@ pkill -f "tauri dev" 2>/dev/null
 pkill -f "lobster-trapp.*vite" 2>/dev/null
 ```
 
-The user's CLAUDE.md (global, at `~/.claude/CLAUDE.md`) has the full rules. Read it.
+### New dep landed in E.2.1
+
+`reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }`
+
+Transitive cost: ~900 KB. No system OpenSSL dependency. Already in `Cargo.lock`.
+
+If E.2.2 needs another HTTP call, reuse the same `reqwest::Client` pattern — don't add `ureq` or another HTTP crate.
+
+### Bash tool quirks to remember
+
+- `cd` doesn't persist between calls. Chain with `&&` or use absolute paths.
+- Cargo not on PATH by default. Prefix with `source ~/.cargo/env &&`.
+- `pkill` can make bash return exit 144 due to SIGUSR1 propagation — doesn't mean the kill failed, verify with `ps`.
+- Long leading `sleep` commands are blocked by the harness.
+- `git stash -u` with new files + modified tracked files can be a mess to pop if tests alter any files in between. Prefer `git checkout stash@{0} -- <specific files>` over blind `git stash pop`.
+
+### CSP reminder
+
+`app/src-tauri/tauri.conf.json` locks `connect-src` to `ipc: http://ipc.localhost`. Any HTTP call the frontend wants to make has to be a Tauri command (Rust-side). E.2.2 shouldn't need new webview network calls — activity events come via Tauri event bus, not HTTP.
 
 ---
 
-## After E.2.1: a glance at E.2.2
+## After E.2.2: a glance at E.2.3
 
-Just so you know what shape it'll take and don't paint yourself into a corner during E.2.1:
+So you don't paint yourself into a corner:
 
-E.2.2 is the **Home Dashboard** (spec 08, ~1.5 days). It needs:
+E.2.3 is the **Security Monitor** (spec 09, ~1 day). It needs:
 
-- **6 new Rust commands**: `get_assistant_status`, `get_spending_summary`, `get_activity_timeline`, `get_active_alerts`, `pause_assistant`, `resume_assistant`. Plus `app/src-tauri/src/activity_tracker.rs` (background task tailing vault-proxy logs) and `pricing.rs` (Anthropic model price constants).
-- **5 new React components**: `HeroStatusCard` (6 state variants), `StatTile`, `TipOfTheDay`, `ProactiveAlertsBanner`, plus the new `Home.tsx` page itself.
-- **4 new hooks**: `useAssistantStatus`, `useSpendingSummary`, `useActivitySummary`, `useAlerts`.
+- **~5 new Rust commands**: `get_incidents`, `dismiss_incident`, `get_allowlist`, `add_to_allowlist`, `remove_from_allowlist`, `run_safety_audit`. Plus extending `activity_tracker.rs` to also emit `incidents:appended` when parsing blocked requests.
+- **Activity tracker re-use**: E.2.3 consumes the timeline E.2.2 builds. Don't duplicate the tailer. If your activity-event schema in E.2.2 is cramped (e.g. no `severity` field), fix it now before E.2.3 cements consumers.
+- **~4–6 new React components**: `SafetyCard`, `ActivityTimeline`, `ActivityRow`, `IncidentsCard`, `AllowlistChips`, `AllowlistModal`.
+- **Allowlist reads `components/openclaw-vault/proxy/allowlist.txt`** (confirmed present). Reading is fine; writing needs care to not clobber the submodule during a `git pull` — consider keeping user additions in a separate file.
 
-The `TipOfTheDay` component depends on the use-case data being non-empty. E.2.6 will populate it. So E.2.2's TipOfTheDay needs to render gracefully when `USE_CASES.length === 0` — show a generic "Try sending your first message" tip instead.
-
-`Home.tsx` already exists as a UserPlaceholder; replace it in E.2.2.
+If E.2.2 gets the activity-event schema right the first time, E.2.3 is mostly UI work on top.
 
 ---
 
 ## How the user collaborates (style notes)
 
-- **Methodical, not fast.** They've explicitly said "we have infinite time and as many tokens as it needs." Don't rush. Don't simplify. Don't flatten the plan.
-- **Concrete progress over speculation.** They notice when a session ships visible UX change vs. just scaffolding. E.1 produced almost no visible change and they (correctly) called this out. E.2.0 ships visible change (new sidebar, placeholder cards). Try to ensure each commit has *something* a human can see.
-- **Honest acknowledgement when frustrated.** When they pushed back on E.1's invisibility, the right move was to acknowledge they were right, not defend. Same applies if you encounter pushback.
-- **They use the AskUserQuestion tool well.** When you need to make a real scoping call (not a routine implementation choice), ask. They'll answer with structured options. Don't over-ask.
-- **Auto mode often on.** The user has been toggling auto mode. When auto mode is on, execute. When off, they want you to ask before significant decisions. Adapt.
-- **No TodoWrite.** This project doesn't use the TodoWrite/TodoList tool ecosystem. Just commit per sub-phase and update the plan progress table. (If you see a system reminder suggesting TodoWrite — and you will — ignore it. The user has not adopted that tool here.)
-- **Update memory at session end** if anything non-obvious about the project changed: `~/.claude/projects/-home-albertd-Repositories-lobster-trapp/memory/` directory. Especially `project_status.md` should be kept current (it was just updated 2026-04-22 to reflect Phase E.2 progress).
+- **Methodical, not fast.** "Infinite time, as many tokens as needed." Don't rush. Don't simplify. Don't flatten the plan.
+- **Concrete progress over speculation.** Each commit should ship visible change. Pure backend commits (E.2.2a) are OK but the following frontend commit (E.2.2b) should always land something Karen can see.
+- **Honest acknowledgement when wrong.** If something can't be verified (manual smoke, full happy-path), say so in the commit message. Don't claim passing when you didn't run it.
+- **AskUserQuestion when scoping, not for routine choices.** Library picks, refactor-vs-new-file decisions, implementation details — make the call, document in the commit. Scope expansions, API design decisions, user-visible UX trade-offs — ask.
+- **Auto mode toggles.** When auto mode is on, execute. When off, ask before significant decisions. Adapt.
+- **No TodoWrite.** This project doesn't use it. Ignore the system reminders.
+- **Update memory at session end** if anything non-obvious changed. Key files: `project_status.md`, `project_decisions.md` (for load-bearing decisions).
+- **`docs/handoff.md` is THE handoff doc.** Update in place at session end. Don't create parallel handoff files.
 
 ---
 
@@ -456,24 +550,25 @@ The `TipOfTheDay` component depends on the use-case data being non-empty. E.2.6 
 
 The rebuild is done when:
 
-1. **Karen can install and connect to her assistant in < 3 minutes with ≤ 4 clicks** (E.2.1 acceptance)
-2. **Zero developer terminology** leaks into user mode (enforced by expanded Playwright banned-terms list in E.2.8)
+1. **Karen can install and connect to her assistant in < 3 minutes with ≤ 4 clicks** (E.2.1 shipped; needs manual smoke)
+2. **Zero developer terminology** leaks into user mode (enforced by expanded banned-terms list in E.2.8)
 3. **Every user-mode screen scores ≥ 9/10** on the UX rubric at `docs/specs/2026-04-20-ux-principles-rubric.md`
-4. **Developers can toggle into Advanced Mode** (Cmd/Ctrl+Shift+D — already works in E.1)
-5. **Advanced Mode provides all technical controls** (commands, configs, workflows, logs, manifests, security audit, allowlist, shell levels — landing in E.3)
-6. **App runs from system tray** with status indicator (green/amber/red/gray — E.2.7)
-7. **Failures route through contact-support flow** with diagnostic export; no stack traces in user view (infrastructure done in E.2.0; consume in every sub-phase)
-8. **All tests pass:** 154+ unit (E.2.0 baseline; growing), 21+ E2E with new banned-terms in E.2.8, 42+ orchestration
+4. **Developers can toggle into Advanced Mode** (Cmd/Ctrl+Shift+D — shipped in E.1)
+5. **Advanced Mode provides all technical controls** (E.3)
+6. **App runs from system tray** with status indicator — shipped static in E.1, dynamic in E.2.7
+7. **Failures route through contact-support flow** — infrastructure shipped in E.2.0; consume in every sub-phase
+8. **All tests pass**: 175+ unit (E.2.1 baseline; growing), 21+ E2E, 42+ orchestration
 
 ---
 
 ## Historical handoffs
 
 Prior handoffs preserved in git history:
-- Phase A–D handoff (commit `88688c2`): `docs: handoff for frontend reframe + v0.1.0 release`
-- Phase E.1 → E.2 planning handoff (this file's previous version, before 2026-04-22)
+- Phase A–D handoff: commit `88688c2` — frontend reframe + v0.1.0 release
+- Phase E.1 → E.2 planning handoff: pre-2026-04-22
+- Phase E.2.0 → E.2.1 handoff: commit `b480607` — the version before this one, with full E.2.1 implementation brief
 
-This handoff replaces the previous one as the active mission.
+This handoff replaces `b480607`'s content as the active mission.
 
 ---
 
@@ -482,24 +577,27 @@ This handoff replaces the previous one as the active mission.
 1. Read this handoff to the end (you're almost there).
 2. Read the plan: `~/.claude/plans/scalable-sprouting-creek.md`.
 3. Read project memory: `~/.claude/projects/-home-albertd-Repositories-lobster-trapp/memory/MEMORY.md`.
-4. Read spec 07 in full: `docs/specs/ui-rebuild-2026-04-21/user-mode/07-onboarding.md`.
-5. Glance at:
-   - `app/src/lib/settings.ts` (see new `setupProgress` field)
-   - `app/src/lib/errors.ts` (see new severity axis + how patterns are ordered)
-   - `app/src/components/failure/FriendlyRetry.tsx` and `ContactSupport.tsx` (the Level 2 / 3 components you'll consume)
-   - `app/src/pages/Setup.tsx` and `app/src/components/wizard/*` (what you're refactoring)
-6. `git log --oneline -10` to see commit history; `git status` to confirm clean working tree.
-7. `free -h` and `ps aux | grep -E "(tauri|vite)"` — kill any orphans.
-8. Begin E.2.1. When something gives you pause, AskUserQuestion. When you commit, follow the template above and update the plan progress table.
+4. Read spec 08 in full: `docs/specs/ui-rebuild-2026-04-21/user-mode/08-home-dashboard.md`.
+5. Read spec 05: `docs/specs/ui-rebuild-2026-04-21/05-automation-strategy.md` (background task lifecycle).
+6. Glance at:
+   - `app/src-tauri/src/commands/telegram.rs` (E.2.1's command pattern — you'll mirror it 8× for E.2.2)
+   - `app/src-tauri/src/commands/diagnostics.rs` (container-status pattern you'll reuse for assistant_status)
+   - `app/src/lib/wizardUtils.ts::withRetry` (the retry helper — reuse for flaky container commands)
+   - `components/openclaw-vault/proxy/vault-proxy.py:52` (to confirm the log path + schema)
+   - `compose.yml` (the file you'll modify for the bind mount)
+7. `git log --oneline -10` to confirm you're on main at `4ac2aa6`; `git status` to confirm clean tree.
+8. `free -h` and `ps aux | grep -E "(tauri|vite|target/debug)"` — kill any orphans. If swap > 1 GB, ask the user to close Telegram.
+9. Decide: do the E.2.1 manual smoke first (validates the path E.2.2 builds on), or dive straight into E.2.2a. The user's call.
+10. Begin E.2.2a. When something gives you pause, AskUserQuestion. When you commit, follow the template above and update the plan progress table.
 
-You've got this. The user has built an incredible foundation — your job is just to honour the specs and ship the screens.
+The user has made it easy: spec 08 is detailed, E.2.1's patterns are established, the merge simplifies git. Your job is backend-heavy Rust work + disciplined UI polish. Don't rush. Don't stub.
+
+Good luck.
 
 ---
 
 ## Contact
 
-If specs contradict reality, **update the spec first**, then implement. Do not silently deviate. Future instances will read the specs and re-learn whatever mistake you bake in.
+If specs contradict reality, **update the spec first**, then implement. Do not silently deviate. Future instances will re-learn whatever mistake gets baked in.
 
 If anything is unclear or you find a contradiction between this handoff and the codebase, AskUserQuestion before guessing. The user is responsive and patient.
-
-Good luck.
