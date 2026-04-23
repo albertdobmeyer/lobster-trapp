@@ -1,119 +1,85 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePrerequisites } from "@/hooks/usePrerequisites";
-import { useManifests } from "@/hooks/useManifests";
-import { useAppContext } from "@/lib/AppContext";
+import type { SetupStep } from "@/lib/settings";
+import { useWizardProgress } from "@/hooks/useWizardProgress";
+import { useSettings } from "@/hooks/useSettings";
 import WelcomeStep from "@/components/wizard/WelcomeStep";
-import PrerequisitesStep from "@/components/wizard/PrerequisitesStep";
-import SubmodulesStep from "@/components/wizard/SubmodulesStep";
-import ConfigStep from "@/components/wizard/ConfigStep";
-import SetupComponentsStep from "@/components/wizard/SetupComponentsStep";
-import CompleteStep from "@/components/wizard/CompleteStep";
+import ConnectStep from "@/components/wizard/ConnectStep";
+import InstallStep from "@/components/wizard/InstallStep";
+import ReadyStep from "@/components/wizard/ReadyStep";
+import WizardProgress from "@/components/wizard/WizardProgress";
 
-type Step = "welcome" | "prerequisites" | "submodules" | "config" | "setup-components" | "complete";
-
-const STEP_ORDER: Step[] = [
-  "welcome",
-  "prerequisites",
-  "submodules",
-  "config",
-  "setup-components",
-  "complete",
-];
+const STEP_ORDER: SetupStep[] = ["welcome", "connect", "install", "ready"];
 
 export default function Setup() {
-  const [step, setStep] = useState<Step>("welcome");
-  const { report, checking, initializing, check, initSubs, createConfig } =
-    usePrerequisites();
-  const { components } = useManifests();
-  const { updateSettings } = useAppContext();
   const navigate = useNavigate();
+  const { settings, loaded: settingsLoaded } = useSettings();
+  const { progress, loaded: progressLoaded, recordStep, complete } =
+    useWizardProgress();
 
-  // Run check when moving past welcome
+  const [step, setStep] = useState<SetupStep>("welcome");
+  const [initialised, setInitialised] = useState(false);
+
+  // On first load, resume at persisted step if any.
   useEffect(() => {
-    if (step === "prerequisites" && !report && !checking) {
-      check();
+    if (!progressLoaded || !settingsLoaded || initialised) return;
+    if (progress?.step && STEP_ORDER.includes(progress.step)) {
+      setStep(progress.step);
     }
-  }, [step, report, checking, check]);
+    setInitialised(true);
+  }, [progressLoaded, settingsLoaded, progress, initialised]);
 
-  const currentIndex = STEP_ORDER.indexOf(step);
+  async function advance(next: SetupStep, opts?: { skippedKeys?: boolean }) {
+    setStep(next);
+    await recordStep(next, opts);
+  }
 
-  function goNext() {
-    if (currentIndex < STEP_ORDER.length - 1) {
-      setStep(STEP_ORDER[currentIndex + 1]);
+  async function goBack() {
+    const idx = STEP_ORDER.indexOf(step);
+    if (idx > 0) {
+      const prev = STEP_ORDER[idx - 1];
+      setStep(prev);
+      await recordStep(prev);
     }
   }
 
-  function goBack() {
-    if (currentIndex > 0) {
-      setStep(STEP_ORDER[currentIndex - 1]);
-    }
-  }
-
-  async function handleFinish() {
-    await updateSettings({ wizardCompleted: true });
+  async function finish() {
+    await complete();
     navigate("/");
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col">
-      {/* Progress indicator */}
+    <div className="flex min-h-screen flex-col bg-neutral-950">
       {step !== "welcome" && (
-        <div className="px-8 pt-6">
-          <div className="flex items-center gap-1 max-w-lg mx-auto">
-            {STEP_ORDER.slice(1, -1).map((s, i) => (
-              <div
-                key={s}
-                className={`flex-1 h-1 rounded-full ${
-                  i < currentIndex - 1
-                    ? "bg-blue-500"
-                    : i === currentIndex - 1
-                      ? "bg-blue-500"
-                      : "bg-gray-800"
-                }`}
-              />
-            ))}
-          </div>
+        <div className="px-6 pt-8">
+          <WizardProgress
+            currentStep={step}
+            completedSteps={progress?.completedSteps ?? []}
+          />
         </div>
       )}
 
-      <div className="flex-1 flex items-center justify-center px-6">
-        {step === "welcome" && <WelcomeStep onNext={goNext} />}
-        {step === "prerequisites" && (
-          <PrerequisitesStep
-            report={report}
-            checking={checking}
-            onNext={goNext}
+      <div className="flex flex-1 items-center justify-center px-6 pb-10">
+        {step === "welcome" && (
+          <WelcomeStep
+            onNext={() => advance("connect")}
+            canSkipToDashboard={settings.wizardCompleted}
+            onSkipToDashboard={() => navigate("/")}
+          />
+        )}
+
+        {step === "connect" && (
+          <ConnectStep
+            onContinue={({ skippedKeys }) => advance("install", { skippedKeys })}
             onBack={goBack}
           />
         )}
-        {step === "submodules" && (
-          <SubmodulesStep
-            report={report}
-            initializing={initializing}
-            onInit={initSubs}
-            onNext={goNext}
-            onBack={goBack}
-          />
+
+        {step === "install" && (
+          <InstallStep onComplete={() => advance("ready")} onBack={goBack} />
         )}
-        {step === "config" && (
-          <ConfigStep
-            report={report}
-            onCreateConfig={createConfig}
-            onNext={goNext}
-            onBack={goBack}
-          />
-        )}
-        {step === "setup-components" && (
-          <SetupComponentsStep
-            components={components}
-            onNext={goNext}
-            onBack={goBack}
-          />
-        )}
-        {step === "complete" && (
-          <CompleteStep onFinish={handleFinish} />
-        )}
+
+        {step === "ready" && <ReadyStep onGoToDashboard={finish} />}
       </div>
     </div>
   );

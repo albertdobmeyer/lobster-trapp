@@ -46,6 +46,8 @@ export interface AppSettings {
   favoriteUseCaseIds: string[];
   /** Alert ids dismissed in the current Tauri-store generation. Cleared on app reinstall. */
   dismissedAlerts: DismissedAlerts;
+  /** Cached `https://t.me/{username}?text=Hi` URL derived from the bot token during Install. */
+  telegramBotUrl: string | null;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -71,4 +73,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   closeToTray: true,
   favoriteUseCaseIds: [],
   dismissedAlerts: {},
+  telegramBotUrl: null,
 };

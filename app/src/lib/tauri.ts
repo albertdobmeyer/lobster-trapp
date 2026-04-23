@@ -202,3 +202,14 @@ export async function executeWorkflow(
 export async function generateDiagnosticBundle(): Promise<string> {
   return invoke<string>("generate_diagnostic_bundle");
 }
+
+/**
+ * Resolves a Telegram bot token into a `https://t.me/{username}?text=Hi`
+ * deep-link. Calls Telegram's `getMe` endpoint from Rust (keeps the token
+ * out of webview memory and avoids a CSP relaxation). Rejects on network
+ * errors, bad tokens, or missing username — callers should fall back to
+ * `https://telegram.org` silently.
+ */
+export async function deriveTelegramBotUrl(token: string): Promise<string> {
+  return invoke<string>("derive_telegram_bot_url", { token });
+}

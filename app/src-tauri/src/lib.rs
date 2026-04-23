@@ -148,6 +148,7 @@ pub fn run() {
             commands::workflow_cmds::list_workflows,
             commands::workflow_cmds::execute_workflow,
             commands::diagnostics::generate_diagnostic_bundle,
+            commands::telegram::derive_telegram_bot_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

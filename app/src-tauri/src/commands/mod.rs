@@ -6,4 +6,5 @@ pub mod manifest_cmds;
 pub mod prerequisites;
 pub mod status;
 pub mod stream;
+pub mod telegram;
 pub mod workflow_cmds;
