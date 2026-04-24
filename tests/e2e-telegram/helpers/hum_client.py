@@ -1,6 +1,11 @@
-"""Thin wrapper over a Telethon client that sends to @LobsterTrappBot and
-waits for Hum's reply. Every test message is prefixed with `[TEST]` so the
-real Telegram chat stays legible and filterable.
+"""Thin wrapper over a Telethon client that sends to the clawbot under test
+(handle configured via HUM_BOT_HANDLE in .env.test) and waits for its reply.
+Every test message is prefixed with `[TEST]` so the real Telegram chat stays
+legible and filterable.
+
+Class name `HumClient` is historical — the product identity is "Hum" (the
+warden/assistant), but any bot handle can be plugged in via config. Error
+messages use the actual handle dynamically so test output reflects reality.
 
 Includes a per-session send-count budget. The Telegram account this harness
 uses is shared across multiple projects (~50 usages/day soft cap on the
@@ -93,7 +98,10 @@ class HumClient:
         except asyncio.TimeoutError:
             self.client.remove_event_handler(_handler)
             raise TimeoutError(
-                f"Hum did not reply within {timeout}s to: {full!r}"
+                f"{self.bot_handle} did not reply within {timeout}s to: {full!r}. "
+                f"If this is the second+ message from an unpaired user, silence is "
+                f"expected — OpenClaw's pairing gate blocks further replies until "
+                f"`openclaw pairing approve telegram <code>` is run on the host."
             ) from None
 
         # Settle window: collect continuation messages.
