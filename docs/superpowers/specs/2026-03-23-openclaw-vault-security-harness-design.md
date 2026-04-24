@@ -620,7 +620,7 @@ Everything in the current vault that works:
 | **Selective host mounts** | Allow specific directories into container for Gear 2/3 |
 | **Protected resources enforcement** | Explicit exclusion list of resources never accessible in any gear |
 | **Monitoring implementations** | Real network-log-parser, session-report, activity-feed (replacing stubs) |
-| **Audit trail renderer** | Human-readable activity feed via `component.yml` commands |
+| **Audit trail renderer** | human-readable activity feed via `component.yml` commands |
 | **Gear-specific verification** | Security checks beyond the current 15, specific to each gear |
 | **Persistent credential volume** | For messaging channel credentials (Telegram, WhatsApp) |
 | **Gear-specific compose templates** | Different compose.yml variations per gear (different mounts, resources) |

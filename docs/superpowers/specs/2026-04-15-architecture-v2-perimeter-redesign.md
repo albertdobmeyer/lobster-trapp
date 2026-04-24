@@ -47,7 +47,7 @@ Lobster-TrApp exists in a multi-agent orchestration system with three trust tier
 
 ```
 TIER 1: TRUSTED (full host access, makes decisions)
-├── Human User (interactive — gives instructions, approves escalations)
+├── human User (interactive — gives instructions, approves escalations)
 └── Claude Code / trusted CLI agent (automated — executes on user's behalf)
         │
         │  manages via CLI, API, or GUI
@@ -181,7 +181,7 @@ The dynamic shell is not just adjustable — it is **intelligent.** A large reas
 **Why this matters:** The non-technical user cannot make security decisions. They don't know what "allow exec with allowlist" means. They don't know whether a SKILL file scan result is acceptable. They don't know when the agent's behavior is suspicious. But Claude Opus does. The meta-orchestration layer is:
 
 ```
-Human: "I want my assistant to manage my calendar"
+human: "I want my assistant to manage my calendar"
     ↓
 Claude Opus (the warden): understands the request, determines
     that calendar management requires Split Shell with specific

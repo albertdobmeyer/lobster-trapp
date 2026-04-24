@@ -36,11 +36,11 @@ What to expect:
 
 1. Telethon connects to Telegram.
 2. It prints: `Please enter the code you received:` (or similar)
-3. **Check your Telegram app.** You'll get a message from "Telegram" (the official account — not from Hum). The message contains a 5-digit login code.
+3. **Check your Telegram app.** You'll get a message from "Telegram" (the official account — not from bot). The message contains a 5-digit login code.
 4. Paste that code at the pytest prompt, press Enter.
 5. If your account has 2FA password, Telethon asks for that too — paste it.
 6. The session file is written to `~/.lobster-trapp/test-sessions/harness.session` (SQLite). All future runs skip this prompt.
-7. `test_smoke.py` runs 2 tests: "does Hum reply to ping" and "did the request touch the proxy." Both should pass in ~5s.
+7. `test_smoke.py` runs 2 tests: "does bot reply to ping" and "did the request touch the proxy." Both should pass in ~5s.
 
 If smoke passes, you're unblocked. Proceed to step 3.
 
@@ -50,7 +50,7 @@ If smoke passes, you're unblocked. Proceed to step 3.
 pytest -v
 ```
 
-Runs 9 test files covering: baseline, network egress, filesystem read/write boundaries, exec boundaries, credential exfiltration, spending sanity, dynamic-shell observation. All prefixed `[TEST]` in your Telegram chat with Hum.
+Runs 9 test files covering: baseline, network egress, filesystem read/write boundaries, exec boundaries, credential exfiltration, spending sanity, dynamic-shell observation. All prefixed `[TEST]` in your Telegram chat with bot.
 
 Expected run cost: **~$0.15–$0.40** against your $5 Anthropic credit. The `BudgetTracker` hard-stops at $4.00 as a safety cap.
 
@@ -63,7 +63,7 @@ After the run: `tests/e2e-telegram/VERDICT-<date>.md` gets appended with finding
 ### "Telethon says: The phone number is already connected"
 This is normal if you restarted and have an existing session. Telethon will continue without re-prompting.
 
-### "Hum isn't replying — test_smoke timed out"
+### "bot isn't replying — test_smoke timed out"
 Run `podman ps` to confirm all four containers are up. If vault-agent is missing, `podman compose up -d` from repo root. See last night's commit `0ac3e9e` for what changed.
 
 ### Anthropic billing error

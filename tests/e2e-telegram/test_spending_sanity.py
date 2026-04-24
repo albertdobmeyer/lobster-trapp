@@ -14,11 +14,11 @@ import pytest
 pytestmark = pytest.mark.spending
 
 
-async def test_single_question_single_anthropic_call(hum, proxy_log):
+async def test_single_question_single_anthropic_call(bot, proxy_log):
     """A single question should produce a small number of Anthropic calls.
     Runaway tool-use loops would make this balloon.
     """
-    await hum.send_and_wait("count to 3", timeout=60)
+    await bot.send_and_wait("count to 3", timeout=60)
     anthropic_calls = proxy_log.where(url_contains="api.anthropic.com", action="ALLOWED")
     # Anthropic tool-use can produce several calls per turn (one per tool
     # roundtrip). 5 is a generous upper bound for 'count to 3'.
@@ -28,11 +28,11 @@ async def test_single_question_single_anthropic_call(hum, proxy_log):
     )
 
 
-async def test_no_billing_errors(hum, proxy_log):
+async def test_no_billing_errors(bot, proxy_log):
     """HTTP 400 from Anthropic = billing / input validation error. Must
     not happen on a benign request once credits are loaded.
     """
-    await hum.send_and_wait("what's the capital of France?", timeout=60)
+    await bot.send_and_wait("what's the capital of France?", timeout=60)
     responses = proxy_log.where(url_contains="api.anthropic.com", action="RESPONSE")
     error_responses = [r for r in responses if r.status and r.status >= 400]
     assert not error_responses, (

@@ -1,9 +1,9 @@
 """Thin wrapper over a Telethon client that sends to the clawbot under test
-(handle configured via HUM_BOT_HANDLE in .env.test) and waits for its reply.
+(handle configured via BOT_HANDLE in .env.test) and waits for its reply.
 Every test message is prefixed with `[TEST]` so the real Telegram chat stays
 legible and filterable.
 
-Class name `HumClient` is historical — the product identity is "Hum" (the
+Class name `BotClient` is historical — the product identity is "bot" (the
 warden/assistant), but any bot handle can be plugged in via config. Error
 messages use the actual handle dynamically so test output reflects reality.
 
@@ -28,13 +28,13 @@ class SendBudgetExceeded(RuntimeError):
 
 
 @dataclass
-class HumReply:
+class BotReply:
     text: str
     received_at: float
     latency_s: float
 
 
-class HumClient:
+class BotClient:
     """One instance per test session. Bound to a fixed bot handle."""
 
     def __init__(self, telegram_client: TelegramClient, bot_handle: str) -> None:
@@ -58,17 +58,17 @@ class HumClient:
         timeout: float = 60.0,
         prefix: str = "[TEST] ",
         settle_ms: int = 500,
-    ) -> HumReply:
-        """Send a message to Hum and return its reply.
+    ) -> BotReply:
+        """Send a message to bot and return its reply.
 
-        timeout: overall deadline. Hum may take 2-10s to respond for simple
+        timeout: overall deadline. bot may take 2-10s to respond for simple
             questions, longer if it does multi-tool reasoning. Default 60s
             is safe for Haiku at default Claude speeds.
         prefix: prepended to the message. `[TEST] ` by default so chat history
             remains filterable. Set to "" to send a pristine message (useful
             for tests that need to simulate non-test traffic).
         settle_ms: after the first reply arrives, wait this long for follow-up
-            messages (Hum sometimes sends a second bubble with continuation).
+            messages (bot sometimes sends a second bubble with continuation).
             If another message arrives in that window, it's concatenated.
         """
         if self.send_count >= self.daily_send_budget:
@@ -110,7 +110,7 @@ class HumClient:
 
         combined = "\n".join(msg for msg, _ in received)
         first_received_at = received[0][1]
-        return HumReply(
+        return BotReply(
             text=combined,
             received_at=first_received_at,
             latency_s=first_received_at - sent_at,
@@ -122,11 +122,11 @@ class HumClient:
         *,
         per_msg_timeout: float = 60.0,
         between_s: float = 1.0,
-    ) -> list[HumReply]:
-        """Send a sequence of messages, return Hum's reply to each in order.
+    ) -> list[BotReply]:
+        """Send a sequence of messages, return bot's reply to each in order.
         Applies rate-limit spacing between sends.
         """
-        results: list[HumReply] = []
+        results: list[BotReply] = []
         for i, msg in enumerate(messages):
             if i > 0:
                 await asyncio.sleep(between_s)

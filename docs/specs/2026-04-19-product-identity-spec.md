@@ -120,7 +120,7 @@ What it should feel like:
 │  Your AI Assistant                      ● Running   │
 │                                                     │
 │  Talk to your assistant:                            │
-│  Open Telegram → message @HumBot                    │
+│  Open Telegram → message @NewLobsterTrappBotBot                    │
 │                                                     │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐         │
 │  │  Skills  │  │ Security │  │   Stop   │         │

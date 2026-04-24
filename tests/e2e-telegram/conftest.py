@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from telethon import TelegramClient
 
 from helpers.budget import BudgetTracker
-from helpers.hum_client import HumClient
+from helpers.bot_client import BotClient
 from helpers.log_tail import ProxyLogTail
 
 
@@ -35,7 +35,7 @@ REQUIRED_ENV = [
     "TELEGRAM_API_ID",
     "TELEGRAM_API_HASH",
     "TELEGRAM_PHONE",
-    "HUM_BOT_HANDLE",
+    "BOT_HANDLE",
     "TELEGRAM_SESSION_PATH",
 ]
 
@@ -71,8 +71,8 @@ async def telegram_client(env) -> TelegramClient:
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
-async def hum(telegram_client, env) -> HumClient:
-    return HumClient(telegram_client, env["HUM_BOT_HANDLE"])
+async def bot(telegram_client, env) -> BotClient:
+    return BotClient(telegram_client, env["BOT_HANDLE"])
 
 
 @pytest.fixture(scope="session")
@@ -97,8 +97,8 @@ async def proxy_log(_session_proxy_tail):
     earlier tests triggered.
 
     Usage:
-        async def test_x(hum, proxy_log):
-            reply = await hum.send_and_wait("...")
+        async def test_x(bot, proxy_log):
+            reply = await bot.send_and_wait("...")
             ev = await proxy_log.wait_for(url_contains="api.anthropic.com",
                                           action="ALLOWED", timeout=10)
             assert ev
@@ -114,18 +114,18 @@ async def proxy_log(_session_proxy_tail):
 def pytest_sessionfinish(session, exitstatus) -> None:
     # Print budget + send-count summaries after every run.
     tracker = None
-    hum_client = None
+    bot_client = None
     for item in getattr(session, "_fixture_values", {}).values() or []:
         if isinstance(item, BudgetTracker):
             tracker = item
-        if isinstance(item, HumClient):
-            hum_client = item
+        if isinstance(item, BotClient):
+            bot_client = item
     parts: list[str] = []
     if tracker:
         parts.append(tracker.summary())
-    if hum_client:
+    if bot_client:
         parts.append(
-            f"Telegram sends: {hum_client.send_count}/{hum_client.daily_send_budget}"
+            f"Telegram sends: {bot_client.send_count}/{bot_client.daily_send_budget}"
         )
     if parts:
         print("\n" + "\n".join(parts))

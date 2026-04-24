@@ -1,6 +1,6 @@
 # Secondary-Telegram-account setup
 
-**Why this exists:** The harness drives Hum via Telegram's MTProto Client
+**Why this exists:** The harness drives bot via Telegram's MTProto Client
 API using a real Telegram user account. Telegram's anti-abuse can
 (rarely, but non-zero) flag automated behavior. To protect the owner's
 primary account, a secondary account dedicated to testing is
@@ -34,14 +34,14 @@ Keep the number somewhere safe; losing it locks you out of the account.
    - Platform: Other
 5. Copy `api_id` (integer) and `api_hash` (32-char hex string)
 
-### 4. Pair the secondary account with Hum
+### 4. Pair the secondary account with bot
 
-Hum doesn't recognize the new Telegram user_id yet. Trigger the pairing
+bot doesn't recognize the new Telegram user_id yet. Trigger the pairing
 flow:
 
 1. From the secondary account in Telegram, search `@LobsterTrappBot`
 2. Send any message (e.g. `hi`)
-3. Hum replies with a pairing code plus the new user_id
+3. bot replies with a pairing code plus the new user_id
 4. Copy both values
 
 On the host (one-time):
@@ -50,7 +50,7 @@ On the host (one-time):
 podman exec vault-agent openclaw pairing approve telegram <PAIRING_CODE>
 ```
 
-After this, Hum will treat the secondary account as authorized.
+After this, bot will treat the secondary account as authorized.
 
 ### 5. Update `.env.test`
 
@@ -60,7 +60,7 @@ Edit `/home/albertd/Repositories/lobster-trapp/.env.test`:
 TELEGRAM_API_ID=<new integer from step 3>
 TELEGRAM_API_HASH=<new hash from step 3>
 TELEGRAM_PHONE=<new phone in +country-code format>
-HUM_BOT_HANDLE=@LobsterTrappBot
+BOT_HANDLE=@LobsterTrappBot
 TELEGRAM_SESSION_PATH=/home/albertd/.lobster-trapp/test-sessions/harness
 
 # Optional: cap daily sends to share the account budget across projects.

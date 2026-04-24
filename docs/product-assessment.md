@@ -65,7 +65,7 @@ The manifest-driven GUI (component.yml) means anyone can add new components. If 
 ## The Honest Cons
 
 ### 1. Gear 1 is not compelling
-Right now, Hum is a Telegram chatbot that can have conversations. That's it. You can do this with Claude.ai, ChatGPT, or any other AI service — without installing Podman, building containers, or managing pairing codes. **Until Gear 2 is working, there's no reason to use Lobster-TrApp over free alternatives.**
+Right now, NewLobsterTrappBot is a Telegram chatbot that can have conversations. That's it. You can do this with Claude.ai, ChatGPT, or any other AI service — without installing Podman, building containers, or managing pairing codes. **Until Gear 2 is working, there's no reason to use Lobster-TrApp over free alternatives.**
 
 ### 2. The setup is too complex for non-technical users
 Our target audience "can barely find a download button" but our setup requires:
@@ -126,7 +126,7 @@ OpenClaw already has built-in security (sandbox mode, tool policies, exec contro
 - Simpler alternatives exist for basic AI chat (Claude.ai, ChatGPT)
 
 ### The honest answer:
-**The product is useful IF we reach Gear 2 AND simplify the setup.** Gear 1 alone is not compelling. The value unlocks when users can say "remind me to call the dentist" from Telegram and Hum actually does it — safely, without the ability to read their SSH keys or drain their API budget. That's a real product. A chatbot that can only chat is not.
+**The product is useful IF we reach Gear 2 AND simplify the setup.** Gear 1 alone is not compelling. The value unlocks when users can say "remind me to call the dentist" from Telegram and NewLobsterTrappBot actually does it — safely, without the ability to read their SSH keys or drain their API budget. That's a real product. A chatbot that can only chat is not.
 
 ---
 
@@ -154,8 +154,8 @@ Even if OpenClaw improves its built-in security, our vault adds defense-in-depth
 
 Based on this assessment, here's what matters most:
 
-### Priority 1: Make Hum useful (Gear 2)
-Without this, there's no product. Users need to be able to DO things through Hum — schedule tasks, manage files, browse the web. Gear 1 proved the security. Gear 2 proves the value.
+### Priority 1: Make NewLobsterTrappBot useful (Gear 2)
+Without this, there's no product. Users need to be able to DO things through NewLobsterTrappBot — schedule tasks, manage files, browse the web. Gear 1 proved the security. Gear 2 proves the value.
 
 ### Priority 2: Simplify setup (Lobster-TrApp GUI)
 The desktop GUI must handle Podman installation, container building, API key entry, Telegram bot creation, and pairing — all through buttons, not terminals. Without this, "for non-technical users" is a lie.

@@ -39,7 +39,7 @@ Nothing untrusted ever touches the user's host. See `docs/trifecta.md` for the f
 ### Multi-Agent Trust Chain
 
 ```
-TIER 1: TRUSTED — Human + Claude Code (warden, host access, makes decisions)
+TIER 1: TRUSTED — human + Claude Code (warden, host access, makes decisions)
 TIER 2: INFRASTRUCTURE — Lobster-TrApp (4 containers, enforces boundaries)
 TIER 3: CONTAINED — OpenClaw agents (do the work, within boundaries)
 ```

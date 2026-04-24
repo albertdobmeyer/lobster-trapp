@@ -20,7 +20,7 @@
         },
         "name": {
           "type": "string",
-          "description": "Human-readable display name"
+          "description": "human-readable display name"
         },
         "version": {
           "type": "string",
@@ -460,7 +460,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Human-readable display name"
+            "description": "human-readable display name"
           },
           "description": {
             "type": "string",

@@ -20,12 +20,12 @@ The honest fork we named: build for **K-local / prosumer** (tech-savvy users who
 
 But before more polish — even for the prosumer audience — we need to know: **does the perimeter actually work?** The whole product is sold on "safe on any computer." Months of building, never stress-tested end-to-end. Could be Swiss cheese, could be an empty prison cell (too restrictive to be useful), could be just right.
 
-So the new immediate mission is: **build a harness that drives Hum from Telegram as a user, observe the perimeter under real traffic, document findings.** Whatever that reveals determines what gets built next.
+So the new immediate mission is: **build a harness that drives NewLobsterTrappBot from Telegram as a user, observe the perimeter under real traffic, document findings.** Whatever that reveals determines what gets built next.
 
 ### What's done this session
 
 **Phase 0 — Perimeter brought up live** ✅
-- Containers restarted with real credentials (previously `.env` had dummy `sk-ant-test-dummy-key`  and `123456:ABC-DEF-test-token` placeholders — that's why Hum was silent)
+- Containers restarted with real credentials (previously `.env` had dummy `sk-ant-test-dummy-key`  and `123456:ABC-DEF-test-token` placeholders — that's why NewLobsterTrappBot was silent)
 - Anthropic key funded ($5 credits; note: you originally set a workspace **spend limit** without actually **purchasing credits**; distinct things)
 - Bot token rotated after **Finding #1** (see below)
 - User paired to `@LobsterTrappBot` (Telegram user id `8585044562`)
@@ -48,7 +48,7 @@ So the new immediate mission is: **build a harness that drives Hum from Telegram
 **Phase 2 — Harness scaffold** ✅ (commit `943a08f`)
 - `tests/e2e-telegram/` — Python + Telethon + pytest scaffold
 - 9 test files covering network, filesystem read/write, exec/escape, credentials, spending, dynamic shell
-- Helpers: `HumClient` (send-and-wait with `[TEST]` prefix), `ProxyLogTail` (async subprocess tail of `podman logs vault-proxy` parsing JSON events), `BudgetTracker` (Decimal-math cost accounting, hard-stops at $4.00)
+- Helpers: `BotClient` (send-and-wait with `[TEST]` prefix), `ProxyLogTail` (async subprocess tail of `podman logs vault-proxy` parsing JSON events), `BudgetTracker` (Decimal-math cost accounting, hard-stops at $4.00)
 - Bonus: `direct_probing/probe.sh` — 24 `podman exec` probes that run without Telegram or Anthropic cost. Actually ran tonight.
 
 **Direct probing results** (`tests/e2e-telegram/direct_probing/findings-2026-04-23.md`): 22 PASS, 0 FAIL, 2 INCONCLUSIVE.
@@ -75,7 +75,7 @@ After that:
 
 4. **Decide next move based on findings.** The harness output is the forcing function for what to build next:
    - Swiss cheese (FAILs in Phase 4): **stop, fix findings, re-run.** Don't build more product on a leaky foundation.
-   - Empty cell (Hum too restricted to do anything useful): **loosen policy at the right shell level**, then re-run.
+   - Empty cell (NewLobsterTrappBot too restricted to do anything useful): **loosen policy at the right shell level**, then re-run.
    - Just right: proceed with the **prosumer** v0.2.0 plan. This doesn't mean going back to the Karen-focused UI polish; it means scoping E.2.2–E.2.8 to what a tech-savvy user actually needs. Different plan, needs re-thinking.
 
 5. **Push the submodule fix** (`components/openclaw-vault` commit `4f5b560`) to `github.com/gitgoodordietrying/openclaw-vault`. I did not push — shared-systems change, your call.

@@ -9,14 +9,14 @@
 
 ## What This Enables
 
-A user messages Hum on Telegram:
+A user messages NewLobsterTrappBot on Telegram:
 > "Remember that my dentist appointment is April 3rd at 2pm"
 
-Hum writes this to `memory/2026-03-25.md` in its workspace. Tomorrow, when the user asks "When's my dentist appointment?", Hum reads its memory files and answers correctly — even if the container was restarted overnight.
+NewLobsterTrappBot writes this to `memory/2026-03-25.md` in its workspace. Tomorrow, when the user asks "When's my dentist appointment?", NewLobsterTrappBot reads its memory files and answers correctly — even if the container was restarted overnight.
 
-Without this capability (Hard Shell): Hum has amnesia. Every restart is a blank slate. Pairing resets. Conversations vanish. This is the #1 reason Hum is useless in Hard Shell.
+Without this capability (Hard Shell): NewLobsterTrappBot has amnesia. Every restart is a blank slate. Pairing resets. Conversations vanish. This is the #1 reason NewLobsterTrappBot is useless in Hard Shell.
 
-With this capability (Split Shell): Hum remembers things, maintains context across sessions, and the Telegram pairing survives restarts.
+With this capability (Split Shell): NewLobsterTrappBot remembers things, maintains context across sessions, and the Telegram pairing survives restarts.
 
 ---
 
@@ -79,7 +79,7 @@ volumes:
 - `agents/main/sessions/*.jsonl` — conversation history
 - `openclaw.json` — running config (includes auto-generated gateway token)
 
-**What this means for the user:** Start the container, Hum remembers everything. No re-pairing. No amnesia.
+**What this means for the user:** Start the container, NewLobsterTrappBot remembers everything. No re-pairing. No amnesia.
 
 ### 3. Allowlist: No changes needed
 
@@ -179,7 +179,7 @@ When switching from Split Shell to Hard Shell:
 
 #### Audit Command: `vault-audit.sh`
 
-A new script (`scripts/vault-audit.sh`) that provides a complete picture of what Hum did. Runs from the host, does not require the container to be running (reads the persistent volume directly).
+A new script (`scripts/vault-audit.sh`) that provides a complete picture of what NewLobsterTrappBot did. Runs from the host, does not require the container to be running (reads the persistent volume directly).
 
 ```
 Usage: bash scripts/vault-audit.sh [options]
@@ -308,11 +308,11 @@ The agent could encode workspace file contents (including conversation transcrip
 ### End-to-end test:
 
 1. Switch to Split Shell: `bash scripts/switch-shell.sh split`
-2. Message Hum: "Remember that my dentist is Dr. Smith, appointment April 3rd at 2pm"
-3. Verify: Hum writes to `memory/2026-03-25.md`
+2. Message NewLobsterTrappBot: "Remember that my dentist is Dr. Smith, appointment April 3rd at 2pm"
+3. Verify: NewLobsterTrappBot writes to `memory/2026-03-25.md`
 4. Restart: `bash scripts/kill.sh --soft && podman-compose up -d`
-5. Message Hum: "When is my dentist appointment?"
-6. Verify: Hum reads from memory and answers correctly
+5. Message NewLobsterTrappBot: "When is my dentist appointment?"
+6. Verify: NewLobsterTrappBot reads from memory and answers correctly
 7. Verify: No re-pairing needed (Telegram user still approved)
 
 ---

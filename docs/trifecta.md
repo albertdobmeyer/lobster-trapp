@@ -30,7 +30,7 @@ The question: how do you let inmates do useful work without giving them access t
 | **The Warden** | Prison director, makes judgment calls | Claude Code / Opus — intelligent security decisions |
 | **The Control Panel** | Warden's security screens | Lobster-TrApp GUI — visual interface to the perimeter |
 | **The Leash** | Adjustable restrictions per inmate | Dynamic Shell — Hard/Split/Soft security levels |
-| **The Human** | Prison owner / taxpayer | The user — gives high-level instructions, approves escalations |
+| **The human** | Prison owner / taxpayer | The user — gives high-level instructions, approves escalations |
 
 Key insight: **the workshop and monitoring station are INSIDE the prison, not outside.** You don't bring untrusted materials out of the prison and inspect them in your kitchen. Everything that touches untrusted content stays behind the fence.
 
@@ -38,7 +38,7 @@ Key insight: **the workshop and monitoring station are INSIDE the prison, not ou
 
 ```
 TIER 1: TRUSTED (full host access, makes decisions)
-├── Human User (interactive — gives instructions in plain language)
+├── human User (interactive — gives instructions in plain language)
 └── Claude Code / trusted CLI agent (the warden — intelligent middleman)
         │
         │  manages via CLI, API, or GUI
@@ -250,7 +250,7 @@ Workflows chain declared commands into single user-facing actions. The GUI execu
 | 2. Network isolation | perimeter | compose network | Pioneer isolated from agent |
 | 3. DM pairing policy | vault | vault-agent | Each Telegram user approved |
 | 4. Tool policy | vault | vault-agent | Denied tools stay invisible |
-| 5. Human/warden approval | Tier 1 | host | User sees every action |
+| 5. human/warden approval | Tier 1 | host | User sees every action |
 
 ---
 

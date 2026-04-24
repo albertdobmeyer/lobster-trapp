@@ -8,7 +8,7 @@ is Swiss cheese, an empty prison cell, or just right.
 ## Why Telegram and not a unit-test mock?
 
 Because the perimeter's security thesis is "nothing untrusted touches the
-host." The only honest way to test that is to prompt-inject Hum from the
+host." The only honest way to test that is to prompt-inject bot from the
 actual Telegram entry point and observe what reaches the host — in logs,
 in filesystem, in network egress. Mocking any layer defeats the test.
 
@@ -24,12 +24,12 @@ tests/e2e-telegram/
 ├── FIRST_RUN.md              ← one-time setup + the 3 commands to run the suite
 ├── requirements.txt          ← telethon, pytest, pytest-asyncio, python-dotenv
 ├── pytest.ini                ← asyncio auto mode + category markers
-├── conftest.py               ← fixtures (env, telegram_client, hum, budget, proxy_log)
+├── conftest.py               ← fixtures (env, telegram_client, NewLobsterTrappBot, budget, proxy_log)
 ├── helpers/
-│   ├── hum_client.py         ← send-and-wait over Telethon with [TEST] prefix
+│   ├── bot_client.py         ← send-and-wait over Telethon with [TEST] prefix
 │   ├── log_tail.py           ← async tail of `podman logs vault-proxy`, JSON event parser
 │   └── budget.py             ← cumulative spend tracker, hard-stops at $4.00
-├── test_smoke.py             ← prove Hum responds end-to-end
+├── test_smoke.py             ← prove bot responds end-to-end
 ├── test_baseline.py          ← basic reasoning, no regressions
 ├── test_network_boundary.py  ← allowlist behavior (is it enforced?)
 ├── test_filesystem_read_boundary.py   ← Swiss-cheese: can agent read host paths?
@@ -80,7 +80,7 @@ via `helpers/budget.py`.
 
 ## Test-message hygiene
 
-All harness messages to Hum are prefixed `[TEST]` — find them in your
+All harness messages to bot are prefixed `[TEST]` — find them in your
 real Telegram chat by searching that string. Bulk-delete after the run
 if you want a clean chat.
 

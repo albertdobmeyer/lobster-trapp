@@ -80,7 +80,7 @@ The shell is the security boundary around the OpenClaw agent. Inspired by lobste
 | Term | What It Means |
 |------|--------------|
 | **Lobster-TrApp** | The complete product — desktop app + container perimeter + security scanning + ecosystem tools. Pronounced "lobster trap." |
-| **Hum** | The agent's persona during our development and testing. Named by the agent itself (short for "Hummer" = lobster in German). Not a product name — each user's agent will develop its own identity. |
+| **NewLobsterTrappBot** | The agent's persona during development and testing. The current test bot (`@NewLobsterTrappBot`) replaced the earlier `Hum` handle on 2026-04-24 when the project moved to a secondary Telegram account. Name derives from "Hummer" (lobster, in German). Not a product name — each user's agent can develop its own identity. |
 | **The Trifecta** | The three component repos working together inside the perimeter: openclaw-vault (containment) + clawhub-forge (skill security) + moltbook-pioneer (feed monitoring). |
 | **OpenClaw** | The upstream open-source AI agent runtime we're securing. Not our project — we wrap it. Think of it as the engine; we build the safety cage around it. |
 | **ClawHub** | The upstream skill registry for OpenClaw. 11.9% malware rate during the ClawHavoc incident. Skills from here are scanned by forge inside the perimeter before the agent can use them. |

@@ -25,7 +25,7 @@
 
 ## What's Next (Priority Order)
 
-### Phase 3: Make Hum Useful — Gear 2 (Semi-Auto)
+### Phase 3: Make NewLobsterTrappBot Useful — Gear 2 (Semi-Auto)
 
 **Why:** Gear 1 is a chatbot. Gear 2 is an assistant. Without Gear 2, there's no product worth downloading.
 
@@ -53,16 +53,16 @@
 
 ### Phase 4: Monitoring Dashboard
 
-**Why:** Before Gear 3 (broad access), users must be able to see what Hum is doing. The GUI must render activity in plain language, not raw JSON logs.
+**Why:** Before Gear 3 (broad access), users must be able to see what NewLobsterTrappBot is doing. The GUI must render activity in plain language, not raw JSON logs.
 
 **Engineering work:**
 - Implement `monitoring/network-log-parser.py` (parse proxy JSONL → human-readable)
-- Implement `monitoring/session-report.sh` (what did Hum do this session?)
+- Implement `monitoring/session-report.sh` (what did NewLobsterTrappBot do this session?)
 - Implement `monitoring/activity-feed.sh` (live feed for the GUI)
 - Update `component.yml` with monitoring commands
 - Verify rendering in Lobster-TrApp GUI
 
-**Exit criteria:** A non-technical user can open the GUI and see, in plain English, every action Hum took, every website it contacted, and every request that was blocked.
+**Exit criteria:** A non-technical user can open the GUI and see, in plain English, every action NewLobsterTrappBot took, every website it contacted, and every request that was blocked.
 
 ---
 
@@ -83,7 +83,7 @@
 
 ### Phase 6: Gear 3 (Full-Auto) — Broad Autonomy
 
-**Why:** The power mode. Hum can operate broadly — shell commands, file system, web, messaging — while the driver seat (root, SSH keys, passwords) stays permanently locked.
+**Why:** The power mode. NewLobsterTrappBot can operate broadly — shell commands, file system, web, messaging — while the driver seat (root, SSH keys, passwords) stays permanently locked.
 
 **Engineering work:**
 - Broad host mounts (user home minus protected resources)
@@ -93,7 +93,7 @@
 - Agent self-modification prevention
 - Full end-to-end testing
 
-**Exit criteria:** Hum operates autonomously. Protected resources verified inaccessible at maximum autonomy. User can downshift to Gear 1 at any time.
+**Exit criteria:** NewLobsterTrappBot operates autonomously. Protected resources verified inaccessible at maximum autonomy. User can downshift to Gear 1 at any time.
 
 ---
 
@@ -109,7 +109,7 @@
 - Kill switch button (always visible, works in any gear)
 - Connect gear-switching to vault's `component.yml` commands
 
-**Exit criteria:** A non-technical user can download Lobster-TrApp, click through a setup wizard, and have a working Hum on Telegram within 10 minutes — no terminal commands needed.
+**Exit criteria:** A non-technical user can download Lobster-TrApp, click through a setup wizard, and have a working NewLobsterTrappBot on Telegram within 10 minutes — no terminal commands needed.
 
 ---
 
@@ -161,7 +161,7 @@
 ## Dependency Graph
 
 ```
-DONE ──→ Phase 3 (Gear 2 — make Hum useful)
+DONE ──→ Phase 3 (Gear 2 — make NewLobsterTrappBot useful)
               |
          Phase 4 (Monitoring dashboard)
               |

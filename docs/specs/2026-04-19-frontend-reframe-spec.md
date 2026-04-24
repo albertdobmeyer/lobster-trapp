@@ -83,11 +83,11 @@ Dashboard
 
 [assistant status card — prominent, role=runtime component]
   Your AI Assistant          ● Running
-  Talk to your assistant on Telegram → @HumBot
+  Talk to your assistant on Telegram → @NewLobsterTrappBotBot
 
   [Security Check]  [Stop Assistant]  [Skills (25)]
 
-[onboarding: "Your assistant is ready! Message @HumBot on Telegram to get started."]
+[onboarding: "Your assistant is ready! Message @NewLobsterTrappBotBot on Telegram to get started."]
 
 [2 secondary cards: Skills + Network]
 ```
