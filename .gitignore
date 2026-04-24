@@ -24,6 +24,17 @@ Desktop.ini
 .env
 .env.local
 
+# Test-harness secrets and caches
+.env.test
+.env.test.local
+*.session
+*.session-journal
+tests/e2e-telegram/.venv/
+tests/e2e-telegram/.pytest_cache/
+tests/e2e-telegram/__pycache__/
+tests/e2e-telegram/**/__pycache__/
+tests/e2e-telegram/artifacts/
+
 # Claude Code local settings
 .claude/
 
