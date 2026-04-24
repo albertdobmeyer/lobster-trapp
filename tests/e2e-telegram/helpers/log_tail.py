@@ -116,24 +116,74 @@ class ProxyLogTail:
         supported as a convenience; all other keys are equality checks on the
         event field.
         """
-        out = []
-        url_contains = filters.pop("url_contains", None)
-        for ev in self.events:
-            if url_contains and url_contains not in ev.url:
-                continue
-            if all(getattr(ev, k, None) == v for k, v in filters.items()):
-                out.append(ev)
-        return out
+        return _filter_events(self.events, **filters)
 
     async def wait_for(self, *, url_contains: str | None = None, action: str | None = None,
                        timeout: float = 15.0) -> ProxyEvent | None:
         """Poll for an event matching criteria. Returns None if timeout."""
-        deadline = time.time() + timeout
-        while time.time() < deadline:
-            matches = self.where(**{k: v for k, v in (("action", action),) if v})
-            if url_contains:
-                matches = [e for e in matches if url_contains in e.url]
-            if matches:
-                return matches[-1]
-            await asyncio.sleep(0.25)
-        return None
+        return await _wait_for(lambda: self.events, url_contains=url_contains,
+                               action=action, timeout=timeout)
+
+    def view_from_now(self) -> "ProxyLogView":
+        """Return a per-test view over this session-scoped tail. The view only
+        surfaces events appended AFTER this call, so negative assertions like
+        "no BLOCKED events this test" remain meaningful across tests that run
+        before it.
+        """
+        return ProxyLogView(self, marker=len(self.events))
+
+
+def _filter_events(events: list[ProxyEvent], **filters) -> list[ProxyEvent]:
+    out = []
+    url_contains = filters.pop("url_contains", None)
+    for ev in events:
+        if url_contains and url_contains not in ev.url:
+            continue
+        if all(getattr(ev, k, None) == v for k, v in filters.items()):
+            out.append(ev)
+    return out
+
+
+async def _wait_for(events_fn, *, url_contains=None, action=None, timeout=15.0):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        filters = {}
+        if action is not None:
+            filters["action"] = action
+        matches = _filter_events(events_fn(), **filters)
+        if url_contains:
+            matches = [e for e in matches if url_contains in e.url]
+        if matches:
+            return matches[-1]
+        await asyncio.sleep(0.25)
+    return None
+
+
+class ProxyLogView:
+    """Per-test slice of a session-scoped ProxyLogTail. Events before the
+    view's marker are hidden; events after it are live-updated as the
+    underlying tail accumulates. Supports .events, .where(), .wait_for(),
+    .clear() — and .clear() only clears the view's window, not session state.
+    """
+
+    def __init__(self, tail: "ProxyLogTail", marker: int) -> None:
+        self._tail = tail
+        self._marker = marker
+
+    @property
+    def events(self) -> list[ProxyEvent]:
+        return self._tail.events[self._marker:]
+
+    def where(self, **filters) -> list[ProxyEvent]:
+        return _filter_events(self.events, **filters)
+
+    async def wait_for(self, *, url_contains: str | None = None, action: str | None = None,
+                       timeout: float = 15.0) -> ProxyEvent | None:
+        return await _wait_for(lambda: self.events, url_contains=url_contains,
+                               action=action, timeout=timeout)
+
+    def clear(self) -> None:
+        """Advance the marker to the current end, effectively emptying the
+        view. Used by tests that compare before/after within a single test.
+        """
+        self._marker = len(self._tail.events)

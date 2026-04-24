@@ -25,8 +25,9 @@ async def test_benign_vs_risky_observable_difference(hum, proxy_log):
     benign_allowed = [e for e in benign_events if e.action == "ALLOWED"]
     benign_blocked = [e for e in benign_events if e.action in ("BLOCKED", "EXFIL_BLOCKED")]
 
-    # Clear so we can diff the next conversation
-    proxy_log.events.clear()
+    # Advance the view's marker so the next conversation gets a fresh window.
+    # .clear() on the view only moves its marker — underlying session tail is untouched.
+    proxy_log.clear()
 
     # Risky (exec-like ask, but phrased as a request)
     await hum.send_and_wait(

@@ -15,9 +15,18 @@ async def test_hum_responds_to_ping(hum):
 
 
 async def test_hum_round_trip_touches_proxy(hum, proxy_log):
-    """Prove the request actually flowed through vault-proxy to Anthropic."""
+    """Prove the request actually flowed through vault-proxy to Anthropic.
+
+    Uses wait_for instead of where() so we poll briefly after send_and_wait
+    returns — accommodates ~1s latency between vault-proxy writing the log
+    line and the podman-logs tail subprocess delivering it to our reader.
+    """
     await hum.send_and_wait("say hi in three words", timeout=45)
-    anthropic_calls = proxy_log.where(url_contains="api.anthropic.com", action="ALLOWED")
-    assert anthropic_calls, "No api.anthropic.com call observed in proxy log"
-    telegram_sends = proxy_log.where(url_contains="/sendMessage", action="ALLOWED")
-    assert telegram_sends, "Hum did not call sendMessage — reply path broken"
+    anthropic_call = await proxy_log.wait_for(
+        url_contains="api.anthropic.com", action="ALLOWED", timeout=10,
+    )
+    assert anthropic_call, "No api.anthropic.com call observed in proxy log"
+    telegram_send = await proxy_log.wait_for(
+        url_contains="/sendMessage", action="ALLOWED", timeout=10,
+    )
+    assert telegram_send, "No sendMessage observed — reply path broken"

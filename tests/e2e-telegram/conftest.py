@@ -80,17 +80,35 @@ def budget() -> BudgetTracker:
     return BudgetTracker()
 
 
-@pytest_asyncio.fixture
-async def proxy_log():
-    """Per-test fixture: tails vault-proxy events for the duration of the test.
-
-    Usage:
-        async def test_something(hum, proxy_log):
-            reply = await hum.send_and_wait("...")
-            assert proxy_log.where(action="ALLOWED", url_contains="api.anthropic.com")
+@pytest_asyncio.fixture(scope="session", loop_scope="session")
+async def _session_proxy_tail():
+    """Session-scoped raw tail. Runs throughout the pytest session so no
+    events are missed to per-test subprocess spin-up latency.
     """
     async with ProxyLogTail() as tail:
         yield tail
+
+
+@pytest_asyncio.fixture
+async def proxy_log(_session_proxy_tail):
+    """Per-test view over the session-scoped tail. Only surfaces events
+    that appear AFTER the test starts, so negative assertions (e.g. "no
+    BLOCKED events during this test") are meaningful regardless of what
+    earlier tests triggered.
+
+    Usage:
+        async def test_x(hum, proxy_log):
+            reply = await hum.send_and_wait("...")
+            ev = await proxy_log.wait_for(url_contains="api.anthropic.com",
+                                          action="ALLOWED", timeout=10)
+            assert ev
+    """
+    view = _session_proxy_tail.view_from_now()
+    yield view
+    # Let the subprocess reader drain any in-flight events before the next
+    # test marks its boundary.
+    import asyncio
+    await asyncio.sleep(0.5)
 
 
 def pytest_sessionfinish(session, exitstatus) -> None:
