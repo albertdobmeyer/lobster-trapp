@@ -1,20 +1,28 @@
-"""Async tail of vault-proxy events — captures the JSONL stream from
-`podman logs -f vault-proxy` during a test, returns the parsed events that
-landed while the test ran. Used for test assertions ("did the blocked fetch
-log a BLOCKED event?") and forensic attachment to failed tests.
+"""Async tail of vault-proxy events. Parses the structured JSONL stream the
+proxy writes and surfaces parsed events for test assertions.
 
-We tail `podman logs` rather than reading /var/log/vault-proxy/requests.jsonl
-because that file lives on a named volume not directly readable from the
-host (per our container audit) and the stdout stream is the same data.
+Source: we tail the requests.jsonl file on the named-volume host path
+(discovered at runtime via `podman volume inspect`). This is more reliable
+than `podman logs -f`, which had observable delivery latency in practice
+(events could land in `podman logs` but not reach our asyncio subprocess
+reader in time for a 10s assertion window — see commit 74d642c postmortem).
+
+Python's logging FileHandler flushes after each emit, so the file is a
+real-time view of proxy activity. `tail -F` on the host path gives
+line-at-a-time streaming with no buffering.
 """
 from __future__ import annotations
 
 import asyncio
 import contextlib
 import json
+import os
 import time
 from dataclasses import dataclass, field
-from typing import AsyncIterator
+
+
+PROXY_LOGS_VOLUME = "lobster-trapp_vault-proxy-logs"
+LOG_FILE_NAME = "requests.jsonl"
 
 
 @dataclass
@@ -56,25 +64,47 @@ class ProxyLogTail:
     """
 
     def __init__(self, container: str = "vault-proxy") -> None:
-        self.container = container
+        self.container = container  # kept for API compatibility; unused in file-tail mode
         self.events: list[ProxyEvent] = []
         self._proc: asyncio.subprocess.Process | None = None
         self._reader_task: asyncio.Task | None = None
         self._started_at: float = 0.0
+        self._log_file_path: str = ""
+
+    async def _discover_log_path(self) -> str:
+        """Find the host path of the requests.jsonl file on the proxy-logs
+        named volume. Raises if the volume isn't present (perimeter likely
+        not started).
+        """
+        proc = await asyncio.create_subprocess_exec(
+            "podman", "volume", "inspect", PROXY_LOGS_VOLUME,
+            "--format", "{{.Mountpoint}}",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        out, err = await proc.communicate()
+        mountpoint = out.decode().strip()
+        if proc.returncode != 0 or not mountpoint:
+            raise RuntimeError(
+                f"Could not discover {PROXY_LOGS_VOLUME} mountpoint. "
+                f"Is the perimeter running? stderr={err.decode()[:200]!r}"
+            )
+        return os.path.join(mountpoint, LOG_FILE_NAME)
 
     async def __aenter__(self) -> "ProxyLogTail":
-        # `--since=0s --tail=0` skips backlog, stream only new lines.
-        # Some podman builds reject --since in that position; fall back to
-        # just --tail 0 which also streams only new content.
+        self._log_file_path = await self._discover_log_path()
+        # `tail -n 0 -F` — skip backlog, follow by name (survives log rotation).
+        # File-level tail bypasses podman-logs stream buffering that missed
+        # events in earlier testing.
         self._proc = await asyncio.create_subprocess_exec(
-            "podman", "logs", "-f", "--tail", "0", self.container,
+            "tail", "-n", "0", "-F", self._log_file_path,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL,
         )
         self._started_at = time.time()
         self._reader_task = asyncio.create_task(self._consume(self._proc.stdout))
-        # Give the reader a tick to spin up before the test starts writing traffic.
-        await asyncio.sleep(0.1)
+        # Brief wait for the tail subprocess to establish before tests send.
+        await asyncio.sleep(0.2)
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
@@ -90,17 +120,14 @@ class ProxyLogTail:
     async def _consume(self, stream: asyncio.StreamReader | None) -> None:
         if stream is None:
             return
+        # File contains one JSON object per line, nothing else. No prefix
+        # stripping needed (unlike the podman-logs stdout which prepended
+        # "[vault-proxy] " or mitmproxy's own "[timestamp] ").
         async for raw in stream:
             try:
                 line = raw.decode("utf-8", errors="replace").strip()
             except Exception:
                 continue
-            # Our addon emits either:
-            #   "[vault-proxy] {...json...}"   (via stdout handler)
-            #   "{...json...}"                  (mitmproxy's stream prefix form)
-            # Strip the bracket prefix if present and try to parse JSON.
-            if line.startswith("[vault-proxy] "):
-                line = line[len("[vault-proxy] "):]
             if not line.startswith("{"):
                 continue
             try:
