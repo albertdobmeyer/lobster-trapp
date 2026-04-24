@@ -94,11 +94,20 @@ async def proxy_log():
 
 
 def pytest_sessionfinish(session, exitstatus) -> None:
-    # Print budget summary so the user sees cost after every run.
+    # Print budget + send-count summaries after every run.
     tracker = None
+    hum_client = None
     for item in getattr(session, "_fixture_values", {}).values() or []:
         if isinstance(item, BudgetTracker):
             tracker = item
-            break
+        if isinstance(item, HumClient):
+            hum_client = item
+    parts: list[str] = []
     if tracker:
-        print("\n" + tracker.summary())
+        parts.append(tracker.summary())
+    if hum_client:
+        parts.append(
+            f"Telegram sends: {hum_client.send_count}/{hum_client.daily_send_budget}"
+        )
+    if parts:
+        print("\n" + "\n".join(parts))

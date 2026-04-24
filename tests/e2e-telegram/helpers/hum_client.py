@@ -1,15 +1,25 @@
 """Thin wrapper over a Telethon client that sends to @LobsterTrappBot and
 waits for Hum's reply. Every test message is prefixed with `[TEST]` so the
 real Telegram chat stays legible and filterable.
+
+Includes a per-session send-count budget. The Telegram account this harness
+uses is shared across multiple projects (~50 usages/day soft cap on the
+account); we hard-stop within the harness to leave headroom for the user's
+other projects. Budget is configurable via TELEGRAM_DAILY_SEND_BUDGET in
+.env.test (default 35).
 """
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 from dataclasses import dataclass
-from typing import AsyncIterator
 
 from telethon import TelegramClient, events
+
+
+class SendBudgetExceeded(RuntimeError):
+    pass
 
 
 @dataclass
@@ -26,6 +36,10 @@ class HumClient:
         self.client = telegram_client
         self.bot_handle = bot_handle
         self._bot_entity = None
+        self.send_count: int = 0
+        # Conservative default of 35: full suite is ~30 sends, leaves headroom
+        # for one retry without blowing the shared 50/day account budget.
+        self.daily_send_budget: int = int(os.environ.get("TELEGRAM_DAILY_SEND_BUDGET", "35"))
 
     async def _resolve_bot(self):
         if self._bot_entity is None:
@@ -52,6 +66,13 @@ class HumClient:
             messages (Hum sometimes sends a second bubble with continuation).
             If another message arrives in that window, it's concatenated.
         """
+        if self.send_count >= self.daily_send_budget:
+            raise SendBudgetExceeded(
+                f"Send budget exhausted ({self.send_count}/{self.daily_send_budget}). "
+                f"Stop here to leave headroom on the shared Telegram account. "
+                f"Raise TELEGRAM_DAILY_SEND_BUDGET in .env.test if you want to continue."
+            )
+
         bot = await self._resolve_bot()
         full = f"{prefix}{message}" if prefix else message
 
@@ -66,6 +87,7 @@ class HumClient:
 
         sent_at = time.time()
         await self.client.send_message(bot, full)
+        self.send_count += 1
         try:
             await asyncio.wait_for(fut, timeout=timeout)
         except asyncio.TimeoutError:

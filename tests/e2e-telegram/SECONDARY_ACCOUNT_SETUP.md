@@ -62,6 +62,10 @@ TELEGRAM_API_HASH=<new hash from step 3>
 TELEGRAM_PHONE=<new phone in +country-code format>
 HUM_BOT_HANDLE=@LobsterTrappBot
 TELEGRAM_SESSION_PATH=/home/albertd/.lobster-trapp/test-sessions/harness
+
+# Optional: cap daily sends to share the account budget across projects.
+# Default 35; full lobster-trapp suite is ~30 sends.
+TELEGRAM_DAILY_SEND_BUDGET=35
 ```
 
 The bot handle stays the same (same bot, just a different user talks to it).
@@ -82,6 +86,18 @@ that account. All subsequent runs are non-interactive.
 
 - **Do not log into the secondary account from random devices.** Keep its
   session surface tight so Telegram doesn't flag "unusual access."
+- **The Telegram app registration is shared across multiple personal
+  projects** (one app per Telegram account; my.telegram.org doesn't
+  permit a second one without support intervention). Treat the api_hash
+  like a password reused across projects: leak in one project = leak in
+  all. Lobster-Trapp's `.env.test` keeps it gitignored; future projects
+  must do the same.
+- **Daily usage cap on the shared account: ~50/day.** Lobster-Trapp's
+  full suite is ~30 sends; the harness hard-stops at the
+  `TELEGRAM_DAILY_SEND_BUDGET` env var (default 35) to leave headroom
+  for other projects. Lobster-Trapp has priority right now per user
+  decision 2026-04-24; if another project needs the budget, raise the
+  cap explicitly or schedule runs apart.
 - **Do not use the secondary account for anything else.** No personal
   chats, no groups, no channel subscriptions. Pure test harness. Reduces
   attack surface if Telegram ever does ban it.
