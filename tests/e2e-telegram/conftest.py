@@ -51,7 +51,7 @@ def env() -> dict[str, str]:
     return {k: os.environ[k] for k in REQUIRED_ENV}
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def telegram_client(env) -> TelegramClient:
     session_path = env["TELEGRAM_SESSION_PATH"]
     # Ensure parent dir exists with restrictive perms.
@@ -70,7 +70,7 @@ async def telegram_client(env) -> TelegramClient:
         await client.disconnect()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def hum(telegram_client, env) -> HumClient:
     return HumClient(telegram_client, env["HUM_BOT_HANDLE"])
 
