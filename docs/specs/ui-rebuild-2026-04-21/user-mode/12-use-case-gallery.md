@@ -93,23 +93,37 @@ Minimum 10 cards, target 15 for MVP. Extend over time.
 
 #### Sample cards
 
-| Title | Example prompt | Category |
-|-------|----------------|----------|
-| Plan a trip | "I need help planning a weekend in Chicago with my grandkids." | Everyday |
-| Morning briefing | "Summarize today's news in 3 bullet points." | Everyday |
-| Remember to call mom | "Remind me every Sunday at 6pm to call my mom." | Everyday |
-| Organize my desktop | "Help me sort these downloaded files into folders." | Everyday |
-| Summarize article | "Summarize this link in plain English: [URL]" | Work |
-| Draft an email | "Draft a polite email declining a meeting." | Work |
-| Research a topic | "Tell me everything about the Mediterranean diet." | Research |
-| Compare products | "Compare the iPhone 17 vs Pixel 11 for a senior user." | Research |
-| Write me a poem | "Write a poem about my dog Coco." | Creative |
-| Brainstorm | "Help me brainstorm gift ideas for my daughter's 30th." | Creative |
-| Translate | "Translate 'where is the bathroom' into French, Spanish, and Italian." | Work |
-| Local weather | "What's the weather like in my area this weekend?" | Everyday |
-| Plan a meal | "Suggest a dinner I can make with chicken and rice." | Everyday |
-| Track activity | "Track what I've been asking you about this week." | Work |
-| Random fact | "Tell me something interesting I don't know." | Creative |
+**Capability tag legend** (added 2026-04-25 per VERDICT-2026-04-25.md Finding #9):
+- ✅ **Works today** at current shell level. Pure reasoning + bot's own file ops + sensitive-advice routing.
+- 🌐 **Needs `fetch` tool** — currently not enabled. Bot will gracefully redirect to a web URL. Promote when Soft Shell + fetch arrives.
+- 📅 **Needs `vault-calendar` sidecar** (planned v0.3.0+ per `2026-04-25-voice-and-calendar-perimeter-extension.md`). Bot will redirect to phone's reminder app for now.
+- 📞 **Needs `vault-voice` sidecar** (planned v0.4.0+).
+
+For v0.2.0 ship: only mark ✅ entries as primary "Try this" cards; gray out the others with a tooltip "Coming in v0.3 — needs <capability>" so users see the roadmap, not a broken promise.
+
+| Tag | Title | Example prompt | Category |
+|---|-------|----------------|----------|
+| 🌐 | Plan a trip | "I need help planning a weekend in Chicago with my grandkids." | Everyday |
+| 🌐 | Morning briefing | "Summarize today's news in 3 bullet points." | Everyday |
+| 📅 | Remember to call mom | "Remind me every Sunday at 6pm to call my mom." | Everyday |
+| ✅ | Organize my desktop | "Help me sort these downloaded files into folders." (bot suggests structure; user does the moving — bot has no host-fs access) | Everyday |
+| 🌐 | Summarize article | "Summarize this link in plain English: [URL]" (bot will ask user to paste the article text) | Work |
+| ✅ | Draft an email | "Draft a polite email declining a meeting." (verified UCT-3 + landlord variant) | Work |
+| 🌐 | Research a topic | "Tell me everything about the Mediterranean diet." (training-data based; explicit cutoff caveat) | Research |
+| 🌐 | Compare products | "Compare the iPhone 17 vs Pixel 11 for a senior user." (training-data based, stale for new releases) | Research |
+| ✅ | Write me a poem | "Write a poem about my dog Coco." | Creative |
+| ✅ | Brainstorm | "Help me brainstorm gift ideas for my daughter's 30th." | Creative |
+| ✅ | Translate | "Translate 'where is the bathroom' into French, Spanish, and Italian." (verified UCT-2: 6 languages w/ cultural tips) | Work |
+| 🌐 | Local weather | "What's the weather like in my area this weekend?" | Everyday |
+| ✅ | Plan a meal | "Suggest a dinner I can make with chicken and rice." | Everyday |
+| ✅ | Track activity | "Track what I've been asking you about this week." (bounded by conversation memory; explicitly refuses to itemize sensitive info per UCT-9) | Work |
+| ✅ | Random fact | "Tell me something interesting I don't know." | Creative |
+| ✅ | Sensitive advice — health urgency | "I have chest tightness and arm numbness. What should I do?" (verified UCT-10: bot directs to 911 with specific instructions) | Everyday |
+| ✅ | Sensitive advice — financial | "Should I put my retirement in crypto?" (verified UCT-11: bot directs to fee-only fiduciary with concrete next step) | Work |
+| ✅ | Sensitive advice — legal | "Landlord won't return my deposit. What are my next steps?" (verified UCT-12: bot cites Texas Property Code § 92.103 + timeline) | Work |
+| ✅ | Difficult conversation | "Help me draft a firm letter to my ex about visitation." (verified UCT-13: empathetic but professional letter) | Everyday |
+
+**Today's shippable count: 11 ✅ of 19 documented. Rest unlock as the perimeter extends per the roadmap.**
 
 ### 3. Favorites Section
 

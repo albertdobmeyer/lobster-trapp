@@ -29,7 +29,28 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(REPO_ROOT / ".env.test")
 
 
-async def chat(message: str, timeout: float = 180.0, settle_s: float = 2.5) -> None:
+async def chat(
+    message: str,
+    timeout: float = 180.0,
+    idle_s: float = 4.0,
+    max_idle_wait: float = 240.0,
+) -> None:
+    """
+    Send a message to the bot and capture the full streamed reply.
+
+    Replaces the old fixed-settle approach with an idle-timer: after the first
+    reply, keep listening until `idle_s` elapse with no new messages, OR until
+    `max_idle_wait` total seconds have elapsed since the first reply
+    (safety upper bound). This handles long-form responses that stream as
+    many Telegram messages over minutes (per F10 from VERDICT-2026-04-25.md).
+
+    Args:
+        message: text to send (no [TEST] prefix; chat.py is for ad-hoc
+                 user-impersonation, not test-prefixed messages)
+        timeout: max seconds to wait for the FIRST reply
+        idle_s: required silence after last message to declare "stream done"
+        max_idle_wait: hard upper bound on total wait after first reply
+    """
     client = TelegramClient(
         session=os.environ["TELEGRAM_SESSION_PATH"],
         api_id=int(os.environ["TELEGRAM_API_ID"]),
@@ -40,10 +61,13 @@ async def chat(message: str, timeout: float = 180.0, settle_s: float = 2.5) -> N
 
     received: list[tuple[str, float]] = []
     first_reply = asyncio.Event()
+    last_message_at: list[float] = [0.0]  # mutable container so handler can update
 
     @client.on(events.NewMessage(from_users=bot))
     async def _handler(event):  # noqa: ARG001
-        received.append((event.message.message or "", time.time()))
+        now = time.time()
+        received.append((event.message.message or "", now))
+        last_message_at[0] = now
         first_reply.set()
 
     print(f">>> USER: {message}", flush=True)
@@ -57,12 +81,28 @@ async def chat(message: str, timeout: float = 180.0, settle_s: float = 2.5) -> N
         await client.disconnect()
         return
 
-    # Let any continuation messages arrive in a settle window.
-    await asyncio.sleep(settle_s)
+    # Idle-timer drain: keep waiting until idle_s of silence, capped by max_idle_wait.
+    first_reply_at = received[0][1]
+    while True:
+        now = time.time()
+        time_since_last = now - last_message_at[0]
+        time_since_first = now - first_reply_at
+        if time_since_last >= idle_s:
+            break
+        if time_since_first >= max_idle_wait:
+            print(f"(hit max_idle_wait {max_idle_wait}s — closing stream)", flush=True)
+            break
+        # Sleep just long enough to re-check after the next likely message
+        await asyncio.sleep(min(idle_s - time_since_last + 0.1, 1.0))
+
     client.remove_event_handler(_handler)
 
-    print(f"\n<<< BOT ({len(received)} message{'s' if len(received) > 1 else ''}, "
-          f"first reply in {received[0][1] - sent_at:.1f}s):\n", flush=True)
+    print(
+        f"\n<<< BOT ({len(received)} message{'s' if len(received) > 1 else ''}, "
+        f"first reply in {first_reply_at - sent_at:.1f}s, "
+        f"stream ended after {time.time() - sent_at:.1f}s):\n",
+        flush=True,
+    )
     for i, (msg, _) in enumerate(received):
         if i > 0:
             print("\n--- (continuation) ---\n", flush=True)
