@@ -1,7 +1,7 @@
 # UX Principles Rubric for Non-Technical Users
 
-**Date:** 2026-04-20
-**Scope:** The Lobster-TrApp desktop GUI
+**Date:** 2026-04-20 (extended 2026-04-29 with P11–P13 + placeholder-page scores per Pass 3 of the Delightful Sloth phase)
+**Scope:** The Lobster-TrApp desktop GUI + the Telegram first-chat surface (added in Pass 1.5)
 **Purpose:** A scoring tool, not a manifesto. Use this to audit screens and prioritize rebuilds.
 
 ---
@@ -163,35 +163,105 @@
 
 ---
 
-## Score Matrix (13 Screens × 10 Principles)
+### Principle 11: The perimeter is alive iff the app is alive
 
-Scored 2026-04-20 after the Phase B/C frontend reframe.
+**The rule:** App start ⇒ perimeter up. App close ⇒ perimeter down. App crash ⇒ perimeter cleanly torn down (no orphan containers). OS reboot ⇒ app autostart respected; perimeter follows the app, not the other way around.
 
-| # | Screen | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 | P9 | P10 | Avg |
-|---|--------|----|----|----|----|----|----|----|----|----|----|-----|
-| 1 | Setup: Welcome | 10 | 10 | N/A | N/A | N/A | 10 | 10 | N/A | N/A | 10 | **10.0** |
-| 2 | Setup: System Check | 7 | 7 | 8 | 8 | 7 | 8 | 8 | N/A | 9 | 10 | **8.0** |
-| 3 | Setup: Assistant Modules | 8 | 8 | 7 | 7 | 9 | 8 | 9 | N/A | N/A | 10 | **8.3** |
-| 4 | Setup: Configuration | 7 | 8 | 7 | 6 | 9 | 6 | 8 | 9 | N/A | 9 | **7.7** |
-| 5 | Setup: Setting Up Your Assistant | 6 | 6 | 8 | 9 | 8 | 9 | 8 | N/A | 9 | 10 | **8.1** |
-| 6 | Setup: Complete | 10 | 10 | N/A | N/A | N/A | 10 | 10 | N/A | N/A | 10 | **10.0** |
-| 7 | Dashboard | 10 | 9 | N/A | N/A | 8 | 10 | 9 | N/A | 8 | 10 | **9.1** |
-| 8 | Component Detail (Assistant) | 8 | 7 | 6 | N/A | 9 | 9 | 8 | N/A | 7 | 8 | **7.8** |
-| 9 | Component Detail (Skills) | 7 | 6 | N/A | N/A | 8 | 9 | 8 | N/A | 7 | 10 | **7.6** |
-| 10 | Component Detail (Network) | 9 | 9 | N/A | N/A | 10 | 10 | 10 | N/A | N/A | 10 | **9.7** |
-| 11 | Settings | 8 | 7 | N/A | N/A | 9 | 9 | 8 | 6 | N/A | 9 | **8.0** |
-| 12 | 404 Page | 10 | 10 | 10 | N/A | N/A | N/A | 10 | N/A | N/A | 10 | **10.0** |
-| 13 | ErrorBoundary | 7 | 5 | 7 | 6 | 4 | N/A | 8 | N/A | N/A | 9 | **6.6** |
+**Why:** The product story is "a silent middleman security warden." That demands the warden's lifetime equal the user's session with the app. Today (per Pass 1's Phase 1 audit) the app is a control panel, not a lifecycle owner — SIGKILL leaks containers, closing the app leaves them running, relaunching shows "Your assistant is ready" even when the perimeter is offline. Each of those states is a lie to the user.
 
-**N/A means the principle doesn't apply** (no forms on a 404 page, no loading on the complete step, etc.).
+**Test question:** *If I randomly kill the Tauri process right now, will containers die within 5 seconds? If I relaunch, will the app know whether the perimeter is up before it tells the user "running safely"?*
+
+**Good (10/10):** Process exit → containers stop. App relaunch → silent health probe → hero state matches reality. Watchdog auto-restarts a single dead container within 30s.
+**Failing (1–3/10):** Tray placeholder says "initializing" forever. Hero status is hardcoded "running safely." `podman ps` shows zombie containers from a session that ended hours ago.
+
+**Where to score N/A:** Static screens with no perimeter coupling (Welcome, Setup Complete, 404, ErrorBoundary).
+
+---
+
+### Principle 12: The app speaks only when it's helping
+
+**The rule:** Notifications fire on **events that change the user's options** — never on routine internal state changes. Three valid trigger categories:
+1. **Threat-blocked** — vault-proxy blocked something the agent tried; user should know
+2. **State-recovery** — perimeter went degraded and came back; user noticed the gap
+3. **Action-required** — API key invalid, credit empty, OS permission missing
+
+**Why:** Pass 1 found no notification system today; the tray placeholder is mute. The vision quote was: "the app might give little updates and notifications once in a while to inform the enduser if something happens (injection attack prevented)." The opposite trap is over-notifying — the goal is "silent middleman," not "chatty middleman." Each false-positive notification trains the user to ignore the next one, including the real one.
+
+**Test question:** *In a 24-hour idle test, does the app fire any notifications? It shouldn't.* Then: *In a planted-attack test, does it fire exactly one humane notification with a single clear next action? It should.*
+
+**Good (10/10):** Three trigger categories cleanly separated. Each notification has plain-English copy + one actionable next step. OS-permission gate handled gracefully.
+**Failing (1–3/10):** Notifications fire on container restarts that resolved in <60s. Notifications mention component names ("vault-agent transitioned to RUNNING"). Notifications without a clear user action.
+
+**Where to score N/A:** Wizard screens (no notifications during setup); 404, ErrorBoundary, Setup Complete.
+
+---
+
+### Principle 13: Dev-tools-lite surfaces feel native, not embedded
+
+**The rule:** When the user reaches for a power-user task (peek at activity, install a skill, download from the network, change a setting, get help), the surface they land on shares the visual language, copy voice, and layout grammar of the Home dashboard. It is NOT an iframe, a console window, an "Advanced" tab styled differently, or a wrapped CLI dump.
+
+**Why:** Pass 1 found the post-wizard sidebar destinations are placeholders rendering "Coming in Phase E.2.X" with raw `docs/specs/...` paths. The architecture-driven temptation will be to "expose the manifest workflow" by showing the workflow output verbatim. The user-driven answer is that the workflow is invisible plumbing; the user sees only their question being answered.
+
+**Test question:** *Take any user-mode page. Replace its title with the Home page's title. Same fonts, same colors, same copy voice? It passes. If a developer-affordance (raw stream, JSON dump, hex hash) is visible without explicit "Show technical details" disclosure, it fails.*
+
+**Good (10/10):** A first-class user-facing page that wraps a backend workflow. The workflow's raw output is hidden behind a "Show technical details" disclosure.
+**Failing (1–3/10):** "Coming in Phase E.2.X" + a `docs/specs/...` path visible to end-users. Raw forge stream as the primary view. Manifest YAML editor as the way to install a skill.
+
+**Where to score N/A:** Pages that are core flow (Welcome, the wizard's four screens, Setup Complete, 404, ErrorBoundary), not dev-tools-lite.
+
+---
+
+## Score Matrix (19 Surfaces × 13 Principles)
+
+Originally scored 2026-04-20 (rows 1–13). Re-scored 2026-04-29 with P11–P13 added; rows 14–19 added (5 user-mode placeholder pages + Telegram first-chat surface from Pass 1.5).
+
+| # | Surface | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 | P9 | P10 | P11 | P12 | P13 | Avg |
+|---|---------|----|----|----|----|----|----|----|----|----|----|----|----|----|-----|
+| 1 | Setup: Welcome | 10 | 10 | N/A | N/A | N/A | 10 | 10 | N/A | N/A | 10 | N/A | N/A | N/A | **10.0** |
+| 2 | Setup: System Check | 7 | 7 | 8 | 8 | 7 | 8 | 8 | N/A | 9 | 10 | N/A | N/A | N/A | **8.0** |
+| 3 | Setup: Assistant Modules | 8 | 8 | 7 | 7 | 9 | 8 | 9 | N/A | N/A | 10 | N/A | N/A | N/A | **8.3** |
+| 4 | Setup: Configuration | 7 | 8 | 7 | 6 | 9 | 6 | 8 | 9 | N/A | 9 | N/A | N/A | N/A | **7.7** |
+| 5 | Setup: Setting Up Your Assistant | 6 | 6 | 8 | 9 | 8 | 9 | 8 | N/A | 9 | 10 | 6 | N/A | N/A | **7.9** |
+| 6 | Setup: Complete | 10 | 10 | N/A | N/A | N/A | 10 | 10 | N/A | N/A | 10 | N/A | N/A | N/A | **10.0** |
+| 7 | Dashboard | 10 | 9 | N/A | N/A | 8 | 10 | 9 | N/A | 8 | 10 | **3** | **0** | N/A | **7.4** |
+| 8 | Component Detail (Assistant) | 8 | 7 | 6 | N/A | 9 | 9 | 8 | N/A | 7 | 8 | 5 | N/A | 7 | **7.4** |
+| 9 | Component Detail (Skills) | 7 | 6 | N/A | N/A | 8 | 9 | 8 | N/A | 7 | 10 | N/A | N/A | 7 | **7.8** |
+| 10 | Component Detail (Network) | 9 | 9 | N/A | N/A | 10 | 10 | 10 | N/A | N/A | 10 | N/A | N/A | 7 | **9.3** |
+| 11 | Settings | 8 | 7 | N/A | N/A | 9 | 9 | 8 | 6 | N/A | 9 | N/A | 8 | N/A | **8.0** |
+| 12 | 404 Page | 10 | 10 | 10 | N/A | N/A | N/A | 10 | N/A | N/A | 10 | N/A | N/A | N/A | **10.0** |
+| 13 | ErrorBoundary | 7 | 5 | 7 | 6 | 4 | N/A | 8 | N/A | N/A | 9 | N/A | N/A | N/A | **6.6** |
+| 14 | Home (placeholder) | **2** | **3** | N/A | N/A | 5 | 8 | 6 | N/A | N/A | 10 | **0** | **0** | **0** | **3.8** |
+| 15 | Security Monitor (placeholder) | **2** | **3** | N/A | N/A | 5 | 8 | 6 | N/A | N/A | 10 | N/A | N/A | **0** | **4.9** |
+| 16 | Discover (placeholder) | **2** | **3** | N/A | N/A | 5 | 8 | 6 | N/A | N/A | 10 | N/A | N/A | **0** | **4.9** |
+| 17 | Preferences (placeholder) | **2** | **3** | N/A | N/A | 5 | 8 | 6 | N/A | N/A | 10 | N/A | N/A | **0** | **4.9** |
+| 18 | Help (placeholder) | **2** | **3** | N/A | N/A | 5 | 8 | 6 | N/A | N/A | 10 | N/A | N/A | **0** | **4.9** |
+| 19 | Telegram first-chat (live, Pass 1.5) | 7 | N/A | 9 | 10 | 8 | 9 | 8 | 9 | 6 | 10 | N/A | N/A | N/A | **8.4** |
+
+**N/A means the principle doesn't apply** (no forms on a 404 page, no loading on the complete step, no perimeter coupling on the wizard's static pages, etc.).
+
+**Bold scores changed in the 2026-04-29 re-score** — primarily lifecycle (P11) and notification (P12) drops on Dashboard, plus the 5 placeholder pages added.
 
 ---
 
 ## Priority Ranking (Lowest Score = Rebuild First)
 
-### Tier 1 — Rebuild soon (score < 7.5)
+### Tier 0 — Critical (score < 5.0)
 
-**#13 ErrorBoundary — 6.6**
+**#14 Home (placeholder) — 3.8**
+The user lands here right after the wizard's celebratory "Your assistant is ready! 🎉" — and sees `Coming in Phase E.2.2` + a `docs/specs/...` path in monospace. The single biggest contradiction in the product. P11 + P12 + P13 all 0/10: the page doesn't surface perimeter state, fires no notifications, and explicitly admits the dev plumbing is showing.
+
+**#15–18 Security Monitor / Discover / Preferences / Help (placeholders) — 4.9 each**
+Same shape as Home: P1=2 (phase code + spec path visible), P2=3 (promises features that don't exist), P13=0 (anti-native by definition). Slightly higher than Home because P11 + P12 are N/A for these (lifecycle and notifications belong to Home).
+
+**Concrete fixes:** see Pass 6 in `~/.claude/plans/yes-we-are-building-delightful-sloth.md`. Three options on the table (A: ship 5 real, B: ship Home + Discover + Preferences real, C: ship Home only). All three options replace the "Coming in Phase E.2.X + spec path" pattern with a friendlier placeholder for whatever isn't shipped real.
+
+**Same Tier 0 issue applies to the 10 dev-mode placeholder pages** (DevAllowlist / DevComponentDetail / DevComponents / DevLogs / DevManifests / DevOverview / DevPreferences / DevSecurity / DevShellLevels) — all render `DevPlaceholder.tsx` with phase-code + spec-path leaks. Lower priority because dev mode is gated behind Cmd/Ctrl+Shift+D + a confirm dialog, but the same Pass 7 cleanup must address them.
+
+---
+
+### Tier 1 — Rebuild soon (score 5.0 – 7.5)
+
+**#13 ErrorBoundary — 6.6** (unchanged)
 Issues:
 - Shows raw `error.message` to the user (developer jargon leak)
 - "Something went wrong" doesn't say what broke or what to do
@@ -201,6 +271,12 @@ Concrete fixes:
 - Map common error types (network, Tauri IPC, permission) to friendly sentences
 - Hide `error.message` behind a "Show technical details" toggle
 - Add contextual advice: "If this keeps happening, try restarting the app."
+
+**#7 Dashboard — 7.4** (was 9.1 before P11 + P12 were added)
+The original 10-principle scoring missed that the dashboard doesn't actually surface perimeter state. The tray placeholder says "initializing" forever; the hero section is hardcoded. Pass 4 (lifecycle ownership) is the fix — until then, the dashboard scores worse than every other "running" screen because it makes a load-bearing claim it can't substantiate.
+
+**#8 Component Detail (Assistant) — 7.4** (was 7.8 before P11 was added)
+Knows the component's state but not the perimeter's lifecycle. Same Pass 4 dependency.
 
 ---
 
@@ -277,21 +353,23 @@ Fix: Add hover tooltips or inline explanations for partial install state, show a
 
 ### Tier 3 — Already strong (score 8.5+)
 
-#7 Dashboard (9.1), #10 Network placeholder (9.7), #1 Welcome (10), #6 Complete (10), #12 404 (10).
+#19 Telegram first-chat (8.4 — borderline; flagged for `components/openclaw-vault` per Pass 1.5 to push to 9+), #10 Network placeholder (9.3), #1 Welcome (10), #6 Complete (10), #12 404 (10).
 
-These don't need rebuilds. If we touch them, it should be for feature additions (e.g. real-time status on the dashboard), not UX fixes.
+These don't need rebuilds. If we touch them, it should be for feature additions (e.g. real-time status on the dashboard, fresh-account pairing-flow re-test for Telegram), not UX fixes.
 
 ---
 
 ## Recommended Next Pass
 
-**If we have 2 hours:** Rebuild ErrorBoundary (Tier 1). That's the one thing a non-technical user will encounter when something breaks, and it's our weakest screen.
+The 2026-04-29 re-score makes Pass 4 (lifecycle ownership, ~3 days) the unambiguous next code work, because the Dashboard's drop from 9.1 → 7.4 is entirely on P11 — and Pass 4 is the *only* pass that closes P11. Without Pass 4, the placeholder rebuild (Pass 6) ships a Home page that reads from a perimeter the app doesn't own — same lie, prettier UI.
 
-**If we have 4 hours:** Tier 1 + Configuration step (#4). Configuration is in the critical path — every new user goes through it, and it has three fixable issues.
+Sequenced recommendation per the master plan (`~/.claude/plans/yes-we-are-building-delightful-sloth.md`):
 
-**If we have a day:** All of Tier 1 + Tier 2. That would bring every screen above 8.5/10.
-
-**If we have a week:** Add Principle 11 — "Every screen has a clear primary action" — and audit against that. We'd find more work.
+1. **Pass 4 — Lifecycle ownership (~3 days)** — closes P11 globally. After: Dashboard recovers to ≥9, ErrorBoundary's "Try Again" can actually do something, P12 work has reliable signal sources to fire on.
+2. **Pass 5 — Wizard polish (~3 days)** — close the 3 remaining wizard P0s from Pass 1 (MissingRuntime "sudo apt install" leak; codenames in technical log; "Podman or Docker" naming). Push every wizard screen ≥9.
+3. **Pass 6 — Dev-tools-lite surface (~3–9 days, A/B/C still pending)** — the 5 placeholder pages get the Tier-0 fix. The choice between Options A/B/C is a user decision informed by Pass 1 + Pass 1.5 evidence.
+4. **Pass 7 — Notifications + recovery + cleanup (~2 days)** — wires P12. Adds Pass 1.5 anti-patterns to the banned-term list.
+5. **Pass 8 — Pre-ship full re-walk (~1–2 days)** — re-score against this extended rubric. Targets: every screen ≥ 8.5, zero P1 violations, all lifecycle stress tests pass.
 
 ---
 
@@ -311,6 +389,36 @@ Keeping this as a reference for what NOT to do:
 - ❌ "Retry" (amber) → "Try Again" (blue, primary action color)
 
 These were caught in three ways: walkthrough audits with the Karen persona, the 19-term banned list in `app/e2e/user-facing.spec.ts`, and reviewing screenshots after each change. Future work should use all three techniques.
+
+---
+
+## Anti-Patterns Observed in Pass 1 + Pass 1.5 — NOT YET FIXED
+
+These are the new violations the 2026-04-28 dogfood walkthrough and 2026-04-29 live first-chat run surfaced. Pass 7's cleanup must address each (and the banned-term list in `app/e2e/user-facing.spec.ts:13-33` should grow to cover the catchable ones).
+
+**Phase-code + spec-path leaks (Tier 0 — Pass 6 owns):**
+
+- ❌ "Coming in Phase E.2.X" → friendlier placeholder OR ship the page real
+- ❌ `spec: docs/specs/ui-rebuild-2026-04-21/user-mode/0X-...md` (monospace, end-user-visible) → never appears in user mode
+
+**Banned-term list gaps (Pass 7 cleanup — extend `app/e2e/user-facing.spec.ts:13-33`):**
+
+- `container` (bare — currently only the compound `container_runtime` is banned; bare leaked into bot reply scenario 3 in Pass 1.5)
+- `sandboxed` / `sandbox` (leaked into bot reply scenario 3)
+- `web_search`, `web_fetch`, `tool` (when used as Anthropic-API tool-name jargon — leaked into bot reply scenario 4)
+- `Podman`, `Docker` (leaked in `MissingRuntimeCard` + the landing page download CTA)
+- `Forge`, `Pioneer`, `Vault` (when used as codename labels — leaked in landing-page diagram)
+
+**Wizard P0s named in Pass 1 (Pass 5 owns):**
+
+- ❌ `sudo apt install podman podman-compose` displayed as primary install guidance → walk Karen through guided install OR offer one-click bundling
+- ❌ Internal codenames in InstallStep technical log (`openclaw-vault: setup`, `clawhub-forge: setup`) → translate to user-facing labels even in the technical-details disclosure
+- ❌ Three thrown errors that fall through to `UNKNOWN_FALLBACK` ("Something went wrong") instead of routing through `classifyError` — `InstallStep.tsx:140-145, 204, 260`
+
+**Telegram first-chat P0s named in Pass 1.5 (`components/openclaw-vault` system prompt — out of parent scope):**
+
+- ❌ `/start` reply is "Pong. What can I help with?" — too terse, doesn't introduce the assistant or set expectations
+- ❌ Tool-inventory inconsistency: `what can you do?` advertises web search; `summarize today's news` admits there's no `web_search/web_fetch tool`
 
 ---
 
