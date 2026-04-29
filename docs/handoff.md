@@ -1,231 +1,239 @@
 # Handoff — Active Mission
 
-**Last updated:** 2026-04-26 (end of v0.2.0 ship day — F11/F13/F14 closed, tag pushed)
-**Current mission:** Two parallel tracks — (A) build the first capability sidecar (`vault-calendar`) per the established mediation pattern, and (B) get v0.2.0 *actually published* (the tag exists; binaries don't).
-**Branch:** `main` — pushed to `origin/main` and `albertdobmeyer/openclaw-vault` (submodule)
-**Last commits:** `816936b` (parent, v0.2.0 ship-gate batch), `9e65672` (submodule, F11 fix)
-**Tag:** `v0.2.0` exists locally and on origin (no GitHub Release object yet — see Track B)
-**Pick up at:** Whichever track matches your energy. Both tracks are independent; you can do them in either order or interleave.
+**Last updated:** 2026-04-29 (end of Delightful Sloth Pass 4 wrap-up)
+**Current phase:** Week 1 of the 3-week "Delightful Sloth" UX-coherence polish phase (~2026-04-28 → ~2026-05-19) leading to first public deployment. **Passes 1, 1.5, 2, 3, and 4 complete.** Pass 5 (Wizard Polish) is next.
+**Branch:** `main` — pushed to `origin/main`
+**Last commits:**
+- `22c1452` — Pass 4 wrap-up (RunGuard, signal handlers, watchdog, get_perimeter_state command)
+- `62b7f4e` — Pass 4 sub-pass (compose restart policies + lifecycle hooks)
+- `b768405` — Pass 3 (rubric +P11/P12/P13, 19 surfaces re-scored)
+- `0416714` — Pass 2 (aspirational target-state UX spec)
+- `7499ceb` — Pass 1 + Pass 1.5 (dogfood punch-list + live first-chat signals)
+
+**Pick up at:** Pass 5 (Wizard Polish, ~3 days) — close the 3 wizard P0s named in Pass 1 + Pass 1.5. Specific files + frictions enumerated below.
 
 ---
 
 ## ⚠️ Read this whole file before touching code
 
-Yesterday's session closed the entire Tier 1 + Tier 2 findings backlog from the prior handoff (F11, F13, F14) and falsified F12. It also ran a Tier 4 stress-test replay at Soft Shell (19/19 attacks blocked). Then it shipped the v0.2.0 ship-gate batch (gallery populated, release notes, version bumps to 0.2.0, landing page banner).
-
-So unlike the prior handoff (which was "fix things first"), this one is **"build the next things, and finish publishing the thing you already shipped."**
+This session moved through 4½ master-plan passes in one stretch. The artifact trail is dense but well-organized — read the spec trio in order before the rubric. The lifecycle code is already shipped; resist the urge to second-guess the architectural decisions (they're justified in the commits).
 
 Read in this order before opening code:
 
-1. **`docs/release-notes-v0.2.0.md`** — the user-facing summary of what shipped. Authoritative for what v0.2.0 IS.
-2. **`docs/v0.2.0-ship-plan.md`** — checklist (now all green except the manual tag, which is also done). Useful as a state-of-the-world snapshot.
-3. **`tests/e2e-telegram/SOFT-SHELL-STRESS-VERDICT-2026-04-25.md`** — Tier 4 results. Soft Shell is verified-safe; ship plan defers the GUI switcher to v0.3 only by scope choice, not by safety.
-4. **`tests/e2e-telegram/F12-VERDICT-2026-04-25.md`** — F12 falsification (prompt-phrasing, not shell-level).
-5. **`docs/specs/2026-04-25-tool-mediation-pattern.md`** — the design rule for every Track A sidecar.
-6. **`docs/specs/2026-04-25-voice-and-calendar-perimeter-extension.md`** — the concrete sidecar designs. Phase A = vault-calendar, Phase B = vault-voice.
-7. **`~/.claude/projects/-home-albertd-Repositories-lobster-trapp/memory/MEMORY.md`** — project memory index.
+1. **Master plan: `~/.claude/plans/yes-we-are-building-delightful-sloth.md`** — the 8-pass workflow + locked out-of-scope. Everything else is a sub-document.
+2. **`docs/specs/2026-04-28-dogfood-walkthrough-findings.md`** (Pass 1) — the friction punch-list across all 8 user moments. Source of every Pass 5–7 P0 enumerated below.
+3. **`docs/specs/2026-04-29-live-signal-first-chat.md`** (Pass 1.5) — live evidence revising Moment 3 from 5.5 → 8.0 and surfacing new banned-term gaps.
+4. **`docs/specs/2026-04-29-delightful-sloth-target-ux.md`** (Pass 2) — what good looks like for each of the 8 user moments + the four cross-cutting target behaviors. Pass 5–8 implement against this.
+5. **`docs/specs/2026-04-20-ux-principles-rubric.md`** (extended in Pass 3) — 13 principles, 19 surfaces re-scored, Tier 0 placeholder pages, "anti-patterns NOT YET FIXED" catalogue.
+6. **`~/.claude/projects/-home-albertd-Repositories-lobster-trapp/memory/MEMORY.md`** — project memory index. `project_status.md` and `project_decisions.md` are most relevant.
 
 ---
 
-## Track A — Middleware tools (vault-calendar first)
+## Where we are in the master plan
 
-### Why this matters
-
-vault-calendar is the **first non-runtime sidecar** in the perimeter. The pattern it establishes will be copied for vault-voice, vault-email, vault-smart-home, and any future capability. Doing it carelessly bakes a bad pattern into the architecture; doing it deliberately gives every future capability a clear template.
-
-### Two paths — pick one based on how rested you are
-
-#### Path A.1 — High-energy: spec-review first, then build
-
-Recommended in yesterday's plan and still my preference.
-
-1. Spawn `feature-dev:code-architect` agent on `docs/specs/2026-04-25-voice-and-calendar-perimeter-extension.md` with the prompt:
-   > Review the vault-calendar Phase A design (sections about `vault-calendar`). The pattern you establish here will be reused for vault-voice, vault-email, vault-smart-home. Surface (a) gaps in the OAuth token-handoff (host → container at startup, refresh on expiry, what happens on Tauri crash mid-flow), (b) whether the per-tool risk classification (LOW/MEDIUM/HIGH) handles edge cases (recurring events, all-day events, attendee email privacy, calendar-share invites), (c) whether vault-calendar should reuse vault-proxy's key-injection pattern or fork its own, (d) what the manifest contract looks like (sidecar exposes `component.yml` like the other components — does it have commands, configs, workflows?), (e) what tests look like (direct probing for sidecar isolation, Telegram-driven for tool surface). Output: a sharper spec ready for implementation.
-2. Read the agent's output, integrate into the spec or write a follow-up spec.
-3. **Then** start the build (Phase A.2 below).
-
-Estimated total: 1–2 days (review + build) versus 3–5 (build alone with rework risk).
-
-#### Path A.2 — Direct build (skip spec review)
-
-Only if you've already mentally walked through the design or if Path A.1's review came back clean. Phase A from the spec breaks into:
-
-1. `components/vault-calendar/` — new component repo (or as a subdirectory if it'll live in the parent repo for now)
-2. `component.yml` manifest conforming to `schemas/component.schema.json` (read `components/openclaw-vault/component.yml` for the established shape — identity, status, commands, configs, health, workflows)
-3. Containerfile + compose service definition (likely add to root `compose.yml` as a 5th service)
-4. OAuth token at rest: Tauri stronghold on the host pushes it into the container env at startup. **Token never on disk inside the container.**
-5. Typed tool surface, exposed via WebSocket (same pattern as vault-proxy's HTTP proxy):
-   - `calendar.add_event(title, start, end, attendees?, location?, description?)`
-   - `calendar.list_events(start, end, calendar_id?)`
-   - `calendar.search_events(query, start?, end?)`
-   - `calendar.delete_event(event_id, recurrence_scope?)`
-6. Per-call sanitization:
-   - parameter type checking, length caps
-   - URL stripping from descriptions
-   - template-marker / prompt-injection-shape detection in descriptions and titles
-7. Per-call risk classification (per the mediation pattern spec):
-   - `add_event` with no attendees → LOW (auto-execute, log)
-   - `add_event` with attendees → MEDIUM (execute + Telegram notify)
-   - `delete_event` → HIGH (block-pending-Telegram-tap-approval)
-   - `delete_event` with `recurrence_scope=all` → HIGH + extra confirmation
-8. Sanitized response format — strip attendee emails, hangout links, organizer details unless explicitly opted in by the request.
-9. Tests:
-   - `tests/e2e-telegram/direct_probing/probe-calendar.sh` — sidecar isolation (no internet to non-Google domains, no host fs access, no env-var leakage of OAuth token)
-   - `tests/e2e-telegram/calendar/` — Telegram-driven test cases extending `chat.py` (plant calendar events, ask bot to summarize/add/modify, verify per-tool policy holds)
-10. `12-use-case-gallery.md` — promote the 📅 entries (currently `Remember to call mom`) from `needs_calendar` to `ready` in `app/src/content/use-cases.ts`. There's currently 1 entry tagged `needs_calendar`; consider adding 2–3 more to demonstrate the new capability.
-11. Host GUI: a Calendar setup wizard (Tauri-side, never inside the agent) that walks the user through Google OAuth, validates the token, and pushes it to the container.
-
-Estimated: 3–5 days, broken into ~1-day chunks.
-
-### After vault-calendar (the future capability roadmap)
-
-In priority order based on user value, *after* vault-calendar's pattern is validated in production:
-
-1. `vault-voice` (Phase B from the spec) — Twilio + TTS + STT. 7–10 days.
-2. `vault-email` — IMAP/SMTP via OAuth providers. ~1 week, similar shape to calendar.
-3. `vault-smart-home` — Home Assistant or HomeKit. ~1 week.
-4. (Skip `vault-banking` — too high stakes for AI mediation.)
-
-### Track A — open questions for the user
-
-- **Does the user want to invest 1–2 hours in spec review (Path A.1) before any code?** I recommend yes. The user's instinct in yesterday's session was also "discuss the middleware tools" — that's the spec review in conversational form.
-- **Calendar provider scope: Google only, or also iCloud / Outlook?** Spec assumes Google. Adding others doubles the surface area.
-- **Component repo strategy: standalone clone + submodule (the established pattern), or in-tree under `components/vault-calendar/` directly?** The current ecosystem uses submodules (openclaw-vault, clawhub-forge, moltbook-pioneer). Consistency favors a new submodule. But for the *first* sidecar, in-tree may be faster to iterate.
-- **Did the user mean "rebuild" by referencing past calendar work?** I didn't find a prior `vault-calendar` or `calendar` folder in the repo. Worth verifying with the user that this is greenfield — they may remember an attempt I can't see.
+| Pass | Status | Artifacts |
+|---|---|---|
+| 1 — Dogfood walkthrough | ✅ DONE | `2026-04-28-dogfood-walkthrough-findings.md` |
+| 1.5 — Live first-chat signals | ✅ DONE | `2026-04-29-live-signal-first-chat.md`; `tests/e2e-telegram/test_ux_first_chat.py` |
+| 2 — Aspirational UX spec | ✅ DONE | `2026-04-29-delightful-sloth-target-ux.md` |
+| 3 — Rubric extension | ✅ DONE | `2026-04-20-ux-principles-rubric.md` (extended) |
+| 4 — Lifecycle ownership | ✅ DONE (4 of 7 sub-items shipped; 3 explicitly deferred per scope cut — see below) | `app/src-tauri/src/lifecycle.rs` (NEW); `compose.yml`; `lib.rs`; `commands/lifecycle.rs` (NEW) |
+| 5 — Wizard polish | ⏸ NEXT | (this handoff specifies the work) |
+| 6 — Dev-tools-lite surface | ⏸ Locked: **Option B** (Home + Discover + Preferences real; Security + Help friendlier placeholders) | (per Pass 2 spec) |
+| 7 — Notifications + recovery + cleanup | ⏸ | (per Pass 2 spec + the named anti-patterns from Pass 3) |
+| 8 — Pre-ship full re-walk | ⏸ | (re-score against extended rubric; ship/no-ship recommendation) |
 
 ---
 
-## Track B — Official publishing and deployment
+## What Pass 4 shipped vs what's deferred
 
-### Current state
+**SHIPPED:**
+- `compose.yml`: `restart: unless-stopped` on all 4 services (vault-agent + vault-proxy added; forge + pioneer already had it).
+- `app/src-tauri/src/lifecycle.rs` (NEW, ~330 lines):
+  - `bring_perimeter_up_async` / `bring_perimeter_down_sync` — try podman first, fall back to docker, both wrapped with `timeout(1)` for hard ceilings (90s for up, 30s for down).
+  - `redact_secrets` — defensive layer on stderr logging (`TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`).
+  - `establish_runguard` / `clear_runguard` — PID-based orphan reap on next launch (closes the SIGKILL leak gap; SIGKILL itself can't be caught).
+  - `install_signal_handlers` (Unix) — SIGTERM/SIGINT → `app.exit(0)` → existing `RunEvent::Exit` → graceful compose down.
+  - `spawn_watchdog` — 30s `tokio::time::interval` task, polls container status, updates the Tauri-managed `PerimeterStateStore`, emits `perimeter-state-changed` events on transitions, refreshes tray tooltip.
+  - `PerimeterState` enum (`NotSetup` / `Starting` / `RunningSafely` / `Recovering` / `Stopped`), `PerimeterStatus`, `ContainerStatus`. Snake-case JSON for the frontend.
+- `app/src-tauri/src/commands/lifecycle.rs` (NEW): `get_perimeter_state` Tauri command — frontend reads cached state. Pass 6's Home rebuild will consume this.
+- `app/src-tauri/src/lib.rs`: rewired to use the lifecycle module. RunGuard runs BEFORE compose up. Watchdog + signal handlers spawned in `.setup`. `RunEvent::Exit` calls `bring_perimeter_down_sync` then `clear_runguard`.
+- 5 unit tests in `lifecycle.rs` (3 redactor, 1 JSON shape, 1 tray-label coverage). All green. Full lib test suite: 33/33 passing.
 
-- ✅ Code tag `v0.2.0` exists locally and on origin
-- ❌ No GitHub Release object created (just a git tag — `gh release view v0.2.0` returns "release not found")
-- ❌ No built binaries attached
-- ⚠️ Landing page download button (`docs/index.html` line 610) points at `https://github.com/albertdobmeyer/lobster-trapp/releases/latest` — currently 404s for download because the release object doesn't exist
+**DEFERRED FROM PASS 4 (intentionally, per scope cut):**
+1. **Hero status surfacing in the main window.** The 6-state hero machine from Pass 2's spec lives on the Home dashboard. Home is currently a placeholder; Pass 6 (Option B) makes it real. Wiring hero on the placeholder is throwaway work. The backend is ready (`get_perimeter_state` + `perimeter-state-changed` event); Pass 6 just wires the frontend.
+2. **Updating the tray menu's "status" item TEXT** (vs the tooltip, which IS live-updated). Requires storing the `MenuItem` handle in Tauri state. Code-hygiene tradeoff over feature-creep; defer to a quick follow-up if a user notices.
+3. **The Pass 6 hero state machine itself.** This is in Pass 6's lap, not a Pass-4 deferral. Listed for clarity.
 
-So **the tag is real but the release isn't real-real yet**. Anyone clicking download from the landing page right now hits a dead link.
-
-### Step-by-step — getting from "tag pushed" to "user can download and run"
-
-Listed roughly in dependency order. Items marked **needs decision** require user input before execution.
-
-1. **Build Tauri binaries** — needs decision on cross-platform scope:
-   - Linux only (the dev box, ~30 min, `cd app && npm run tauri build`)
-   - Linux + Mac + Windows (cross-compile or use GitHub Actions; ~few hours setup, then automated)
-   - Per-platform (.deb, .AppImage, .dmg, .msi, .exe — Tauri can produce all of these; sane defaults usually fine)
-2. **Decide on code signing** — needs decision:
-   - **Mac:** Apple developer cert + notarization is the only way to avoid the Gatekeeper "unverified developer" warning. Free workaround: ship unsigned + tell users `xattr -d com.apple.quarantine`. Not great UX.
-   - **Windows:** Code-signing cert from a CA (~$200/year) avoids SmartScreen scary warning. Free workaround: tell users to click "More info → Run anyway."
-   - **Linux:** No signing requirement; AppImage / .deb are fine.
-   - For v0.2.0: probably **ship Linux unsigned + Mac unsigned with workaround docs + skip Windows** is the realistic minimum. Defer signing investment until usage justifies it.
-3. **Create GitHub Release** from the v0.2.0 tag:
-   ```bash
-   gh release create v0.2.0 \
-     --title "v0.2.0 — Hardened release" \
-     --notes-file docs/release-notes-v0.2.0.md \
-     <built-binary-files>
-   ```
-   This creates the release object the landing page expects.
-4. **Verify landing page download flow** — the JS at `docs/index.html` likely sniffs platform and picks an asset filename. Check the `download-format` and `other-platforms` spans (lines 621–622) and the JS that populates them. Make sure the asset filenames the JS expects match what `tauri build` produces.
-5. **Hetzner server / lobster-trapp.com deployment** — per project memory, the landing page is hosted at `lobster-trapp.com` via nginx on a Hetzner server. Check `~/.claude/projects/-home-albertd-Repositories-lobster-trapp/memory/reference_hetzner.md` for the deployment pattern. The `docs/` directory is what's served. So updates to `docs/index.html` need to be deployed (rsync? git pull on the server? CI?).
-6. **Smoke-test the full install flow** from a clean machine (or a clean user account):
-   - Click download from lobster-trapp.com
-   - Install on each target OS
-   - Open the app, walk through setup wizard
-   - Pair Telegram, send a message, get a response
-   - Confirm the perimeter is up (`podman ps` shows 4 containers)
-7. **Optional: announce** — HN Show post, blog post, Twitter, Reddit. The release notes are already written; this is just distribution.
-
-### Track B — open questions for the user
-
-- **What platforms to support for v0.2.0?** Linux-only is fastest. Mac is high-value. Windows is hard (signing). Recommend Linux + Mac unsigned-with-docs.
-- **Code signing investment now or later?** Real money + setup time. Probably defer until v0.3 or v1.0.
-- **Should the landing page get an "install instructions" page?** Currently goes from "Download" to opaque platform-specific binary. A short "what to do after download" page lowers the abandon rate.
-- **CI for the build?** GitHub Actions can produce per-platform binaries on tag push. Setup is ~half a day; payoff is automated future releases.
+**NOT MEANT TO BE IN PASS 4 BUT WORTH NAMING:**
+- Auto-restart of dead containers is delegated to `restart: unless-stopped`. The watchdog REPORTS state; it does not act. This was a deliberate choice to avoid competing supervisors. If Pass 7 finds the policy doesn't react fast enough in practice, add an active-restart layer there.
 
 ---
 
-## Cross-track considerations
+## Pass 5 — Wizard Polish (the next code work)
 
-- vault-calendar is a v0.3.0 candidate. Publishing v0.2.0 (Track B) is independent of Track A. **Recommend doing Track B first** — it closes the loop on what already shipped.
-- Once vault-calendar lands, v0.3.0 will be a natural next tag (Soft Shell GUI switcher + vault-calendar). Repeating the publishing process will be cheap once it's been done once for v0.2.0.
-- The `also_allow` pattern in `tool-manifest.yml` (introduced for F11) may need extending if vault-calendar exposes its tool surface to the agent through OpenClaw's tool system rather than directly. Worth sanity-checking during spec review (Track A.1).
+**Estimate per master plan: ~3 days.** Push every wizard screen to ≥9/10 on the (now extended) 13-principle rubric.
+
+The frictions to close — all named in Pass 1 + Pass 1.5 + Pass 3's "Anti-Patterns NOT YET FIXED" section. Listed P0 → P1 → P2.
+
+### P0 — Must close
+
+#### P0-1. MissingRuntimeCard Linux block exposes raw `sudo apt install`
+
+**File:** `app/src/components/wizard/InstallStep.tsx:511-518`
+**Current:** Karen sees `sudo apt install podman podman-compose` as primary install guidance.
+**Target:** Walk Karen through guided install, OR offer one-click bundling of the runner. At minimum: hide the raw command behind a `Show technical command` disclosure and frame it as `If you're comfortable with the terminal, run this; otherwise click 'Open guide.'`
+**Rubric anchor:** P1 (never expose plumbing). Pass 3 anti-pattern list line "sudo apt install podman podman-compose displayed as primary install guidance."
+
+#### P0-2. Internal codenames in InstallStep technical log
+
+**File:** `app/src/components/wizard/InstallStep.tsx:175, 192, 221, 223, 234`
+**Current:** Lines like `→ openclaw-vault: setup`, `→ clawhub-forge: setup`, `Container runtime: podman`, `Fetching assistant modules…` appear when Karen clicks "Show technical details".
+**Target:** Translate to user-facing labels even inside the technical-details disclosure. `→ Your Assistant: install` / `→ Skill Scanner: install` / `Sandbox runner: ready` / `Downloading the assistant…`
+**Rubric anchor:** P1 + P6.
+
+#### P0-3. `MissingRuntimeCard` rebrand: "Podman or Docker" → "sandbox runner"
+
+**File:** `app/src/components/wizard/InstallStep.tsx:490-558`
+**Current:** Card surfaces dev tool names directly.
+**Target:** Replace primary copy with neutral "sandbox runner" framing. Keep the actual brand names only inside the per-platform install guidance, where they're necessary signposts.
+**Rubric anchor:** P1 + P6.
+
+### P1 — Should close
+
+#### P1-1. Three thrown errors fall through to UNKNOWN_FALLBACK
+
+**Files:** `app/src/components/wizard/InstallStep.tsx:140-145, 204, 260`
+**Current:** Errors thrown as `Error("...exited with code ${event.payload.exit_code}")`, `throw new Error("Some assistant modules failed to download")`, and `throw new Error("Workflow ended with status: ${r.status}")` don't match any pattern in `app/src/lib/errors.ts:200-228`'s `classifyError()`. They fall through to `UNKNOWN_FALLBACK` which says "Something went wrong" — explicitly a rubric anti-pattern (line 311 of `2026-04-20-ux-principles-rubric.md`).
+**Target:** Add specific patterns to `errors.ts` for each, OR pre-classify before throwing.
+
+#### P1-2. UNKNOWN_FALLBACK itself is the named anti-pattern
+
+**File:** `app/src/lib/errors.ts:191-198`
+**Current:** Generic "Something went wrong" / "Something didn't work as expected." copy.
+**Target:** Make context-aware based on which sub-step (`check`/`download`/`build`/`safety`) was running. E.g., `Your computer check didn't work as expected.`
+
+#### P1-3. Telegram URL prefetch failure is silent
+
+**File:** `app/src/components/wizard/InstallStep.tsx:630-646`
+**Current:** If `deriveTelegramBotUrl()` returns null, Ready screen falls back to generic `https://telegram.org` — Karen has no idea which bot to talk to.
+**Target:** When prefetch fails, surface the bot's username on the Ready screen as a fallback, with copy like `Find your bot in Telegram: search for @YourBotUsername`.
+
+#### P1-4. ConnectStep read-config error path doesn't route through classifyError
+
+**File:** `app/src/components/wizard/ConnectStep.tsx:163-169`
+**Current:** Toast shows raw `err.message` — could leak strings like "openclaw-vault not found".
+**Target:** Route through `classifyError()` like InstallStep does.
+
+### P2 — Nice to have
+
+- Save-confirmation toast on Continue when Karen had pre-existing keys (Pass 1 line 199).
+- Inline screenshots in `HowToModal` (currently `TODO E.4` at `app/src/components/wizard/HowToModal.tsx:94`).
+- "Anthropic API key" → "Anthropic key" or "AI account key" (Pass 1 line 198).
+- "Fetching assistant modules" → "Downloading your assistant" (Pass 1 line 252).
+
+### Pass 5 verification (per Pass 8 acceptance signals)
+
+- All four wizard E2E tests in `app/e2e/wizard.spec.ts` pass with the extended banned-term list.
+- Three thrown errors route through `classifyError` to specific patterns, not `UNKNOWN_FALLBACK`.
+- Telegram URL prefetch failure shows bot username fallback (manual test: temporarily break the prefetch and verify Ready screen).
+- Re-score wizard screens (#1–#5 in the rubric) against the extended 13-principle rubric. Target: every screen ≥9/10.
+- Ideally a brief live-running validation (~30 min) confirms dynamic friction is closed.
 
 ---
 
-## What you can ignore
+## Locked decisions
 
-The following are real items but not for this session:
+- **Pass 6 = Option B.** Ship Home + Discover + Preferences real; Security + Help friendlier placeholders ("We're still building this section. In the meantime, talk to your assistant on Telegram while we finish."). ~5 days. Decided 2026-04-29 with Pass 1.5 live evidence + Pass 3 rubric. Recorded in `project_decisions.md`.
+- **External-AI-as-warden via MCP is OUT OF SCOPE for this phase** (deferred to v0.3+).
+- **No new sidecars** (vault-calendar / voice / email) this phase. Reopen for v0.3+.
+- **Backend orchestrator architecture changes** are out — engine is solid. Pass 4 added lifecycle hooks but did not restructure.
+- **Pioneer code** is frozen (target API acquired by Meta).
+- **Watchdog reports state; auto-restart is owned by `restart: unless-stopped`.** Don't add a competing supervisor unless Pass 7 finds the policy is too slow in practice.
 
-- Discover.tsx UI wiring (E.2.6 work; data file is ready when needed)
-- GitHub Actions for `direct_probing/probe.sh` (v0.3 setup)
-- Submodule remote URL retargeting (cosmetic — the GitHub redirect notice on push)
-- F2 (`/proc/mounts` disclosure) — accepted-LOW
-- F6 (file-existence confabulation) — monitor only; didn't recur in F12 work
-- F7 (tool-inventory disclosure) — recon, not breach; optional system-prompt tightening
+---
+
+## Open decisions for the next session
+
+- **Token rotation status.** During Pass 4 sub-pass verification, `podman compose up -d` echoed `TELEGRAM_BOT_TOKEN=...` to stdout (pre-existing podman-compose CLI behavior; not anything our code does). The user said they'd rotate it. **Confirm with user that the new token is in `.env` before running anything that uses Telegram.** The Telethon harness (`tests/e2e-telegram/test_ux_first_chat.py`) doesn't need the bot token — it uses Telethon's user API — but the perimeter does.
+- **Pass 5 budget.** Master plan said ~3 days. Pass 1's 4 P0s + 4 P1s should fit. Do all P0+P1, defer P2s if running long.
+- **Live-run validation sub-pass during Pass 5 or Pass 8?** Pass 1's doc recommended "a brief live-run validation sub-pass" for dynamic friction (~2 hours). Decide whether to slot this into Pass 5 (live-run the wizard install on a clean VM) or Pass 8 (full re-walk). Recommend Pass 5, since the wizard frictions are exactly what live-running surfaces.
 
 ---
 
 ## Working state at handoff time
 
-- **vault-agent:** Split Shell (matches v0.2.0 ship-state). Verified live: `profile=coding, exec.ask=always, no alsoAllow`.
-- **All 4 containers up.** `podman ps` confirms.
-- **Working tree clean.** `git status` confirms.
-- **Pushed:** parent `816936b` = `origin/main`. Submodule `9e65672` = remote main. Tag `v0.2.0` on origin.
-- **Tests green:** 42/42 orchestrator-check, 63/63 tool-control, 10/10 mediation, 22/22 direct-probing.
-- **Test harness ready:** `cd tests/e2e-telegram && source .venv/bin/activate && python chat.py "test"` works.
-
----
-
-## Decisions deferred to user (next session)
-
-Track A:
-- Path A.1 (spec review first) vs Path A.2 (direct build)
-- Calendar provider scope (Google only?)
-- Component placement (submodule vs in-tree)
-
-Track B:
-- Platform scope for v0.2.0 binaries (Linux only / + Mac / + Windows)
-- Code signing investment (now vs deferred)
-- CI for builds (set up now or after first manual build)
+- **All 4 containers up.** `podman ps` confirms; restart policies are `unless-stopped` on all 4 (verified earlier this session).
+- **Working tree clean.** `git status` clean as of last commit.
+- **Cargo build clean.** Only the 2 pre-existing dead-code warnings on unused `WorkflowStatus`/`StepStatus` variants (unrelated to lifecycle work).
+- **Cargo test green.** 33/33 passing including 5 lifecycle tests.
+- **Pushed:** `origin/main` at `22c1452`.
+- **Phase memory current.** `project_status.md` updated through Pass 4. `project_decisions.md` records Pass 6 Option B lock-in.
+- **Token rotation:** pending user action. Will be done out-of-band by the user before next code work.
 
 ---
 
 ## Memory updates needed at session start
 
-The next instance should refresh these files in `~/.claude/projects/-home-albertd-Repositories-lobster-trapp/memory/`:
+The next instance should read these BEFORE opening code:
 
-- `project_status.md` — replace with: "v0.2.0 tagged and pushed (2026-04-25). All Tier-1/2 findings closed. Soft Shell verified-safe but GUI-hidden by scope choice. Active tracks: (A) vault-calendar Phase A — sidecar build per the mediation pattern; (B) v0.2.0 publishing — binaries + GitHub Release + lobster-trapp.com deployment."
-- `project_decisions.md` — add: "v0.2.0 ship-gate completed 2026-04-25 with all original findings closed; Soft Shell promotion to GUI deferred to v0.3 by scope choice not by safety concern. Tag exists; release artifacts and Hetzner deployment are downstream."
-- (Optional) Add `feedback_user_priorities.md` if not already there: "User explicitly requested honest opinions when overwhelmed. Prefer clean stopping points and small completions over starting new large lifts at end-of-session."
+- `project_status.md` — already current through Pass 4.
+- `project_decisions.md` — already current with Pass 6 Option B lock-in.
+- `project_three_week_polish_phase.md` — index of the 8 passes (current as written).
+
+If anything looks stale, refresh it before assuming.
 
 ---
 
-## Historical handoffs
+## Quick verification commands at session start
 
-Prior handoffs preserved in git history:
-- `88688c2` — Phase A–D + v0.1.0 release
-- `b480607` — Phase E.2.0 → E.2.1
-- `2d25299` — Phase E.2.1 → E.2.2 (paused — mission pivoted)
-- `8d2e8cc` — 2026-04-24 morning handoff (mission pivot, Phase 0-2 of harness)
-- `95cec0c` — 2026-04-25 morning handoff (fix-first mandate; F11 root cause)
+```bash
+# Confirm working state
+git log --oneline -5
+git status --short
+podman ps --format "table {{.Names}}\t{{.Status}}"
+podman inspect vault-agent vault-proxy vault-forge vault-pioneer \
+  --format "{{.Name}}: {{.HostConfig.RestartPolicy.Name}}"
 
-This handoff supersedes `95cec0c` as the active mission.
+# Confirm Rust still builds
+cd app/src-tauri && cargo build && cargo test --lib
+
+# Confirm Telethon harness still works (optional, costs ~$0.01)
+cd tests/e2e-telegram && source .venv/bin/activate && \
+  python chat.py "ping (Pass 5 session start)"
+```
+
+Expected:
+- `git status` clean.
+- 4 containers up with `unless-stopped` policy.
+- Cargo build clean (only pre-existing workflow warnings).
+- 33/33 tests pass.
+- Bot replies (or, if user hasn't rotated the token yet, we get an auth error — confirm with user).
+
+---
+
+## Historical handoffs (preserved in git history)
+
+- `d55bdbd` — 2026-04-26: v0.2.0 ship + two-track v0.3 mission (calendar + publishing). **Superseded** by the Delightful Sloth phase pivot 2026-04-26 → 2026-04-28.
+- `95cec0c` — 2026-04-25: morning, fix-first mandate (F11 root cause).
+- `8d2e8cc` — 2026-04-24: morning, mission pivot (Karen → prosumer, harness Phase 0-2).
+- `2d25299` — Phase E.2.1 → E.2.2 (paused).
+- `b480607` — Phase E.2.0 → E.2.1.
+- `88688c2` — Phases A–D + v0.1.0 release.
+
+This handoff supersedes `d55bdbd` as the active mission.
 
 ---
 
 ## tl;dr — the first 30 minutes of the next session
 
 1. Read this handoff to the end (you're almost there).
-2. Read `docs/release-notes-v0.2.0.md` — what shipped.
-3. Confirm working state: `git status` clean, `podman ps` shows 4 containers, `git -C components/openclaw-vault log --oneline -1` shows `9e65672`.
-4. Ask the user which track they want to start with: A (build calendar) or B (publish v0.2.0).
-5. Within Track A, ask Path A.1 (spec review first — recommended) or A.2 (direct build).
-6. Within Track B, ask about platform scope and code signing.
-7. Update memory per the section above.
-8. Start the agreed work.
+2. Read `~/.claude/plans/yes-we-are-building-delightful-sloth.md` (master plan).
+3. Skim `2026-04-29-delightful-sloth-target-ux.md` for the target voice; `2026-04-28-dogfood-walkthrough-findings.md` for the friction punch-list (especially Moment 2 — wizard).
+4. Run the verification commands above. Confirm: clean working state + 4 containers up + token rotated by user.
+5. **Start Pass 5 P0-1**: `app/src/components/wizard/InstallStep.tsx:490-558` (MissingRuntimeCard). The 3 P0s in Pass 5 are independent; if one snags, move to the next.
+6. After P0s ship, do P1s. If running long, P2s slip to Pass 7 cleanup.
+7. Re-score wizard screens against the rubric. Update the score matrix in `2026-04-20-ux-principles-rubric.md` if the rebuild moves anything ≥9.
+8. Commit-and-push at sensible points (one per P0/P1 cluster is sane). Update `project_status.md` at end-of-session.
 
-The user's instinct yesterday was to discuss the middleware tools. If they're still in that headspace, **Track A.1 (spec review)** is the natural opening — it's a conversation-shaped task that doesn't commit code yet. Track B is more execution-shaped and benefits from a fresh, focused chunk.
-
-Either track is shippable in a single ~3-hour session if the decisions above are made up-front.
+The wizard is already at 9.5/10 — Pass 5 is **polishing**, not rebuilding. Resist the urge to redesign anything; the design has earned its score. Just close the named P0s.
