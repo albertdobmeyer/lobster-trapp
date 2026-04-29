@@ -65,6 +65,7 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     stdin_open: true
     tty: true
+    restart: unless-stopped
 
   # ─── THE GATE ───────────────────────────────────────────────────
   # mitmproxy sidecar. The ONLY container with internet access.
@@ -111,6 +112,7 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_VERSION=${ANTHROPIC_API_VERSION:-2023-06-01}
+    restart: unless-stopped
 
   # ─── THE WORKSHOP ───────────────────────────────────────────────
   # Skill scanner & CDR pipeline. Downloads untrusted SKILL files
