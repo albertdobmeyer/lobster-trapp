@@ -1,10 +1,10 @@
 mod commands;
+mod lifecycle;
 mod orchestrator;
 mod util;
 
 use orchestrator::state::AppState;
-use std::path::{Path, PathBuf};
-use std::process::Command as StdCommand;
+use std::path::PathBuf;
 use std::time::Duration;
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
@@ -12,145 +12,16 @@ use tauri::{
     Manager,
 };
 
-/// Redact known token-bearing environment variables from a stderr blob
-/// before it's logged. `podman compose` echoes the full container-creation
-/// command on failure, including `TELEGRAM_BOT_TOKEN=...` in cleartext —
-/// which would leak into our log if surfaced verbatim. Mirrors the
-/// vault-proxy redaction pattern from Finding #1 (project_decisions.md).
-const REDACTED: &str = "<REDACTED>";
+use lifecycle::{
+    bring_perimeter_down_sync, bring_perimeter_up_async, clear_runguard,
+    establish_runguard, install_signal_handlers, spawn_watchdog,
+    PerimeterStateStore,
+};
 
-fn redact_secrets(s: &str) -> String {
-    const SENSITIVE_VARS: &[&str] = &[
-        "TELEGRAM_BOT_TOKEN",
-        "ANTHROPIC_API_KEY",
-        "OPENAI_API_KEY",
-    ];
-    let mut out = s.to_string();
-    for var in SENSITIVE_VARS {
-        let needle = format!("{var}=");
-        let mut search_from = 0;
-        while let Some(rel) = out[search_from..].find(&needle) {
-            let pos = search_from + rel;
-            let after = pos + needle.len();
-            // Redact until the next whitespace, quote, or end-of-string.
-            let end = out[after..]
-                .find(|c: char| c.is_whitespace() || c == '"' || c == '\'')
-                .map(|n| after + n)
-                .unwrap_or(out.len());
-            out.replace_range(after..end, REDACTED);
-            // Advance past the redaction so we don't re-match the same `KEY=`.
-            search_from = after + REDACTED.len();
-        }
-    }
-    out
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn redacts_telegram_bot_token() {
-        let input = "podman run -e TELEGRAM_BOT_TOKEN=12345:abcdef -e FOO=bar ...";
-        let out = redact_secrets(input);
-        assert!(!out.contains("12345:abcdef"));
-        assert!(out.contains("TELEGRAM_BOT_TOKEN=<REDACTED>"));
-        assert!(out.contains("FOO=bar"));
-    }
-
-    #[test]
-    fn redacts_multiple_occurrences_without_looping() {
-        let input = "ANTHROPIC_API_KEY=sk-ant-aaa OPENAI_API_KEY=sk-bbb";
-        let out = redact_secrets(input);
-        assert!(!out.contains("sk-ant-aaa"));
-        assert!(!out.contains("sk-bbb"));
-        assert!(out.matches(REDACTED).count() == 2);
-    }
-
-    #[test]
-    fn passes_through_unrelated_text() {
-        let input = "exit 137: SIGKILL received";
-        assert_eq!(redact_secrets(input), input);
-    }
-}
-
-/// Try `podman compose <args...>` first, then `docker compose <args...>`.
-/// Returns true if either succeeded with a zero exit code. Intentionally
-/// non-fatal — the app boots even if no container runtime is installed
-/// yet (e.g. first launch before the wizard has run System Check).
-///
-/// `timeout` wraps the call with `timeout(1)` if that binary is on PATH;
-/// otherwise the call runs without a wrapper and may hang indefinitely
-/// (which is no worse than the pre-Pass-4 behavior of not running it at all).
-fn run_compose(root: &Path, args: &[&str], timeout: Duration) -> bool {
-    for runtime in &["podman", "docker"] {
-        let secs = timeout.as_secs().max(1).to_string();
-
-        // First attempt: wrap with timeout(1) for a hard ceiling.
-        let wrapped = StdCommand::new("timeout")
-            .args(["--signal=TERM", "--kill-after=5s", &secs, runtime, "compose"])
-            .args(args)
-            .current_dir(root)
-            .output();
-
-        let output = match wrapped {
-            // ENOENT: timeout binary not on PATH. Fall back to direct call.
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => StdCommand::new(runtime)
-                .arg("compose")
-                .args(args)
-                .current_dir(root)
-                .output(),
-            other => other,
-        };
-
-        match output {
-            Ok(out) if out.status.success() => {
-                eprintln!("[lifecycle] {} compose {} → ok", runtime, args.join(" "));
-                return true;
-            }
-            Ok(out) => {
-                let stderr = String::from_utf8_lossy(&out.stderr);
-                eprintln!(
-                    "[lifecycle] {} compose {} exited {}: {}",
-                    runtime,
-                    args.join(" "),
-                    out.status,
-                    redact_secrets(stderr.trim())
-                );
-                // Try the next runtime — maybe podman is broken on this host
-                // and docker works.
-            }
-            Err(e) => {
-                eprintln!(
-                    "[lifecycle] failed to spawn {}: {} — trying next runtime",
-                    runtime, e
-                );
-            }
-        }
-    }
-    false
-}
-
-/// Bring the 4-container perimeter up. Idempotent — `compose up -d` is a
-/// no-op when containers are already running. Spawned on a background
-/// thread so the Tauri window appears immediately even if containers are
-/// being built/pulled for the first time.
-fn bring_perimeter_up_async(root: PathBuf) {
-    std::thread::spawn(move || {
-        // 90s budget for first-time pulls / image builds. On a warm cache
-        // this returns in 1-3s.
-        run_compose(&root, &["up", "-d"], Duration::from_secs(90));
-    });
-}
-
-/// Tear the perimeter down on graceful exit. Synchronous — we want the
-/// containers actually stopped before the process terminates so we don't
-/// leak the cell block. 30s budget; if compose down stalls past that,
-/// the timeout kicks in and the app exits anyway (P11: app dies → containers
-/// die, even on a stuck shutdown).
-fn bring_perimeter_down_sync(root: &Path) {
-    run_compose(root, &["down"], Duration::from_secs(30));
-}
+/// How often the watchdog re-probes container state. 30s matches Pass 4's
+/// "watchdog notices a dead container within 30s" target from the master
+/// plan + Pass 2 spec.
+const WATCHDOG_INTERVAL: Duration = Duration::from_secs(30);
 
 /// Find the monorepo root by looking for a `components/` directory.
 fn find_monorepo_root() -> PathBuf {
@@ -191,17 +62,16 @@ fn find_monorepo_root() -> PathBuf {
 
 /// Build the system tray menu and register event handlers.
 ///
-/// Minimum implementation for Phase E.1:
-/// - Non-clickable status line (placeholder — real status wires in Phase E.2)
+/// - Status line (initial placeholder; live-updated by the watchdog tooltip)
 /// - Open Dashboard → shows/focuses the main window
-/// - Quit → exits the app
+/// - Quit → exits the app cleanly (triggers RunEvent::Exit → compose down)
 ///
 /// Left-click on the tray icon brings the main window forward.
 fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
     let status_item = MenuItem::with_id(
         app,
         "status",
-        "Assistant status — initializing",
+        "Assistant — checking…",
         false,
         None::<&str>,
     )?;
@@ -220,7 +90,7 @@ fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         .ok_or_else(|| tauri::Error::AssetNotFound("default window icon".into()))?;
 
     TrayIconBuilder::with_id("main-tray")
-        .tooltip("Lobster-TrApp")
+        .tooltip("Lobster-TrApp — checking…")
         .icon(icon)
         .menu(&menu)
         .show_menu_on_left_click(false)
@@ -257,11 +127,17 @@ pub fn run() {
     let monorepo_root = find_monorepo_root();
     let app_state = AppState::new(monorepo_root.clone());
 
-    // Pass-4 sub-pass (lifecycle ownership, partial): the perimeter is now
-    // bound to the app's lifetime. App start spawns `compose up -d`; graceful
-    // exit runs `compose down`. RunGuard / signal handlers / watchdog land
-    // in a follow-up sub-pass.
-    let perimeter_root = monorepo_root.clone();
+    // RunGuard: reap orphan containers from any prior SIGKILL'd session
+    // BEFORE we bring the perimeter up. Reads/writes ~/.lobster-trapp/runguard.pid.
+    establish_runguard(&monorepo_root);
+
+    // Pass-4 lifecycle ownership (P11): the perimeter is bound to the app's
+    // lifetime. App start → compose up. Graceful exit (window quit, tray Quit,
+    // SIGTERM, SIGINT) → compose down. SIGKILL is reaped on next launch via
+    // RunGuard above. Watchdog reports state every 30s; auto-restart of dead
+    // containers is delegated to `restart: unless-stopped` in compose.yml.
+    let perimeter_root_setup = monorepo_root.clone();
+    let perimeter_root_exit = monorepo_root.clone();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -273,14 +149,19 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        .manage(PerimeterStateStore::new())
+        .manage(app_state)
         .setup(move |app| {
             setup_tray(app)?;
             // Spawn perimeter bring-up on a background thread so the UI
             // appears immediately even if a first-time pull is happening.
-            bring_perimeter_up_async(perimeter_root.clone());
+            bring_perimeter_up_async(perimeter_root_setup.clone());
+            // Install Unix signal handlers (SIGTERM, SIGINT → graceful exit).
+            install_signal_handlers(app.handle().clone());
+            // Spawn the perimeter-state watchdog.
+            spawn_watchdog(app.handle().clone(), WATCHDOG_INTERVAL);
             Ok(())
         })
-        .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             commands::manifest_cmds::list_components,
             commands::manifest_cmds::get_component,
@@ -293,6 +174,7 @@ pub fn run() {
             commands::config::write_config,
             commands::status::get_status,
             commands::health::run_health_probe,
+            commands::lifecycle::get_perimeter_state,
             commands::prerequisites::check_prerequisites,
             commands::prerequisites::init_submodules,
             commands::prerequisites::create_config_from_template,
@@ -309,7 +191,8 @@ pub fn run() {
             // app-close ⇒ perimeter-down (P11). Synchronous, with a 30s
             // ceiling enforced by run_compose's timeout wrapper.
             if let tauri::RunEvent::Exit = &event {
-                bring_perimeter_down_sync(&monorepo_root);
+                bring_perimeter_down_sync(&perimeter_root_exit);
+                clear_runguard();
             }
         });
 }

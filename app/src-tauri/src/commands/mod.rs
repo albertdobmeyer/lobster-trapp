@@ -2,6 +2,7 @@ pub mod config;
 pub mod diagnostics;
 pub mod execute;
 pub mod health;
+pub mod lifecycle;
 pub mod manifest_cmds;
 pub mod prerequisites;
 pub mod status;
