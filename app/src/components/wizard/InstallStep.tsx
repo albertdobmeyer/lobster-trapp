@@ -73,6 +73,7 @@ export default function InstallStep({ onComplete, onBack }: Props) {
   const [tick, setTick] = useState(0);
   const unlistenersRef = useRef<Array<() => void>>([]);
   const cancelledRef = useRef(false);
+  const currentSubStepRef = useRef<SubStepId | null>(null);
 
   const updateStep = useCallback(
     (id: SubStepId, patch: Partial<SubStep>) => {
@@ -168,11 +169,12 @@ export default function InstallStep({ onComplete, onBack }: Props) {
 
     try {
       // ── A: Check your computer ─────────────────────────────────────────
+      currentSubStepRef.current = "check";
       updateStep("check", { status: "running", startedAt: Date.now() });
       const prereqReport = await checkPrerequisites();
       appendLog(
         "check",
-        `Container runtime: ${prereqReport.container_runtime.name ?? "not found"}`,
+        `Sandbox runner: ${prereqReport.container_runtime.found ? "ready" : "not found"}`,
       );
       if (!prereqReport.container_runtime.found) {
         // User-action required — do not auto-retry or escalate to FriendlyRetry.
@@ -186,10 +188,11 @@ export default function InstallStep({ onComplete, onBack }: Props) {
       updateStep("check", { status: "succeeded" });
 
       // ── B: Download the AI parts (submodules) ──────────────────────────
+      currentSubStepRef.current = "download";
       updateStep("download", { status: "running", startedAt: Date.now() });
       await withRetry(
         async () => {
-          appendLog("download", "Fetching assistant modules…");
+          appendLog("download", "Downloading your assistant…");
           const out = await initSubmodules();
           if (out) appendLog("download", out);
         },
@@ -206,6 +209,7 @@ export default function InstallStep({ onComplete, onBack }: Props) {
       updateStep("download", { status: "succeeded" });
 
       // ── C: Build your assistant (stream vault + forge; skip pioneer) ──
+      currentSubStepRef.current = "build";
       updateStep("build", { status: "running", startedAt: Date.now() });
       const components = postInitReport.components
         .map((c) => c.component_id)
@@ -218,9 +222,9 @@ export default function InstallStep({ onComplete, onBack }: Props) {
       if (components.includes("openclaw-vault")) {
         await withRetry(
           async () => {
-            appendLog("build", "→ openclaw-vault: setup");
+            appendLog("build", "→ Your assistant: install");
             await streamOneCommand("openclaw-vault", "setup", "build");
-            appendLog("build", "→ openclaw-vault: start");
+            appendLog("build", "→ Your assistant: start");
             await streamOneCommand("openclaw-vault", "start", "build");
           },
           2,
@@ -231,7 +235,7 @@ export default function InstallStep({ onComplete, onBack }: Props) {
       if (components.includes("clawhub-forge")) {
         await withRetry(
           async () => {
-            appendLog("build", "→ clawhub-forge: setup");
+            appendLog("build", "→ Skill scanner: install");
             await streamOneCommand("clawhub-forge", "setup", "build");
           },
           2,
@@ -241,16 +245,17 @@ export default function InstallStep({ onComplete, onBack }: Props) {
       updateStep("build", { status: "succeeded" });
 
       // ── D: Test safety checks (parallel: vault 24-point + forge pipeline)─
+      currentSubStepRef.current = "safety";
       updateStep("safety", { status: "running", startedAt: Date.now() });
       await withRetry(
         async () => {
           const tasks: Promise<unknown>[] = [];
           if (components.includes("openclaw-vault")) {
-            appendLog("safety", "Running vault security audit (24 checks)…");
+            appendLog("safety", "Running assistant security audit (24 checks)…");
             tasks.push(executeWorkflow("openclaw-vault", "full-verify"));
           }
           if (components.includes("clawhub-forge")) {
-            appendLog("safety", "Running skill-scanner pipeline check…");
+            appendLog("safety", "Running skill scanner pipeline check…");
             tasks.push(executeWorkflow("clawhub-forge", "full-check"));
           }
           const results = await Promise.all(tasks);
@@ -272,7 +277,7 @@ export default function InstallStep({ onComplete, onBack }: Props) {
       setOutcome({ kind: "succeeded" });
     } catch (err) {
       if (cancelledRef.current) return;
-      const classified = classifyError(err);
+      const classified = classifyError(err, currentSubStepRef.current ?? undefined);
       // Mark any running step as failed.
       setSteps((prev) =>
         prev.map((s) =>
@@ -502,7 +507,7 @@ function MissingRuntimeCard({
           One thing missing
         </h2>
         <p className="mb-4 text-sm text-neutral-400">
-          You'll need Podman or Docker installed first. It's free, takes a
+          You'll need a sandbox runner installed first. It's free, takes a
           minute, and is what keeps your assistant safely separated from the
           rest of your computer.
         </p>
@@ -511,8 +516,8 @@ function MissingRuntimeCard({
           {platform === "linux" && (
             <InstallLine
               title="Linux (Ubuntu/Debian)"
-              body="Run this in your terminal:"
-              code="sudo apt install podman podman-compose"
+              body="Open the guide for a one-click installer."
+              advancedCode="sudo apt install podman podman-compose"
               href="https://podman.io/docs/installation#installing-on-linux"
             />
           )}
@@ -532,7 +537,7 @@ function MissingRuntimeCard({
           )}
           {platform === "other" && (
             <InstallLine
-              title="Install Podman"
+              title="Install a sandbox runner"
               body="Choose the option for your computer:"
               href="https://podman-desktop.io/downloads"
             />
@@ -560,23 +565,20 @@ function MissingRuntimeCard({
 function InstallLine({
   title,
   body,
-  code,
+  advancedCode,
   href,
 }: {
   title: string;
   body: string;
-  code?: string;
+  /** Optional terminal command — hidden by default behind a disclosure. */
+  advancedCode?: string;
   href: string;
 }) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
   return (
     <div className="rounded-md bg-neutral-900 p-3">
       <p className="text-sm font-medium text-neutral-100">{title}</p>
       <p className="mt-1 text-xs text-neutral-400">{body}</p>
-      {code && (
-        <code className="mt-2 block rounded bg-neutral-950 px-2 py-1.5 font-mono text-xs text-info-400">
-          {code}
-        </code>
-      )}
       <a
         href={href}
         target="_blank"
@@ -585,6 +587,30 @@ function InstallLine({
       >
         Open guide <ExternalLink size={10} />
       </a>
+      {advancedCode && (
+        <div className="mt-3 border-t border-neutral-800 pt-2">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="inline-flex items-center gap-1 text-[11px] text-neutral-500 hover:text-neutral-300"
+            aria-expanded={showAdvanced}
+          >
+            {showAdvanced ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+            {showAdvanced ? "Hide" : "Show"} terminal command
+          </button>
+          {showAdvanced && (
+            <>
+              <p className="mt-2 text-[11px] text-neutral-500">
+                If you're comfortable with the terminal, run this. Otherwise,
+                use the guide above.
+              </p>
+              <code className="mt-2 block rounded bg-neutral-950 px-2 py-1.5 font-mono text-xs text-info-400">
+                {advancedCode}
+              </code>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -628,19 +654,24 @@ function estimateRemaining(steps: SubStep[]): number | null {
 }
 
 async function prefetchTelegramUrl(
-  update: (patch: Partial<{ telegramBotUrl: string | null }>) => Promise<void>,
+  update: (
+    patch: Partial<{
+      telegramBotUrl: string | null;
+      telegramBotUsername: string | null;
+    }>,
+  ) => Promise<void>,
 ): Promise<void> {
   try {
     const envContent = await readConfig("openclaw-vault", ".env").catch(() => "");
     const { telegramToken } = parseEnvKeys(envContent);
     if (!telegramToken) {
-      await update({ telegramBotUrl: null });
+      await update({ telegramBotUrl: null, telegramBotUsername: null });
       return;
     }
-    const url = await deriveTelegramBotUrl(telegramToken);
-    await update({ telegramBotUrl: url });
+    const bot = await deriveTelegramBotUrl(telegramToken);
+    await update({ telegramBotUrl: bot.url, telegramBotUsername: bot.username });
   } catch {
-    // Silently accept failure — Ready falls back to generic telegram.org.
-    await update({ telegramBotUrl: null });
+    // Silently accept failure — Ready falls back to a generic message.
+    await update({ telegramBotUrl: null, telegramBotUsername: null });
   }
 }

@@ -48,6 +48,8 @@ export interface AppSettings {
   dismissedAlerts: DismissedAlerts;
   /** Cached `https://t.me/{username}?text=Hi` URL derived from the bot token during Install. */
   telegramBotUrl: string | null;
+  /** Cached bot @username (without the `@`) — surfaced on Ready as a fallback when the deep-link doesn't auto-route into the right chat. */
+  telegramBotUsername: string | null;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -74,4 +76,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   favoriteUseCaseIds: [],
   dismissedAlerts: {},
   telegramBotUrl: null,
+  telegramBotUsername: null,
 };

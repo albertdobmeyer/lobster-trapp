@@ -27,6 +27,13 @@ const BANNED_WIZARD_TERMS = [
   "vault-",
   "compose",
   "seccomp",
+  // Project codenames — must never reach user-facing copy.
+  "openclaw",
+  "OpenClaw",
+  "clawhub",
+  "ClawHub",
+  "moltbook",
+  "Moltbook",
 ];
 
 // Exceptions — phrases that happen to contain a banned token for legitimate

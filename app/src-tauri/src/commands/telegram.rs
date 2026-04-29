@@ -7,7 +7,7 @@
 //! into browser memory — both avoidable by making the call from Rust and
 //! handing back a clean URL.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 struct TelegramResponse {
@@ -21,14 +21,26 @@ struct BotUser {
     username: Option<String>,
 }
 
-/// Returns a `https://t.me/{username}?text=Hi` URL derived from the token.
+/// Resolved Telegram bot identity surfaced to the frontend. Both fields are
+/// always populated together — they're derived from the same `getMe` call.
+/// The frontend caches them so the Ready screen can either deep-link into
+/// the bot chat (`url`) or, if the link doesn't auto-route into the right
+/// chat, surface the `@username` for Karen to search manually.
+#[derive(Serialize)]
+pub struct TelegramBot {
+    pub url: String,
+    pub username: String,
+}
+
+/// Resolves a bot token into a `{url, username}` pair via Telegram's
+/// `getMe` endpoint.
 ///
 /// - `Err` on any failure (network, non-200, malformed JSON, missing username).
 ///   The frontend falls back to a generic Telegram link; no error is surfaced
 ///   to the user.
-/// - Never returns a URL containing the token.
+/// - Never returns a value containing the token.
 #[tauri::command]
-pub async fn derive_telegram_bot_url(token: String) -> Result<String, String> {
+pub async fn derive_telegram_bot_url(token: String) -> Result<TelegramBot, String> {
     let token = token.trim();
     if token.is_empty() {
         return Err("Empty token".to_string());
@@ -71,7 +83,10 @@ pub async fn derive_telegram_bot_url(token: String) -> Result<String, String> {
         return Err("Empty username".to_string());
     }
 
-    Ok(format!("https://t.me/{}?text=Hi", username))
+    Ok(TelegramBot {
+        url: format!("https://t.me/{}?text=Hi", username),
+        username,
+    })
 }
 
 #[cfg(test)]

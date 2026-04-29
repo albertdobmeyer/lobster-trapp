@@ -213,15 +213,15 @@
 
 ## Score Matrix (19 Surfaces × 13 Principles)
 
-Originally scored 2026-04-20 (rows 1–13). Re-scored 2026-04-29 with P11–P13 added; rows 14–19 added (5 user-mode placeholder pages + Telegram first-chat surface from Pass 1.5).
+Originally scored 2026-04-20 (rows 1–13). Re-scored 2026-04-29 with P11–P13 added; rows 14–19 added (5 user-mode placeholder pages + Telegram first-chat surface from Pass 1.5). **Wizard rows 2–5 re-scored 2026-04-29 (Pass 5)** after the MissingRuntimeCard rebrand, codename translations, error-pattern routing, and context-aware fallback. P2/P4 holdouts on row #4 (Configuration) reflect deferred P2 nice-to-haves ("Anthropic API key" → "AI account key" rename) and the unchanged transparency level.
 
 | # | Surface | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 | P9 | P10 | P11 | P12 | P13 | Avg |
 |---|---------|----|----|----|----|----|----|----|----|----|----|----|----|----|-----|
 | 1 | Setup: Welcome | 10 | 10 | N/A | N/A | N/A | 10 | 10 | N/A | N/A | 10 | N/A | N/A | N/A | **10.0** |
-| 2 | Setup: System Check | 7 | 7 | 8 | 8 | 7 | 8 | 8 | N/A | 9 | 10 | N/A | N/A | N/A | **8.0** |
-| 3 | Setup: Assistant Modules | 8 | 8 | 7 | 7 | 9 | 8 | 9 | N/A | N/A | 10 | N/A | N/A | N/A | **8.3** |
-| 4 | Setup: Configuration | 7 | 8 | 7 | 6 | 9 | 6 | 8 | 9 | N/A | 9 | N/A | N/A | N/A | **7.7** |
-| 5 | Setup: Setting Up Your Assistant | 6 | 6 | 8 | 9 | 8 | 9 | 8 | N/A | 9 | 10 | 6 | N/A | N/A | **7.9** |
+| 2 | Setup: System Check | 9 | 8 | 8 | 8 | 7 | 9 | 8 | N/A | 9 | 10 | N/A | N/A | N/A | **8.4** |
+| 3 | Setup: Assistant Modules | 9 | 9 | 8 | 7 | 9 | 9 | 9 | N/A | N/A | 10 | N/A | N/A | N/A | **8.8** |
+| 4 | Setup: Configuration | 8 | 8 | 8 | 6 | 9 | 7 | 8 | 9 | N/A | 9 | N/A | N/A | N/A | **8.0** |
+| 5 | Setup: Setting Up Your Assistant | 9 | 8 | 9 | 9 | 9 | 10 | 8 | N/A | 9 | 10 | 6 | N/A | N/A | **8.7** |
 | 6 | Setup: Complete | 10 | 10 | N/A | N/A | N/A | 10 | 10 | N/A | N/A | 10 | N/A | N/A | N/A | **10.0** |
 | 7 | Dashboard | 10 | 9 | N/A | N/A | 8 | 10 | 9 | N/A | 8 | 10 | **3** | **0** | N/A | **7.4** |
 | 8 | Component Detail (Assistant) | 8 | 7 | 6 | N/A | 9 | 9 | 8 | N/A | 7 | 8 | 5 | N/A | 7 | **7.4** |
@@ -411,9 +411,9 @@ These are the new violations the 2026-04-28 dogfood walkthrough and 2026-04-29 l
 
 **Wizard P0s named in Pass 1 (Pass 5 owns):**
 
-- ❌ `sudo apt install podman podman-compose` displayed as primary install guidance → walk Karen through guided install OR offer one-click bundling
-- ❌ Internal codenames in InstallStep technical log (`openclaw-vault: setup`, `clawhub-forge: setup`) → translate to user-facing labels even in the technical-details disclosure
-- ❌ Three thrown errors that fall through to `UNKNOWN_FALLBACK` ("Something went wrong") instead of routing through `classifyError` — `InstallStep.tsx:140-145, 204, 260`
+- ✅ `sudo apt install podman podman-compose` displayed as primary install guidance — **CLOSED 2026-04-29 (Pass 5):** primary copy is now "sandbox runner"; the raw apt command is hidden behind a "Show terminal command" disclosure with a "use the guide above" framing.
+- ✅ Internal codenames in InstallStep technical log (`openclaw-vault: setup`, `clawhub-forge: setup`) — **CLOSED 2026-04-29 (Pass 5):** translated to "Your assistant: install" / "Skill scanner: install" / "Sandbox runner: ready" / "Downloading your assistant…" / "Running assistant security audit (24 checks)…".
+- ✅ Three thrown errors that fall through to `UNKNOWN_FALLBACK` — **CLOSED 2026-04-29 (Pass 5):** added specific patterns for `Some assistant modules failed to download`, `Workflow ended with status:`, and `exited with code` in `app/src/lib/errors.ts:54-90`. Also made `UNKNOWN_FALLBACK` context-aware via `classifyError(err, context?)` — Karen now sees "Building didn't finish" instead of "Something went wrong".
 
 **Telegram first-chat P0s named in Pass 1.5 (`components/openclaw-vault` system prompt — out of parent scope):**
 

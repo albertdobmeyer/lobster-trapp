@@ -94,6 +94,35 @@ const PATTERNS: Pattern[] = [
     suggestedAction: "Check the file permissions and try again.",
     retryable: false,
   },
+  // Wizard install pipeline — specific failure shapes, ordered before
+  // the generic "execution failed" / "Not found" catch-alls.
+  {
+    test: /Some assistant modules failed to download/i,
+    category: "execution",
+    severity: "connectivity",
+    title: "Couldn't download everything",
+    userMessage: "Some parts of your assistant didn't finish downloading.",
+    suggestedAction: "Check your wifi and try again.",
+    retryable: true,
+  },
+  {
+    test: /Workflow ended with status:/i,
+    category: "execution",
+    severity: "transient",
+    title: "Safety check didn't finish",
+    userMessage: "One of the safety checks didn't finish.",
+    suggestedAction: "Try again — it usually works the second time.",
+    retryable: true,
+  },
+  {
+    test: /exited with code/i,
+    category: "execution",
+    severity: "transient",
+    title: "A setup step didn't finish",
+    userMessage: "That setup step didn't finish successfully.",
+    suggestedAction: "Try again — it usually works the second time.",
+    retryable: true,
+  },
   // Existing patterns — preserve category/retryable for back-compat
   {
     test: /timed out/i,
@@ -197,7 +226,38 @@ const UNKNOWN_FALLBACK: Omit<Pattern, "test"> = {
   retryable: false,
 };
 
-export function classifyError(err: unknown): ClassifiedError {
+/**
+ * Optional context tag passed by callers that know which phase of work was
+ * running when the error was thrown. Used to make UNKNOWN_FALLBACK copy
+ * specific instead of generic — Karen sees "Your computer check didn't work
+ * as expected" rather than "Something went wrong".
+ */
+export type ErrorContext = "check" | "download" | "build" | "safety";
+
+const CONTEXT_FALLBACKS: Record<ErrorContext, Pick<Pattern, "title" | "userMessage" | "suggestedAction">> = {
+  check: {
+    title: "Computer check didn't work",
+    userMessage: "Checking your computer didn't work as expected.",
+    suggestedAction: "Let's try again — if it keeps happening, get help.",
+  },
+  download: {
+    title: "Download didn't finish",
+    userMessage: "Downloading your assistant didn't work as expected.",
+    suggestedAction: "Check your wifi and try again.",
+  },
+  build: {
+    title: "Building didn't finish",
+    userMessage: "Building your assistant didn't work as expected.",
+    suggestedAction: "Let's try again — if it keeps happening, get help.",
+  },
+  safety: {
+    title: "Safety checks didn't finish",
+    userMessage: "Running the safety checks didn't work as expected.",
+    suggestedAction: "Let's try again — if it keeps happening, get help.",
+  },
+};
+
+export function classifyError(err: unknown, context?: ErrorContext): ClassifiedError {
   const message = err instanceof Error ? err.message : String(err);
 
   for (const pattern of PATTERNS) {
@@ -215,12 +275,13 @@ export function classifyError(err: unknown): ClassifiedError {
     }
   }
 
+  const fallback = context ? CONTEXT_FALLBACKS[context] : null;
   return {
     category: UNKNOWN_FALLBACK.category,
     severity: UNKNOWN_FALLBACK.severity,
-    title: UNKNOWN_FALLBACK.title,
-    userMessage: UNKNOWN_FALLBACK.userMessage,
-    suggestedAction: UNKNOWN_FALLBACK.suggestedAction,
+    title: fallback?.title ?? UNKNOWN_FALLBACK.title,
+    userMessage: fallback?.userMessage ?? UNKNOWN_FALLBACK.userMessage,
+    suggestedAction: fallback?.suggestedAction ?? UNKNOWN_FALLBACK.suggestedAction,
     message,
     technicalDetails: message,
     retryable: UNKNOWN_FALLBACK.retryable,

@@ -41,15 +41,23 @@ export default function ReadyStep({ onGoToDashboard }: Props) {
     setSecondsLeft(null);
   };
 
+  // Resolve the best Telegram link we have. If the prefetched URL from
+  // Install isn't available but we know the bot's @username, build the
+  // deep-link from it. Generic telegram.org is the last resort.
+  const telegramLink =
+    settings.telegramBotUrl ??
+    (settings.telegramBotUsername
+      ? `https://t.me/${settings.telegramBotUsername}?text=Hi`
+      : "https://telegram.org");
+
   async function handleOpenTelegram() {
     cancelAutoAdvance();
-    const url = settings.telegramBotUrl ?? "https://telegram.org";
     try {
-      await openUrl(url);
+      await openUrl(telegramLink);
     } catch {
       // Fall back to window.open if the shell plugin isn't available in a
       // given build (e.g. running `npm run dev` outside Tauri).
-      window.open(url, "_blank", "noopener,noreferrer");
+      window.open(telegramLink, "_blank", "noopener,noreferrer");
     }
   }
 
@@ -63,7 +71,9 @@ export default function ReadyStep({ onGoToDashboard }: Props) {
         Your assistant is ready! 🎉
       </h1>
       <p className="animate-slide-up mb-10 max-w-md text-base text-neutral-400">
-        Say hi on Telegram to get started.
+        {settings.telegramBotUsername
+          ? <>Say hi on Telegram — search for <span className="text-neutral-200">@{settings.telegramBotUsername}</span> if it doesn't open the right chat.</>
+          : "Say hi on Telegram to get started."}
       </p>
 
       <div className="flex flex-col items-center gap-4">

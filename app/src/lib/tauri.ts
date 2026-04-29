@@ -204,12 +204,21 @@ export async function generateDiagnosticBundle(): Promise<string> {
 }
 
 /**
- * Resolves a Telegram bot token into a `https://t.me/{username}?text=Hi`
- * deep-link. Calls Telegram's `getMe` endpoint from Rust (keeps the token
- * out of webview memory and avoids a CSP relaxation). Rejects on network
- * errors, bad tokens, or missing username — callers should fall back to
- * `https://telegram.org` silently.
+ * Resolved Telegram bot identity. Both fields come from a single `getMe`
+ * call and are always populated together.
  */
-export async function deriveTelegramBotUrl(token: string): Promise<string> {
-  return invoke<string>("derive_telegram_bot_url", { token });
+export interface TelegramBot {
+  url: string;
+  username: string;
+}
+
+/**
+ * Resolves a Telegram bot token into a `{url, username}` pair. Calls
+ * Telegram's `getMe` endpoint from Rust (keeps the token out of webview
+ * memory and avoids a CSP relaxation). Rejects on network errors, bad
+ * tokens, or missing username — callers should fall back to a generic
+ * Telegram link silently.
+ */
+export async function deriveTelegramBotUrl(token: string): Promise<TelegramBot> {
+  return invoke<TelegramBot>("derive_telegram_bot_url", { token });
 }

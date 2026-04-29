@@ -10,6 +10,7 @@ import {
   upsertEnvVar,
 } from "@/lib/wizardUtils";
 import { useToast } from "@/lib/ToastContext";
+import { classifyError } from "@/lib/errors";
 import HowToModal, { type HowToStep } from "./HowToModal";
 
 interface Props {
@@ -160,10 +161,13 @@ export default function ConnectStep({ onContinue, onBack }: Props) {
       }
       onContinue({ skippedKeys: opts.skip });
     } catch (err) {
+      const classified = classifyError(err);
       addToast({
         type: "error",
-        title: "Couldn't save your keys",
-        message: err instanceof Error ? err.message : String(err),
+        title: classified.title === "Something went wrong"
+          ? "Couldn't save your keys"
+          : classified.title,
+        message: classified.userMessage,
         duration: 0,
       });
     } finally {
