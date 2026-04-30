@@ -9,28 +9,30 @@ test.describe("Navigation and routing", () => {
     await expect(settingsLink.or(setup)).toBeVisible();
   });
 
-  test("settings page has controls", async ({ page }) => {
+  test("preferences page has controls", async ({ page }) => {
+    // /settings is a back-compat redirect to /preferences.
     await page.goto("/settings");
-    await expect(page.getByRole("heading", { name: "Settings", exact: true })).toBeVisible();
-    await expect(page.getByText(/app data location/i).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Preferences", exact: true })).toBeVisible();
+    // Spending alert-threshold slider.
     await expect(page.getByRole("slider")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Re-run Setup Wizard" })).toBeVisible();
+    // Re-run setup button.
+    await expect(page.getByRole("button", { name: "Re-run setup" })).toBeVisible();
   });
 
   test("unknown route shows 404 page with navigation", async ({ page }) => {
     await page.goto("/nonexistent-page");
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
     await expect(page.getByText("doesn't exist or has been moved")).toBeVisible();
-    // Sidebar is still visible for navigation
-    await expect(page.getByRole("link", { name: /settings/i })).toBeVisible();
-    // "Back to Dashboard" link exists
-    const backLink = page.getByRole("link", { name: "Back to Dashboard" });
+    // UserSidebar is still visible for navigation — has a Preferences link.
+    await expect(page.getByRole("link", { name: "Preferences" })).toBeVisible();
+    // "Back home" link exists.
+    const backLink = page.getByRole("link", { name: "Back home" });
     await expect(backLink).toBeVisible();
   });
 
-  test("404 'Back to Dashboard' link navigates home", async ({ page }) => {
+  test("404 'Back home' link navigates to root", async ({ page }) => {
     await page.goto("/nonexistent-page");
-    await page.getByRole("link", { name: "Back to Dashboard" }).click();
+    await page.getByRole("link", { name: "Back home" }).click();
     await expect(page).toHaveURL(/\/(?:setup)?$/);
   });
 
@@ -38,7 +40,7 @@ test.describe("Navigation and routing", () => {
     await page.goto("/component/unknown-id-that-does-not-exist");
     // Should show "Page not found" (not infinite skeleton)
     await expect(page.getByText("Page not found")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Back to Dashboard" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Back home" })).toBeVisible();
   });
 
   test("setup wizard route loads with welcome message", async ({ page }) => {

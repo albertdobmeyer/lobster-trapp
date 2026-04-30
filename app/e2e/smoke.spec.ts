@@ -18,11 +18,12 @@ test.describe("Smoke tests", () => {
     expect(text?.length).toBeGreaterThan(20);
   });
 
-  test("navigation to /settings works", async ({ page }) => {
+  test("navigation to /preferences works", async ({ page }) => {
+    // /settings is a back-compat redirect to /preferences.
     await page.goto("/settings");
-    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
-    // About section shows version
-    await expect(page.getByText("Lobster-TrApp v0.1.0")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Preferences" })).toBeVisible();
+    // Footer shows version.
+    await expect(page.getByText(/Lobster-TrApp v\d+\.\d+\.\d+/)).toBeVisible();
   });
 
   test("no unexpected console errors", async ({ page }) => {

@@ -10,7 +10,7 @@ export default function NotFound() {
         The page you're looking for doesn't exist or has been moved.
       </p>
       <Link to="/" className="btn btn-safe inline-flex items-center gap-2">
-        Back to Dashboard
+        Back home
       </Link>
     </div>
   );

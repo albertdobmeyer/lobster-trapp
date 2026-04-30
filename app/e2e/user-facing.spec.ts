@@ -111,16 +111,17 @@ test.describe("Non-technical user experience", () => {
     }
   });
 
-  test("settings page has no developer jargon in user-visible text", async ({
+  test("preferences page has no developer jargon in user-visible text", async ({
     page,
   }) => {
+    // /settings is a back-compat redirect to /preferences.
     await page.goto("/settings");
     await expect(
-      page.getByRole("heading", { name: "Settings" }),
+      page.getByRole("heading", { name: "Preferences" }),
     ).toBeVisible();
 
     const text = await getVisibleText(page);
-    assertNoBannedTerms(text, "Settings");
+    assertNoBannedTerms(text, "Preferences");
   });
 
   test("component detail (unknown) says 'Page not found' not 'Component not found'", async ({
@@ -136,21 +137,21 @@ test.describe("Non-technical user experience", () => {
   test("sidebar shows role-based labels, not component names", async ({
     page,
   }) => {
-    await page.goto("/settings"); // Settings page always has sidebar
+    await page.goto("/preferences"); // Any user-mode page renders UserSidebar
 
-    // Sidebar should contain "Lobster-TrApp" title
-    await expect(
-      page.getByRole("heading", { name: "Lobster-TrApp" }),
-    ).toBeVisible();
-
-    // Must NOT show "OpenClaw Orchestrator" subtitle
-    await expect(page.getByText("OpenClaw Orchestrator")).not.toBeVisible();
-
-    // Must NOT show "Components" section header
+    // UserSidebar uses 5 role-based icon-nav links: Home / Security / Discover
+    // / Preferences / Help. No codenames. No "Components" section.
     const sidebar = page.locator("aside");
+    await expect(sidebar).toBeVisible();
+
     const sidebarText = await sidebar.textContent();
-    expect(sidebarText).not.toContain("COMPONENTS");
+    // Role-based labels present.
+    expect(sidebarText).toContain("Home");
+    expect(sidebarText).toContain("Preferences");
+    // No codenames.
+    expect(sidebarText).not.toContain("OpenClaw");
     expect(sidebarText).not.toContain("Components");
+    expect(sidebarText).not.toContain("COMPONENTS");
   });
 
   test("no banned terms on any reachable page", async ({ page }) => {
