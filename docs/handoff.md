@@ -106,42 +106,38 @@ Rubric re-scored: rows 2–5 in the score matrix updated. Wizard avg 8.0/8.3/7.7
 
 ## Pass 6 — Dev-tools-lite Surface (the next code work)
 
-**Estimate per master plan: ~5 days. Locked: Option B.**
+**Full Pass 6 roadmap is in its own spec doc: `docs/specs/2026-04-30-pass-6-roadmap.md`.** Read that before code. This handoff section is a one-screen summary so the next instance has orientation without flipping documents.
 
-Build Home + Discover + Preferences as real, native-feeling user surfaces. Security + Help stay as friendlier placeholders ("We're still building this section. In the meantime, talk to your assistant on Telegram while we finish.").
+**Estimate per master plan: ~5 days. Locked: Option B.** Build Home + Discover + Preferences as real, native-feeling user surfaces. Security + Help stay as friendlier placeholders.
 
-### What "real" means for each surface
+### Key scope cut (recorded in the roadmap doc)
 
-Per the Pass 2 target-state spec (`docs/specs/2026-04-29-delightful-sloth-target-ux.md`):
+The page-level specs (`08/10/12.md`) assume four backend subsystems: activity tracking, spending aggregation from vault-proxy logs, alerts evaluator, status aggregator. **Only the perimeter-state half (Pass 4) is shipped.** Writing the other three subsystems would consume Pass 6's entire budget before any pixel reaches Karen.
 
-- **Home dashboard.** The main window's hero state machine. Six states (NotSetup / Starting / RunningSafely / Recovering / Stopped / Error) — the backend already emits these via `get_perimeter_state` + `perimeter-state-changed` event (Pass 4 shipped). Pass 6 wires the frontend. Below the hero, surface "what your assistant has done today" (recent activity) and a single CTA to chat on Telegram.
-- **Discover.** Real use-cases (existing `useCaseLibrary`-style feed) — favorites, search, click-through to "talk to your assistant about this on Telegram" deep-link. Pass 1.5 live evidence informs which use-cases land first.
-- **Preferences.** Real surface for: Anthropic key (rotate), Telegram bot (rotate), spending limit, notifications, autostart, close-to-tray, theme. Routes through the existing `useSettings` hook + `writeConfig` for `.env` updates. Honors Pass 5's `classifyError()` routing for save errors.
-- **Security (placeholder).** "We're still building this. Your assistant is already running safely behind a 4-container perimeter — we just haven't finished the dashboard for it yet."
-- **Help (placeholder).** Same shape — friendly placeholder copy + a "talk to your assistant on Telegram" CTA.
+Pass 6 ships the frontend with **honest stub copy** for Activity ("None yet") and Spending ("$0.00 this month — we're still wiring this up"); Security tile derives from `PerimeterState`. The actual tracking subsystems slip to Pass 7. Mapping from the spec's 6-state hero to the backend's 5-state perimeter is documented in the roadmap doc (`paused_by_user` and `error_key` are NOT YET REACHABLE — they slip to Pass 7).
 
-### Files / surfaces to touch
+### Per-day shape
 
-- `app/src/pages/Home.tsx` (rebuild — currently a placeholder).
-- `app/src/pages/Discover.tsx` (rebuild from placeholder; the data feed exists in `app/src/data/useCases.ts` or similar).
-- `app/src/pages/Preferences.tsx` (rebuild from placeholder).
-- `app/src/pages/Security.tsx` + `app/src/pages/Help.tsx` (replace Tier-0 placeholder text with friendlier "still building" copy).
-- New hook `useHero()` (or similar) — listens to `perimeter-state-changed`, fetches initial state via `get_perimeter_state`, returns a typed `HeroState`. Drives the Home hero block.
-- Sidebar + nav: ensure all 5 surfaces have role-based labels, not codenames (already audited in Pass 3 for the nav itself; just verify after the rebuild).
+| Day | Surface | Key files |
+|---|---|---|
+| 1 (today, 2026-04-30) | Home hero + 3 tiles (real perimeter, stub Activity/Spending) | `Home.tsx`, `HeroStatusCard.tsx`, `StatTile.tsx`, `useHero.ts` |
+| 2 | Preferences | `Preferences.tsx` + 6 small Card components |
+| 3 | Discover | `Discover.tsx`, `UseCaseCard.tsx`, `data/useCases.ts` |
+| 4 | Tip-of-the-day + alerts banner | `TipOfTheDay.tsx`, `ProactiveAlertsBanner.tsx`, `useAlerts.ts` (frontend-only evaluator) |
+| 5 | Security/Help friendlier placeholders + rubric re-score | `SecurityMonitor.tsx`, `Help.tsx`, score matrix update |
 
-### Rubric targets for Pass 6
+### Rubric targets
 
-The current matrix has rows 14–18 (Home / Security / Discover / Preferences / Help) at avg 3.8 / 4.9 / 4.9 / 4.9 / 4.9 — all Tier 0. Pass 6 must:
-- Move rows 14, 16, 17 (Home / Discover / Preferences) into Tier 2 (≥7.5) at minimum, ideally Tier 3 (≥8.5).
-- Move rows 15, 18 (Security / Help) out of Tier 0 by replacing the spec-path leak with friendlier copy. Realistic target: 6.0–7.0.
-- Re-score after the rebuild; update the matrix preamble note.
+- Rows 14, 16, 17 (Home / Discover / Preferences): from 3.8/4.9/4.9 → ≥8.5.
+- Rows 15, 18 (Security / Help placeholders): from 4.9/4.9 → ≥6.5.
 
-### Pass 6 verification
+### Done-criteria (full list in roadmap doc)
 
-- All wizard E2E tests still pass (Pass 5 is downstream; nothing should regress).
-- Browser Playwright suite for the 5 rebuilt surfaces — at minimum a smoke test per page that verifies banned-term cleanliness (extend `app/e2e/user-facing.spec.ts` which currently has 2 failing tests in the `Home` placeholder area; those failures should resolve with the rebuild).
-- Manual: open the app, walk through each of the 5 sections, confirm the hero state updates live when you `podman stop vault-agent` (Recovering → restart → RunningSafely).
-- Re-score rows 14–18 against the extended 13-principle rubric.
+- All 5 user-mode pages no longer render `UserPlaceholder`. The phrase `Coming in Phase E.2.` is gone.
+- Hero reflects perimeter health within 30s of a container state change.
+- Banned-term sweeps clean across all 5 surfaces.
+- Pre-existing baseline-failing tests in navigation/smoke/user-facing resolved or `.skip`-ed.
+- Wizard E2E (4/4) + cargo lib (33/33) + orchestrator-check (41/41) still pass.
 
 ---
 
