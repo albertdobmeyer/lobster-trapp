@@ -1,16 +1,18 @@
 # Handoff — Active Mission
 
-**Last updated:** 2026-04-29 (end of Delightful Sloth Pass 5 + post-rotation validation)
-**Current phase:** Week 1 of the 3-week "Delightful Sloth" UX-coherence polish phase (~2026-04-28 → ~2026-05-19) leading to first public deployment. **Passes 1, 1.5, 2, 3, 4, and 5 complete.** Pass 6 (Dev-tools-lite, Option B) is next.
+**Last updated:** 2026-04-30 (end of Delightful Sloth Pass 6 — Dev-tools-lite shipped)
+**Current phase:** Week 2 of the 3-week "Delightful Sloth" UX-coherence polish phase (~2026-04-28 → ~2026-05-19) leading to first public deployment. **Passes 1, 1.5, 2, 3, 4, 5, and 6 complete.** Pass 7 (Notifications + recovery + cleanup) is next.
 **Branch:** `main` — pushed to `origin/main`
 **Last commits:**
+- `2ea0631` — Pass 6 Day 5: friendlier placeholders + dead-code cleanup + rubric re-score
+- `368ef94` — Pass 6 Day 4: tip-of-the-day + alerts banner + useAlerts hook
+- `f320ec0` — Pass 6 Day 3: Discover use-case gallery
+- `977ef52` — Pass 6 Day 2: real Preferences page (6 sections)
+- `9e5ba11` — Pass 6 Day 1: Home hero state machine + stat tiles
+- `1c3c71d` — Pass 6 roadmap doc + handoff scaffold
 - `1f879d9` — Pass 5: Wizard Polish (3 P0s + 4 P1s closed)
-- `3cc2b4e` — handoff supersedes 2026-04-26 (Pass 4 wrap-up doc)
-- `22c1452` — Pass 4 wrap-up (RunGuard, signal handlers, watchdog, get_perimeter_state command)
-- `62b7f4e` — Pass 4 sub-pass (compose restart policies + lifecycle hooks)
-- `b768405` — Pass 3 (rubric +P11/P12/P13, 19 surfaces re-scored)
 
-**Pick up at:** Pass 6 (Dev-tools-lite — Option B, ~5 days). Build Home + Discover + Preferences as real surfaces; Security + Help stay as friendlier placeholders. Wire `get_perimeter_state` + `perimeter-state-changed` event into the new Home dashboard's hero state machine (Pass 4 deferred this; the backend is ready). Spec lives in `docs/specs/2026-04-29-delightful-sloth-target-ux.md`.
+**Pick up at:** Pass 7 (Notifications + recovery + cleanup, ~2 days per master plan). The full backlog is in this handoff under "What Pass 6 shipped vs what's deferred" — but the headline items: spending aggregation from vault-proxy logs, activity persistence, the 60s backend alerts evaluator, automatic vault-agent restart on key change, OS-level autostart wiring (`tauri-plugin-autostart`), bespoke `status-{state}.svg` illustrations.
 
 ---
 
@@ -39,8 +41,8 @@ Read in this order before opening code:
 | 3 — Rubric extension | ✅ DONE | `2026-04-20-ux-principles-rubric.md` (extended) |
 | 4 — Lifecycle ownership | ✅ DONE (4 of 7 sub-items shipped; 3 explicitly deferred per scope cut) | `app/src-tauri/src/lifecycle.rs` (NEW); `compose.yml`; `lib.rs`; `commands/lifecycle.rs` (NEW) |
 | 5 — Wizard polish | ✅ DONE (3 P0s + 4 P1s closed; 4 P2s deferred to Pass 7) | commit `1f879d9`; rubric matrix re-scored rows 2–5 |
-| 6 — Dev-tools-lite surface | ⏸ NEXT — Locked: **Option B** (Home + Discover + Preferences real; Security + Help friendlier placeholders) | (per Pass 2 spec) |
-| 7 — Notifications + recovery + cleanup | ⏸ | (per Pass 2 spec + the named anti-patterns from Pass 3) |
+| 6 — Dev-tools-lite surface | ✅ DONE (Option B; 5 days, 5 commits, 5 surfaces) | commits `9e5ba11`/`977ef52`/`f320ec0`/`368ef94`/`2ea0631`; rubric rows 14–18 re-scored |
+| 7 — Notifications + recovery + cleanup | ⏸ NEXT | (per Pass 2 spec + the deferred items in this handoff) |
 | 8 — Pre-ship full re-walk | ⏸ | (re-score against extended rubric; ship/no-ship recommendation) |
 
 ---
@@ -104,40 +106,57 @@ Rubric re-scored: rows 2–5 in the score matrix updated. Wizard avg 8.0/8.3/7.7
 
 ---
 
-## Pass 6 — Dev-tools-lite Surface (the next code work)
+## What Pass 6 shipped vs what's deferred to Pass 7
 
-**Full Pass 6 roadmap is in its own spec doc: `docs/specs/2026-04-30-pass-6-roadmap.md`.** Read that before code. This handoff section is a one-screen summary so the next instance has orientation without flipping documents.
+**SHIPPED across 5 commits (`9e5ba11` → `2ea0631`):**
 
-**Estimate per master plan: ~5 days. Locked: Option B.** Build Home + Discover + Preferences as real, native-feeling user surfaces. Security + Help stay as friendlier placeholders.
-
-### Key scope cut (recorded in the roadmap doc)
-
-The page-level specs (`08/10/12.md`) assume four backend subsystems: activity tracking, spending aggregation from vault-proxy logs, alerts evaluator, status aggregator. **Only the perimeter-state half (Pass 4) is shipped.** Writing the other three subsystems would consume Pass 6's entire budget before any pixel reaches Karen.
-
-Pass 6 ships the frontend with **honest stub copy** for Activity ("None yet") and Spending ("$0.00 this month — we're still wiring this up"); Security tile derives from `PerimeterState`. The actual tracking subsystems slip to Pass 7. Mapping from the spec's 6-state hero to the backend's 5-state perimeter is documented in the roadmap doc (`paused_by_user` and `error_key` are NOT YET REACHABLE — they slip to Pass 7).
-
-### Per-day shape
-
-| Day | Surface | Key files |
+| Day | Commit | Surface |
 |---|---|---|
-| 1 (today, 2026-04-30) | Home hero + 3 tiles (real perimeter, stub Activity/Spending) | `Home.tsx`, `HeroStatusCard.tsx`, `StatTile.tsx`, `useHero.ts` |
-| 2 | Preferences | `Preferences.tsx` + 6 small Card components |
-| 3 | Discover | `Discover.tsx`, `UseCaseCard.tsx`, `data/useCases.ts` |
-| 4 | Tip-of-the-day + alerts banner | `TipOfTheDay.tsx`, `ProactiveAlertsBanner.tsx`, `useAlerts.ts` (frontend-only evaluator) |
-| 5 | Security/Help friendlier placeholders + rubric re-score | `SecurityMonitor.tsx`, `Help.tsx`, score matrix update |
+| 1 | `9e5ba11` | Home hero state machine + 3 stat tiles. New `useHero` hook (subscribes to `perimeter-state-changed`, derives 5 reachable states). New `HeroStatusCard` + `StatTile` components. Closed the orchestrator-check warning by adding `getPerimeterState()` frontend wrapper. |
+| 2 | `977ef52` | Real `Preferences` page with 6 sections per spec 10. Inline key-edit (modal slipped to Pass 7), preset spending limit + alert-threshold slider, 3 notification toggles, 2 startup toggles, re-run setup confirm, Advanced Mode toggle. Auto-saves via `useSettings`; errors route through `classifyError`. Footer with version + tagline. **Side-effect win:** the 5 baseline-failing playwright tests cleared because they referenced the old `Settings` heading and `Back to Dashboard` link — both renamed in this pass. |
+| 3 | `f320ec0` | Real `Discover` page rendering the existing 19-card `USE_CASES` fixture. Search + category tabs + favorites (persisted to `settings.favoriteUseCaseIds`) + "Try this" CTAs that open Telegram with the prompt URL-encoded into `?text=`. Capability-based de-emphasis for `needs_calendar` / `needs_voice` cards. |
+| 4 | `368ef94` | `TipOfTheDay` card on Home (deterministic day-of-year pick from ready use-cases) + `ProactiveAlertsBanner` (renders nothing when no alerts — honours P12). New `useAlerts` hook with 3 frontend-only rules: missing Anthropic key (danger), missing Telegram token (warning), perimeter in error state (danger). Dismissals persist via `settings.dismissedAlerts`. |
+| 5 | `2ea0631` | Friendlier placeholders for Security + Help via the new `StillBuildingCard` component (honest plain-language copy + Open-Telegram CTA — replaces "Coming in Phase E.2.X" + spec-path leak). Dead-code cleanup: removed `Layout.tsx`, old `Sidebar.tsx`, `UserPlaceholder.tsx`. Rubric matrix re-scored rows 14–18. |
 
-### Rubric targets
+**Rubric outcome (all Day-5 targets met):**
 
-- Rows 14, 16, 17 (Home / Discover / Preferences): from 3.8/4.9/4.9 → ≥8.5.
-- Rows 15, 18 (Security / Help placeholders): from 4.9/4.9 → ≥6.5.
+| Row | Surface | Before | After | Target |
+|---|---|---|---|---|
+| 14 | Home | 3.8 | **8.8** | ≥8.5 ✓ |
+| 15 | Security (placeholder) | 4.9 | **8.5** | ≥6.5 ✓ |
+| 16 | Discover | 4.9 | **9.0** | ≥8.5 ✓ |
+| 17 | Preferences | 4.9 | **8.6** | ≥8.5 ✓ |
+| 18 | Help (placeholder) | 4.9 | **8.5** | ≥6.5 ✓ |
 
-### Done-criteria (full list in roadmap doc)
+The Tier-0 cliff Pass 1 flagged is closed. Karen's curve: Wizard 9.5 → Telegram 8.0 → Home 8.8 → Discover 9.0 / Preferences 8.6.
 
-- All 5 user-mode pages no longer render `UserPlaceholder`. The phrase `Coming in Phase E.2.` is gone.
-- Hero reflects perimeter health within 30s of a container state change.
-- Banned-term sweeps clean across all 5 surfaces.
-- Pre-existing baseline-failing tests in navigation/smoke/user-facing resolved or `.skip`-ed.
-- Wizard E2E (4/4) + cargo lib (33/33) + orchestrator-check (41/41) still pass.
+**DEFERRED FROM PASS 6 TO PASS 7 (intentionally — recorded in `2026-04-30-pass-6-roadmap.md` and `project_decisions.md`):**
+
+Backend subsystems (the page specs assumed these existed; we shipped the frontend with honest stubs instead):
+1. **Activity tracking subsystem** — persist agent task events. Activity tile on Home will then say "12 tasks today / Most recent: planned a trip" instead of the current "None yet" stub.
+2. **Spending aggregation subsystem** — read vault-proxy `Anthropic API call` log entries, compute `tokens × price_per_token`, persist daily/monthly totals. Spending tile + spending alert + spending limit display all depend on this.
+3. **60-second backend alerts evaluator** — replaces the frontend-only `useAlerts` evaluator. Adds rules for: spending limit reached, container crashed, security audit failed, threat-blocked notice.
+4. **Status aggregator** — combines container health + API key validity + proxy readiness into a single `assistant_status` enum. Unblocks the `error_key` hero state.
+
+Hero state machine completion:
+5. **`paused_by_user` hero state** — needs a backend "Pause" command (stop containers without recreating + flag the pause as user-initiated) and a "Pause" affordance on the hero CTA when state is `running_safely`.
+6. **`error_key` hero state** — needs the alerts evaluator to detect Anthropic 401 responses and the status aggregator to surface the result.
+
+Preferences gaps:
+7. **Auto-restart vault-agent on key rotation** — currently the toast says "Restart your assistant for the change to take effect"; should be automatic. Needs a new `restart_perimeter` Tauri command.
+8. **OS-level autostart wiring** — the `settings.autostart` toggle persists; `tauri-plugin-autostart` to register/unregister at OS level slips to Pass 7.
+9. **OS-permission gate for notifications** — the toggles persist; the Tauri notification permission prompt slips to Pass 7.
+10. **KeyChangeModal** — Pass 6 used inline edit (simpler, equally usable); the modal pattern from spec 10 slips if it earns its keep.
+
+Visual polish:
+11. **Bespoke `status-{state}.svg` illustrations** — Pass 6 reuses the wizard's pulsing-rings stand-in. Six illustrations (safe / paused / warning / error / offline / not-setup) are still TODO E.4.
+12. **Inline use-case illustrations** — `app/src/assets/illustrations/use-cases/` is empty; Discover cards render text-only.
+13. **`<SkeletonCard>` / `<SkeletonText>` polish** — Pass 6 uses a brief animate-pulse skeleton in `HeroStatusCard`; richer skeletons across the app slip.
+
+Wizard P2s also slipped from Pass 5 (still open):
+14. **"Anthropic API key" → "AI account key" rename** — the P6 holdout that kept Configuration row at 8.0.
+15. **Inline screenshots in `HowToModal`**.
+16. **Save-confirmation toast on Continue with pre-existing keys**.
 
 ---
 
@@ -154,24 +173,24 @@ Pass 6 ships the frontend with **honest stub copy** for Activity ("None yet") an
 
 ## Open decisions for the next session
 
-- **Pass 6 budget.** Master plan said ~5 days. Five pages (3 real + 2 friendlier-placeholder). The Home hero is the largest piece — it depends on a new `useHero()` hook. Discover + Preferences are mostly form/list rebuilds. Security + Help are copy-only. Recommend tackling Home first (largest, gates the hero pattern), then Preferences (most user-touched after Home), then Discover (data-driven, can lean on existing `useCases` fixtures), then the two placeholders.
-- **Live-run validation sub-pass.** Pass 5 already ran one (post-token-rotation perimeter restart + end-to-end Telegram round-trip confirmed). Pass 8's full re-walk will re-validate. No additional live-run needed mid-Pass-6 unless something visibly regresses.
-- **Stale playwright tests.** `app/e2e/navigation.spec.ts:12,20`, `app/e2e/smoke.spec.ts:21`, `app/e2e/user-facing.spec.ts:114,136` are baseline-failing on `main` because they assume Home / Settings rebuild that hasn't shipped yet. Pass 6 should clear these as a side effect; if not, mark them `.skip` until the rebuild lands and re-enable once green.
+- **Pass 7 budget.** Master plan said ~2 days; the deferred-from-Pass-6 backlog above is closer to 4. Recommend prioritising the items that *unlock* user-visible features (spending aggregation → real Spending tile, status aggregator → `error_key` hero state, alerts evaluator → real notification value) over polish items (skeletons, illustrations, modal pattern). The polish items can slip to Pass 8's pre-ship pass if they earn it.
+- **Pass 8 ship/no-ship gate.** The 3-week window ends ~2026-05-19. After Pass 7, Pass 8 is the full re-walk + ship recommendation. The current trajectory (1 day per pass on average since 2026-04-28) suggests we'll arrive at Pass 8 with budget to spare.
+- **Stale baseline tests:** ✅ resolved as a Day-2 side effect — 25/25 E2E now pass.
 - **Old bot cleanup.** The token rotation invalidates the previously-leaked token. The user may also want to run `/revoke` in BotFather to confirm the old token is permanently dead (BotFather's /token already does this implicitly, but explicit /revoke makes auditing cleaner).
 
 ---
 
 ## Working state at handoff time
 
-- **All 4 containers up** with the rotated token loaded. Verified end-to-end: `getUpdates` → `sendChatAction` → `anthropic.com/v1/messages` → `sendMessage` round-trip working in vault-proxy log.
-- **Working tree clean.** `git status` clean as of `1f879d9`.
+- **All 4 containers up** with the rotated token loaded.
+- **Working tree clean.** `git status` clean as of `2ea0631`.
 - **Cargo build clean.** Same 2 pre-existing dead-code warnings on unused `WorkflowStatus`/`StepStatus` variants.
 - **Cargo test green.** 33/33 passing.
-- **Wizard E2E green.** 4/4 passing with extended banned-term list.
-- **Pushed:** `origin/main` at `1f879d9`.
-- **Phase memory current.** `project_status.md` and `project_decisions.md` reflect Pass 5 done.
-- **Token rotation:** ✅ done. New token in `components/openclaw-vault/.env` and top-level `.env`, both at mode 0600.
-- **No tokens in git history.** Verified via `git log --all --full-history -p | grep <token-shape>`.
+- **E2E green.** 25/25 passing (was 20/25 before Pass 6 Day 2 cleared the baseline).
+- **Orchestrator-check.** 42/42 with **0 warnings**.
+- **Pushed:** `origin/main` at `2ea0631`.
+- **Phase memory current.** `project_status.md` and `project_decisions.md` reflect Pass 6 done.
+- **Token rotation:** ✅ done (twice today). New token in `components/openclaw-vault/.env` and top-level `.env`, both at mode 0600.
 
 ---
 
@@ -224,7 +243,7 @@ Expected:
 - `b480607` — Phase E.2.0 → E.2.1.
 - `88688c2` — Phases A–D + v0.1.0 release.
 
-This handoff supersedes `3cc2b4e` as the active mission.
+This handoff supersedes the prior end-of-Pass-5 doc (the previous superseded link was `3cc2b4e`; the handoff committed at the end of Pass 5 was `a8fb18e`).
 
 ---
 
@@ -232,11 +251,13 @@ This handoff supersedes `3cc2b4e` as the active mission.
 
 1. Read this handoff to the end (you're almost there).
 2. Read `~/.claude/plans/yes-we-are-building-delightful-sloth.md` (master plan).
-3. Skim `2026-04-29-delightful-sloth-target-ux.md` for the target voice — Pass 6 implements directly against it. Pay special attention to the hero state machine (Pass 6's load-bearing pattern).
+3. Skim the **deferred-from-Pass-6** list above. Pass 7's job is to convert as many of those as the budget allows into shipped value.
 4. Run the verification commands above. Confirm: clean working state + 4 containers up + bot replying.
-5. **Start Pass 6 with the Home hero.** Files: `app/src/pages/Home.tsx` (rebuild) + new `useHero()` hook listening to `perimeter-state-changed` + reading `get_perimeter_state` for the initial value. The backend is already shipped (Pass 4); you're wiring frontend.
-6. After Home, do Preferences (most user-touched after Home). Then Discover (data-driven, can lean on existing fixtures). Then replace Security + Help placeholder copy.
-7. Re-score rows 14–18 against the rubric. Update the score matrix in `2026-04-20-ux-principles-rubric.md`.
-8. Commit-and-push at sensible points (one per surface is sane). Update `project_status.md` at end-of-session.
+5. **Highest-leverage Pass 7 starting points**, in priority order:
+   - **Spending aggregation subsystem** (item #2): unlocks the real Spending tile on Home. Read vault-proxy logs, compute cost per Anthropic call, persist daily/monthly. ~1 day.
+   - **Status aggregator + alerts evaluator** (items #3 + #4): unlock the `error_key` hero state and richer notification rules. ~1 day combined.
+   - **Auto-restart on key change** (item #7): big UX win for `Preferences`'s key-rotation flow. ~half-day.
+6. Polish items (skeletons, illustrations, modal pattern) only if Pass 7 finishes early. Otherwise let them slip to Pass 8's pre-ship pass.
+7. Commit-and-push per logical chunk. Update `project_status.md` and `project_decisions.md` at end-of-session.
 
-Pass 6 is a rebuild, not a polish — these surfaces are at Tier 0 (avg 3.8–4.9/10). Don't over-engineer; the goal is "feels native, looks like the rest of the app, gets the hero state machine live." Polish lives in Pass 7.
+Pass 7 closes the polish gap. Pass 8 ships. The 3-week window stays comfortable.
