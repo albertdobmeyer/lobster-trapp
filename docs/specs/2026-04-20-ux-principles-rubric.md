@@ -213,7 +213,7 @@
 
 ## Score Matrix (19 Surfaces × 13 Principles)
 
-Originally scored 2026-04-20 (rows 1–13). Re-scored 2026-04-29 with P11–P13 added; rows 14–19 added (5 user-mode placeholder pages + Telegram first-chat surface from Pass 1.5). **Wizard rows 2–5 re-scored 2026-04-29 (Pass 5)** after the MissingRuntimeCard rebrand, codename translations, error-pattern routing, and context-aware fallback. P2/P4 holdouts on row #4 (Configuration) reflect deferred P2 nice-to-haves ("Anthropic API key" → "AI account key" rename) and the unchanged transparency level.
+Originally scored 2026-04-20 (rows 1–13). Re-scored 2026-04-29 with P11–P13 added; rows 14–19 added (5 user-mode placeholder pages + Telegram first-chat surface from Pass 1.5). **Wizard rows 2–5 re-scored 2026-04-29 (Pass 5)** after the MissingRuntimeCard rebrand, codename translations, error-pattern routing, and context-aware fallback. P2/P4 holdouts on row #4 (Configuration) reflect deferred P2 nice-to-haves ("Anthropic API key" → "AI account key" rename) and the unchanged transparency level. **Rows 14–18 re-scored 2026-04-30 (Pass 6)** after the Home / Discover / Preferences rebuilds + Security / Help friendlier-placeholder pattern. Tier-0 cliff resolved across all five surfaces.
 
 | # | Surface | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 | P9 | P10 | P11 | P12 | P13 | Avg |
 |---|---------|----|----|----|----|----|----|----|----|----|----|----|----|----|-----|
@@ -230,11 +230,11 @@ Originally scored 2026-04-20 (rows 1–13). Re-scored 2026-04-29 with P11–P13 
 | 11 | Settings | 8 | 7 | N/A | N/A | 9 | 9 | 8 | 6 | N/A | 9 | N/A | 8 | N/A | **8.0** |
 | 12 | 404 Page | 10 | 10 | 10 | N/A | N/A | N/A | 10 | N/A | N/A | 10 | N/A | N/A | N/A | **10.0** |
 | 13 | ErrorBoundary | 7 | 5 | 7 | 6 | 4 | N/A | 8 | N/A | N/A | 9 | N/A | N/A | N/A | **6.6** |
-| 14 | Home (placeholder) | **2** | **3** | N/A | N/A | 5 | 8 | 6 | N/A | N/A | 10 | **0** | **0** | **0** | **3.8** |
-| 15 | Security Monitor (placeholder) | **2** | **3** | N/A | N/A | 5 | 8 | 6 | N/A | N/A | 10 | N/A | N/A | **0** | **4.9** |
-| 16 | Discover (placeholder) | **2** | **3** | N/A | N/A | 5 | 8 | 6 | N/A | N/A | 10 | N/A | N/A | **0** | **4.9** |
-| 17 | Preferences (placeholder) | **2** | **3** | N/A | N/A | 5 | 8 | 6 | N/A | N/A | 10 | N/A | N/A | **0** | **4.9** |
-| 18 | Help (placeholder) | **2** | **3** | N/A | N/A | 5 | 8 | 6 | N/A | N/A | 10 | N/A | N/A | **0** | **4.9** |
+| 14 | Home | 9 | 9 | N/A | 8 | 9 | 10 | 9 | N/A | 8 | 10 | 9 | 8 | 8 | **8.8** |
+| 15 | Security Monitor (friendlier placeholder) | 8 | 8 | N/A | N/A | N/A | 9 | 8 | N/A | N/A | 10 | N/A | N/A | N/A | **8.5** |
+| 16 | Discover | 9 | 9 | N/A | N/A | 9 | 10 | 9 | N/A | 8 | 10 | N/A | N/A | 8 | **9.0** |
+| 17 | Preferences | 9 | 9 | 8 | 8 | 9 | 9 | 9 | 8 | N/A | 9 | N/A | 8 | N/A | **8.6** |
+| 18 | Help (friendlier placeholder) | 8 | 8 | N/A | N/A | N/A | 9 | 8 | N/A | N/A | 10 | N/A | N/A | N/A | **8.5** |
 | 19 | Telegram first-chat (live, Pass 1.5) | 7 | N/A | 9 | 10 | 8 | 9 | 8 | 9 | 6 | 10 | N/A | N/A | N/A | **8.4** |
 
 **N/A means the principle doesn't apply** (no forms on a 404 page, no loading on the complete step, no perimeter coupling on the wizard's static pages, etc.).
