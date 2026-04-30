@@ -1,6 +1,8 @@
 import { Activity, DollarSign, Shield } from "lucide-react";
 import HeroStatusCard from "@/components/user/HeroStatusCard";
+import ProactiveAlertsBanner from "@/components/user/ProactiveAlertsBanner";
 import StatTile, { type TileTone } from "@/components/user/StatTile";
+import TipOfTheDay from "@/components/user/TipOfTheDay";
 import { useHero, type HeroState } from "@/hooks/useHero";
 
 export default function Home() {
@@ -9,6 +11,8 @@ export default function Home() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 animate-fade-in">
+      <ProactiveAlertsBanner />
+
       <HeroStatusCard state={state} loading={loading} />
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -38,6 +42,8 @@ export default function Home() {
           href="/preferences"
         />
       </div>
+
+      <TipOfTheDay />
     </div>
   );
 }
