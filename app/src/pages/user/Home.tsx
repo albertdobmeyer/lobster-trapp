@@ -1,14 +1,72 @@
-import { Home as HomeIcon } from "lucide-react";
-import UserPlaceholder from "./UserPlaceholder";
+import { Activity, DollarSign, Shield } from "lucide-react";
+import HeroStatusCard from "@/components/user/HeroStatusCard";
+import StatTile, { type TileTone } from "@/components/user/StatTile";
+import { useHero, type HeroState } from "@/hooks/useHero";
 
 export default function Home() {
+  const { state, loading } = useHero();
+  const security = securityFromHero(state);
+
   return (
-    <UserPlaceholder
-      icon={HomeIcon}
-      title="Your assistant, at a glance"
-      summary="The hero status card, security/activity/spending tiles, and proactive alerts will live here. The full home dashboard arrives in the next sub-phase."
-      comingIn="Phase E.2.2"
-      specRef="docs/specs/ui-rebuild-2026-04-21/user-mode/08-home-dashboard.md"
-    />
+    <div className="mx-auto max-w-3xl px-4 py-8 animate-fade-in">
+      <HeroStatusCard state={state} loading={loading} />
+
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatTile
+          icon={Shield}
+          iconTint="text-success-400"
+          title="Security"
+          value={security.value}
+          subline={security.subline}
+          href="/security"
+          tone={security.tone}
+        />
+        <StatTile
+          icon={Activity}
+          iconTint="text-info-400"
+          title="Activity"
+          value="None yet"
+          subline="Your assistant has no tasks today."
+          href="/security"
+        />
+        <StatTile
+          icon={DollarSign}
+          iconTint="text-warning-400"
+          title="Spending"
+          value="$0.00 this month"
+          subline="We're still wiring this up."
+          href="/preferences"
+        />
+      </div>
+    </div>
   );
+}
+
+interface SecurityCell {
+  value: string;
+  subline: string;
+  tone: TileTone;
+}
+
+function securityFromHero(state: HeroState): SecurityCell {
+  switch (state) {
+    case "running_safely":
+      return { value: "Safe", subline: "Sandbox is active.", tone: "neutral" };
+    case "starting":
+      return { value: "Starting…", subline: "Sandbox is coming up.", tone: "neutral" };
+    case "recovering":
+      return {
+        value: "Recovering",
+        subline: "Sandbox is restarting itself.",
+        tone: "warning",
+      };
+    case "error_perimeter":
+      return {
+        value: "Needs attention",
+        subline: "Sandbox isn't running.",
+        tone: "danger",
+      };
+    case "not_setup":
+      return { value: "Not set up", subline: "Run setup to begin.", tone: "neutral" };
+  }
 }

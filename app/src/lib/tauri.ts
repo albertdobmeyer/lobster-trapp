@@ -204,6 +204,37 @@ export async function generateDiagnosticBundle(): Promise<string> {
 }
 
 /**
+ * Live state of the 4-container perimeter. Updated by the Rust watchdog
+ * every 30s and emitted as a `perimeter-state-changed` event on each
+ * transition. The frontend can either read the latest cached value via
+ * `getPerimeterState()` or subscribe to the event for push updates.
+ *
+ * Snake-case matches Rust's serde rename. See `app/src-tauri/src/lifecycle.rs`.
+ */
+export type PerimeterState =
+  | "not_setup"
+  | "starting"
+  | "running_safely"
+  | "recovering"
+  | "stopped";
+
+export interface ContainerStatus {
+  name: string;
+  running: boolean;
+}
+
+export interface PerimeterStatus {
+  state: PerimeterState;
+  containers: ContainerStatus[];
+  /** Unix-millis timestamp of the last watchdog poll. 0 if watchdog hasn't ticked yet. */
+  last_checked_unix_ms: number;
+}
+
+export async function getPerimeterState(): Promise<PerimeterStatus> {
+  return invoke<PerimeterStatus>("get_perimeter_state");
+}
+
+/**
  * Resolved Telegram bot identity. Both fields come from a single `getMe`
  * call and are always populated together.
  */
