@@ -99,6 +99,7 @@ impl PerimeterStateStore {
 pub fn redact_secrets(s: &str) -> String {
     const SENSITIVE_VARS: &[&str] = &[
         "TELEGRAM_BOT_TOKEN",
+        "ANTHROPIC_ADMIN_API_KEY",
         "ANTHROPIC_API_KEY",
         "OPENAI_API_KEY",
     ];

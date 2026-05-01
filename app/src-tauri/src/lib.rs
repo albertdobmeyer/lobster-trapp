@@ -12,6 +12,7 @@ use tauri::{
     Manager,
 };
 
+use commands::spending::SpendingCache;
 use lifecycle::{
     bring_perimeter_down_sync, bring_perimeter_up_async, clear_runguard,
     establish_runguard, install_signal_handlers, spawn_watchdog,
@@ -150,6 +151,7 @@ pub fn run() {
             None,
         ))
         .manage(PerimeterStateStore::new())
+        .manage(SpendingCache::new())
         .manage(app_state)
         .setup(move |app| {
             setup_tray(app)?;
@@ -175,6 +177,7 @@ pub fn run() {
             commands::status::get_status,
             commands::health::run_health_probe,
             commands::lifecycle::get_perimeter_state,
+            commands::spending::get_spending_summary,
             commands::prerequisites::check_prerequisites,
             commands::prerequisites::init_submodules,
             commands::prerequisites::create_config_from_template,

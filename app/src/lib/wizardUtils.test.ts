@@ -76,6 +76,7 @@ OTHER_VAR=ignored
     expect(parseEnvKeys(env)).toEqual({
       anthropicKey: "sk-ant-real-key",
       telegramToken: "1234567890:ABCdef",
+      adminKey: null,
     });
   });
 
@@ -85,6 +86,7 @@ TELEGRAM_BOT_TOKEN=REPLACE_WITH_YOUR_TOKEN`;
     expect(parseEnvKeys(env)).toEqual({
       anthropicKey: null,
       telegramToken: null,
+      adminKey: null,
     });
   });
 
@@ -94,6 +96,7 @@ TELEGRAM_BOT_TOKEN='1234:ABCdef'`;
     expect(parseEnvKeys(env)).toEqual({
       anthropicKey: "sk-ant-quoted",
       telegramToken: "1234:ABCdef",
+      adminKey: null,
     });
   });
 
@@ -101,6 +104,18 @@ TELEGRAM_BOT_TOKEN='1234:ABCdef'`;
     expect(parseEnvKeys("")).toEqual({
       anthropicKey: null,
       telegramToken: null,
+      adminKey: null,
+    });
+  });
+
+  it("extracts the optional admin key when present", () => {
+    const env = `ANTHROPIC_API_KEY=sk-ant-real-key
+ANTHROPIC_ADMIN_API_KEY=sk-ant-admin-billing
+TELEGRAM_BOT_TOKEN=1234567890:ABCdef`;
+    expect(parseEnvKeys(env)).toEqual({
+      anthropicKey: "sk-ant-real-key",
+      telegramToken: "1234567890:ABCdef",
+      adminKey: "sk-ant-admin-billing",
     });
   });
 });

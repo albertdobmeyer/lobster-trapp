@@ -5,6 +5,7 @@ pub mod health;
 pub mod lifecycle;
 pub mod manifest_cmds;
 pub mod prerequisites;
+pub mod spending;
 pub mod status;
 pub mod stream;
 pub mod telegram;
