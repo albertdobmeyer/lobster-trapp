@@ -4,15 +4,7 @@ export type SetupStep = "welcome" | "connect" | "install" | "ready";
 
 export interface NotificationSettings {
   securityAlerts: boolean;
-  spendingLimit: boolean;
   updates: boolean;
-}
-
-export interface SpendingLimitSettings {
-  /** Monthly limit in cents, or null for no limit. */
-  monthly: number | null;
-  /** Fractional threshold at which to alert (e.g. 0.8 = 80%). */
-  alertThreshold: number;
 }
 
 export interface SetupProgress {
@@ -38,7 +30,6 @@ export interface AppSettings {
   hasSeenAdvancedModeIntro: boolean;
   autostart: boolean;
   notifications: NotificationSettings;
-  spendingLimit: SpendingLimitSettings;
   theme: "dark";
   minimizeToTray: boolean;
   closeToTray: boolean;
@@ -63,12 +54,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autostart: true,
   notifications: {
     securityAlerts: true,
-    spendingLimit: true,
     updates: true,
-  },
-  spendingLimit: {
-    monthly: 2000,
-    alertThreshold: 0.8,
   },
   theme: "dark",
   minimizeToTray: false,

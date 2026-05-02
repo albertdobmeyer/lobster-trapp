@@ -27,8 +27,10 @@ interface KeyState {
 /**
  * Frontend-only alerts evaluator. Pass 6 Day 4: surfaces three rules over
  * the data we already have (perimeter health + .env key presence). The
- * 60-second backend evaluator and the broader rule set (spending limits,
- * threat-blocked notices, container crash narratives) slip to Pass 7.
+ * 60-second backend evaluator and the broader rule set (threat-blocked
+ * notices, container crash narratives, Anthropic 401 detection) lands
+ * in Pass 7 Day 2. Spending-limit alerts were dropped from scope per
+ * the 2026-05-02 vision recheck — Anthropic Console handles billing.
  */
 export function useAlerts(): { alerts: Alert[]; dismiss: (id: string) => void } {
   const { settings, update } = useSettings();

@@ -235,49 +235,6 @@ export async function getPerimeterState(): Promise<PerimeterStatus> {
 }
 
 /**
- * Live spending data, pulled straight from the Anthropic Admin API
- * (`/v1/organizations/cost_report`). No estimation, no hardcoded prices.
- *
- * - `not_connected` — user hasn't pasted an admin key into Preferences yet.
- *   The UI should show a "Connect billing access" CTA + the Console
- *   deep-link as the always-available escape hatch.
- * - `connected` — values are USD cents for the current calendar month.
- * - `error` — network or auth failure. `code` distinguishes the
- *   "individual account, no organization" case (very common for
- *   self-served Anthropic users) from generic failures.
- */
-export type SpendingSummary =
-  | { kind: "not_connected" }
-  | {
-      kind: "connected";
-      this_month_cents: number;
-      today_cents: number;
-      last_fetched_unix_ms: number;
-    }
-  | {
-      kind: "error";
-      code: SpendingErrorCode;
-      message: string;
-    };
-
-export type SpendingErrorCode =
-  | "unauthorized"
-  | "individual_account"
-  | "unreachable"
-  | "parse_failed";
-
-/**
- * Fetch the cached spending summary, or refresh from Anthropic when the
- * 10-min cache TTL has expired. Pass `forceRefresh: true` after the user
- * pastes a new admin key in Preferences so they see the result immediately.
- */
-export async function getSpendingSummary(
-  forceRefresh: boolean = false,
-): Promise<SpendingSummary> {
-  return invoke<SpendingSummary>("get_spending_summary", { forceRefresh });
-}
-
-/**
  * Resolved Telegram bot identity. Both fields come from a single `getMe`
  * call and are always populated together.
  */

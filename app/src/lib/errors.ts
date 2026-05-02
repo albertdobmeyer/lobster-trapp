@@ -232,7 +232,7 @@ const UNKNOWN_FALLBACK: Omit<Pattern, "test"> = {
  * specific instead of generic — Karen sees "Your computer check didn't work
  * as expected" rather than "Something went wrong".
  */
-export type ErrorContext = "check" | "download" | "build" | "safety" | "billing";
+export type ErrorContext = "check" | "download" | "build" | "safety";
 
 const CONTEXT_FALLBACKS: Record<ErrorContext, Pick<Pattern, "title" | "userMessage" | "suggestedAction">> = {
   check: {
@@ -254,11 +254,6 @@ const CONTEXT_FALLBACKS: Record<ErrorContext, Pick<Pattern, "title" | "userMessa
     title: "Safety checks didn't finish",
     userMessage: "Running the safety checks didn't work as expected.",
     suggestedAction: "Let's try again — if it keeps happening, get help.",
-  },
-  billing: {
-    title: "Couldn't save your billing key",
-    userMessage: "Saving your billing key didn't work as expected.",
-    suggestedAction: "Try again — if it keeps happening, view your spend on Console instead.",
   },
 };
 

@@ -1,15 +1,13 @@
-import { Activity, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import HeroStatusCard from "@/components/user/HeroStatusCard";
 import ProactiveAlertsBanner from "@/components/user/ProactiveAlertsBanner";
 import SpendingTile from "@/components/user/SpendingTile";
 import StatTile, { type TileTone } from "@/components/user/StatTile";
 import TipOfTheDay from "@/components/user/TipOfTheDay";
 import { useHero, type HeroState } from "@/hooks/useHero";
-import { useSpending } from "@/hooks/useSpending";
 
 export default function Home() {
   const { state, loading } = useHero();
-  const spending = useSpending();
   const security = securityFromHero(state);
 
   return (
@@ -18,7 +16,7 @@ export default function Home() {
 
       <HeroStatusCard state={state} loading={loading} />
 
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <StatTile
           icon={Shield}
           iconTint="text-success-400"
@@ -28,15 +26,7 @@ export default function Home() {
           href="/security"
           tone={security.tone}
         />
-        <StatTile
-          icon={Activity}
-          iconTint="text-info-400"
-          title="Activity"
-          value="None yet"
-          subline="Your assistant has no tasks today."
-          href="/security"
-        />
-        <SpendingTile summary={spending.summary} loading={spending.loading} />
+        <SpendingTile />
       </div>
 
       <TipOfTheDay />

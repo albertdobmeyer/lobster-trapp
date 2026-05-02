@@ -13,8 +13,9 @@ test.describe("Navigation and routing", () => {
     // /settings is a back-compat redirect to /preferences.
     await page.goto("/settings");
     await expect(page.getByRole("heading", { name: "Preferences", exact: true })).toBeVisible();
-    // Spending alert-threshold slider.
-    await expect(page.getByRole("slider")).toBeVisible();
+    // Section headers across the 5 sections.
+    await expect(page.getByRole("heading", { name: "Your keys" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
     // Re-run setup button.
     await expect(page.getByRole("button", { name: "Re-run setup" })).toBeVisible();
   });

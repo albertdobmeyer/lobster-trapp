@@ -39,21 +39,16 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * Extract the keys the wizard + Preferences care about from a `.env`
- * file's contents. Returns null values for missing or placeholder
- * entries. `adminKey` (Anthropic Admin API key for the optional
- * spending integration) is opt-in — the wizard never asks for it; it's
- * only set from Preferences > Spending > Billing access.
+ * Extract the two keys the wizard cares about from a `.env` file's
+ * contents. Returns null values for missing or placeholder entries.
  */
 export function parseEnvKeys(envText: string): {
   anthropicKey: string | null;
   telegramToken: string | null;
-  adminKey: string | null;
 } {
   const lines = envText.split("\n");
   let anthropicKey: string | null = null;
   let telegramToken: string | null = null;
-  let adminKey: string | null = null;
 
   for (const line of lines) {
     const match = line.match(/^([A-Z_]+)=(.*)$/);
@@ -63,10 +58,9 @@ export function parseEnvKeys(envText: string): {
     if (!value || value.includes("REPLACE")) continue;
     if (key === "ANTHROPIC_API_KEY") anthropicKey = value;
     if (key === "TELEGRAM_BOT_TOKEN") telegramToken = value;
-    if (key === "ANTHROPIC_ADMIN_API_KEY") adminKey = value;
   }
 
-  return { anthropicKey, telegramToken, adminKey };
+  return { anthropicKey, telegramToken };
 }
 
 /** Mask a secret to `••••••••<last 4>` — shown in Change flows. */
@@ -99,11 +93,6 @@ export function isAnthropicKeyLike(value: string): boolean {
 /** Inline regex check used for green-checkmark feedback. Non-blocking. */
 export function isTelegramTokenLike(value: string): boolean {
   return /^\d{6,12}:[A-Za-z0-9_-]{10,}$/.test(value.trim());
-}
-
-/** Inline regex check for Anthropic Admin API keys (`sk-ant-admin-…`). */
-export function isAnthropicAdminKeyLike(value: string): boolean {
-  return value.trim().startsWith("sk-ant-admin-") && value.trim().length > 20;
 }
 
 /**
