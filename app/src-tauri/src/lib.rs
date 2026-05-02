@@ -1,6 +1,7 @@
 mod commands;
 mod lifecycle;
 mod orchestrator;
+mod status_aggregator;
 mod util;
 
 use orchestrator::state::AppState;
@@ -17,11 +18,18 @@ use lifecycle::{
     establish_runguard, install_signal_handlers, spawn_watchdog,
     PerimeterStateStore,
 };
+use status_aggregator::{spawn_status_evaluator, AssistantStatusStore};
 
 /// How often the watchdog re-probes container state. 30s matches Pass 4's
 /// "watchdog notices a dead container within 30s" target from the master
 /// plan + Pass 2 spec.
 const WATCHDOG_INTERVAL: Duration = Duration::from_secs(30);
+
+/// How often the status aggregator re-evaluates AssistantStatus + alerts.
+/// 60s per Pass 7 Day 2 spec — twice the watchdog cadence so we always
+/// see the freshest container state, with enough headroom for the
+/// (cached) auth probe.
+const STATUS_INTERVAL: Duration = Duration::from_secs(60);
 
 /// Find the monorepo root by looking for a `components/` directory.
 fn find_monorepo_root() -> PathBuf {
@@ -150,6 +158,7 @@ pub fn run() {
             None,
         ))
         .manage(PerimeterStateStore::new())
+        .manage(AssistantStatusStore::new())
         .manage(app_state)
         .setup(move |app| {
             setup_tray(app)?;
@@ -160,6 +169,10 @@ pub fn run() {
             install_signal_handlers(app.handle().clone());
             // Spawn the perimeter-state watchdog.
             spawn_watchdog(app.handle().clone(), WATCHDOG_INTERVAL);
+            // Spawn the status aggregator (Pass 7 Day 2): combines
+            // perimeter health + .env presence + Anthropic auth probe
+            // into AssistantStatus + alerts list.
+            spawn_status_evaluator(app.handle().clone(), STATUS_INTERVAL);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -175,6 +188,7 @@ pub fn run() {
             commands::status::get_status,
             commands::health::run_health_probe,
             commands::lifecycle::get_perimeter_state,
+            status_aggregator::get_assistant_status,
             commands::prerequisites::check_prerequisites,
             commands::prerequisites::init_submodules,
             commands::prerequisites::create_config_from_template,

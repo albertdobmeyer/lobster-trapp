@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { readConfig } from "@/lib/tauri";
-import { parseEnvKeys } from "@/lib/wizardUtils";
+import { listen } from "@tauri-apps/api/event";
+import {
+  getAssistantStatus,
+  type AssistantStatusSnapshot,
+  type BackendAlert,
+} from "@/lib/tauri";
 import { useSettings } from "./useSettings";
-import { useHero } from "./useHero";
 
 export type AlertSeverity = "danger" | "warning" | "info";
 
@@ -18,90 +21,60 @@ export interface Alert {
   dismissable?: boolean;
 }
 
-interface KeyState {
-  hasAnthropic: boolean;
-  hasTelegram: boolean;
-  loaded: boolean;
-}
+const EMPTY_SNAPSHOT: AssistantStatusSnapshot = {
+  status: "not_setup",
+  alerts: [],
+  last_checked_unix_ms: 0,
+};
 
 /**
- * Frontend-only alerts evaluator. Pass 6 Day 4: surfaces three rules over
- * the data we already have (perimeter health + .env key presence). The
- * 60-second backend evaluator and the broader rule set (threat-blocked
- * notices, container crash narratives, Anthropic 401 detection) lands
- * in Pass 7 Day 2. Spending-limit alerts were dropped from scope per
- * the 2026-05-02 vision recheck — Anthropic Console handles billing.
+ * Backend-driven alerts (Pass 7 Day 2). Subscribes to the
+ * `assistant-status-changed` event emitted by `status_aggregator.rs`'s
+ * 60s evaluator. The four rules — missing-anthropic-key,
+ * invalid-anthropic-key, missing-telegram-token, perimeter-error —
+ * all live in Rust now (`build_alerts`).
+ *
+ * The frontend's only filter responsibility is suppressing alerts
+ * during the wizard (set via the alert's `suppress_during_wizard`
+ * flag) and applying the user's persisted dismissals.
+ *
+ * Spending-limit alerts were dropped from scope per the 2026-05-02
+ * vision recheck — Anthropic Console handles billing.
  */
 export function useAlerts(): { alerts: Alert[]; dismiss: (id: string) => void } {
   const { settings, update } = useSettings();
-  const { state: heroState, loading: heroLoading } = useHero();
-  const [keys, setKeys] = useState<KeyState>({
-    hasAnthropic: false,
-    hasTelegram: false,
-    loaded: false,
-  });
+  const [snapshot, setSnapshot] = useState<AssistantStatusSnapshot>(EMPTY_SNAPSHOT);
 
   useEffect(() => {
     let cancelled = false;
+    let unlisten: (() => void) | null = null;
+
     (async () => {
       try {
-        const env = await readConfig("openclaw-vault", ".env");
-        if (cancelled) return;
-        const { anthropicKey, telegramToken } = parseEnvKeys(env);
-        setKeys({
-          hasAnthropic: Boolean(anthropicKey),
-          hasTelegram: Boolean(telegramToken),
-          loaded: true,
-        });
+        const initial = await getAssistantStatus();
+        if (!cancelled) setSnapshot(initial);
       } catch {
-        // .env missing — both keys absent.
-        if (!cancelled) setKeys({ hasAnthropic: false, hasTelegram: false, loaded: true });
+        // Tauri IPC unavailable (e.g. browser dev mode) — keep EMPTY_SNAPSHOT.
       }
+
+      unlisten = await listen<AssistantStatusSnapshot>(
+        "assistant-status-changed",
+        (event) => {
+          setSnapshot(event.payload);
+        },
+      );
     })();
+
     return () => {
       cancelled = true;
+      unlisten?.();
     };
   }, []);
 
-  const candidates: Alert[] = [];
-
-  // Rule 1 — Anthropic key missing.
-  if (keys.loaded && !keys.hasAnthropic && settings.wizardCompleted) {
-    candidates.push({
-      id: "missing-anthropic-key",
-      severity: "danger",
-      title: "Your AI key isn't set",
-      body: "Your assistant needs an Anthropic key to think. Add one in Preferences.",
-      cta: { label: "Open Preferences", to: "/preferences" },
-      dismissable: false,
-    });
-  }
-
-  // Rule 2 — Telegram token missing.
-  if (keys.loaded && !keys.hasTelegram && settings.wizardCompleted) {
-    candidates.push({
-      id: "missing-telegram-token",
-      severity: "warning",
-      title: "Telegram isn't connected yet",
-      body: "Add a bot token in Preferences so you can chat with your assistant.",
-      cta: { label: "Open Preferences", to: "/preferences" },
-      dismissable: true,
-    });
-  }
-
-  // Rule 3 — perimeter is in error state (Stopped while wizard was completed).
-  if (!heroLoading && heroState === "error_perimeter") {
-    candidates.push({
-      id: "perimeter-error",
-      severity: "danger",
-      title: "Your assistant didn't recover",
-      body: "Try restarting the app. If it keeps happening, get help.",
-      cta: { label: "Get help", to: "/help" },
-      dismissable: false,
-    });
-  }
-
-  const alerts = candidates.filter((a) => !settings.dismissedAlerts[a.id]);
+  const alerts = snapshot.alerts
+    .filter((a) => !(a.suppress_during_wizard && !settings.wizardCompleted))
+    .filter((a) => !settings.dismissedAlerts[a.id])
+    .map(toFrontendAlert);
 
   function dismiss(id: string) {
     void update({
@@ -110,4 +83,18 @@ export function useAlerts(): { alerts: Alert[]; dismiss: (id: string) => void } 
   }
 
   return { alerts, dismiss };
+}
+
+function toFrontendAlert(a: BackendAlert): Alert {
+  return {
+    id: a.id,
+    severity: a.severity,
+    title: a.title,
+    body: a.body ?? undefined,
+    cta:
+      a.cta_label && a.cta_to
+        ? { label: a.cta_label, to: a.cta_to }
+        : undefined,
+    dismissable: a.dismissable,
+  };
 }

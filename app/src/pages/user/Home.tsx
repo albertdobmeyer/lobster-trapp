@@ -58,7 +58,12 @@ function securityFromHero(state: HeroState): SecurityCell {
         subline: "Sandbox isn't running.",
         tone: "danger",
       };
+    case "error_key":
+      // Sandbox itself is fine; the assistant just can't reach Anthropic.
+      return { value: "Safe", subline: "Sandbox is active.", tone: "neutral" };
     case "not_setup":
       return { value: "Not set up", subline: "Run setup to begin.", tone: "neutral" };
+    case "paused_by_user":
+      return { value: "Paused", subline: "Sandbox is stopped on purpose.", tone: "neutral" };
   }
 }

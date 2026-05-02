@@ -348,9 +348,11 @@ section "6. Frontend-Backend Contract"
 python3 -c "
 import re, os, sys, glob
 
-# Extract Rust #[tauri::command] function names
+# Extract Rust #[tauri::command] function names. Recursive scan so
+# top-level modules (e.g. status_aggregator.rs) are picked up alongside
+# the commands/ submodule.
 rust_commands = set()
-for rs_file in glob.glob('app/src-tauri/src/commands/*.rs'):
+for rs_file in glob.glob('app/src-tauri/src/**/*.rs', recursive=True):
     with open(rs_file) as f:
         content = f.read()
     # Find pub async fn NAME after #[tauri::command]

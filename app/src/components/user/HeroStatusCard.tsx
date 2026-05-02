@@ -43,11 +43,23 @@ const COPY: Record<HeroState, Copy> = {
     ringTint: "border-danger-500/40 border-danger-500/60",
     dotTint: "bg-danger-500",
   },
+  error_key: {
+    title: "Your Anthropic key isn't working",
+    subline: "Update it in Preferences and your assistant will be back.",
+    ringTint: "border-danger-500/40 border-danger-500/60",
+    dotTint: "bg-danger-500",
+  },
   not_setup: {
     title: "Your assistant isn't set up yet",
     subline: "Let's get you started.",
     ringTint: "border-primary-500/40 border-primary-500/60",
     dotTint: "bg-primary-500",
+  },
+  paused_by_user: {
+    title: "Your assistant is paused",
+    subline: "Resume from the tray menu when you want it back.",
+    ringTint: "border-neutral-500/40 border-neutral-500/60",
+    dotTint: "bg-neutral-500",
   },
 };
 
@@ -135,6 +147,17 @@ export default function HeroStatusCard({ state, loading }: Props) {
           </>
         )}
 
+        {state === "error_key" && (
+          <button
+            type="button"
+            onClick={() => navigate("/preferences")}
+            className="btn btn-lg btn-primary"
+          >
+            <RotateCcw size={18} />
+            Update your key
+          </button>
+        )}
+
         {state === "not_setup" && (
           <button
             type="button"
@@ -143,6 +166,12 @@ export default function HeroStatusCard({ state, loading }: Props) {
           >
             Run setup
           </button>
+        )}
+
+        {state === "paused_by_user" && (
+          <span className="text-xs text-neutral-500">
+            Paused — resume from the tray menu.
+          </span>
         )}
       </div>
     </div>

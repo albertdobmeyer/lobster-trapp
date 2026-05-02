@@ -235,6 +235,50 @@ export async function getPerimeterState(): Promise<PerimeterStatus> {
 }
 
 /**
+ * Aggregated user-facing status. Backend evaluator (Pass 7 Day 2)
+ * combines perimeter state + .env presence + Anthropic auth probe into
+ * a single value driving the Home hero state machine. Snake-case
+ * matches Rust serde rename.
+ *
+ * `paused_by_user` is reserved for Day 4. `starting` is currently
+ * unused by the backend (which maps any partial state to `recovering`)
+ * — the frontend's `useHero` hasBeenRunning ref flips the first
+ * occurrence to "starting" for nicer first-run copy.
+ */
+export type AssistantStatus =
+  | "not_setup"
+  | "starting"
+  | "recovering"
+  | "ok"
+  | "error_perimeter"
+  | "error_key"
+  | "paused_by_user";
+
+export type AlertSeverity = "danger" | "warning" | "info";
+
+export interface BackendAlert {
+  id: string;
+  severity: AlertSeverity;
+  title: string;
+  body: string | null;
+  cta_label: string | null;
+  cta_to: string | null;
+  dismissable: boolean;
+  /** True when the alert should NOT show during the wizard. */
+  suppress_during_wizard: boolean;
+}
+
+export interface AssistantStatusSnapshot {
+  status: AssistantStatus;
+  alerts: BackendAlert[];
+  last_checked_unix_ms: number;
+}
+
+export async function getAssistantStatus(): Promise<AssistantStatusSnapshot> {
+  return invoke<AssistantStatusSnapshot>("get_assistant_status");
+}
+
+/**
  * Resolved Telegram bot identity. Both fields come from a single `getMe`
  * call and are always populated together.
  */
