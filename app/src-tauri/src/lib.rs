@@ -188,6 +188,7 @@ pub fn run() {
             commands::status::get_status,
             commands::health::run_health_probe,
             commands::lifecycle::get_perimeter_state,
+            commands::lifecycle::restart_perimeter,
             status_aggregator::get_assistant_status,
             commands::prerequisites::check_prerequisites,
             commands::prerequisites::init_submodules,

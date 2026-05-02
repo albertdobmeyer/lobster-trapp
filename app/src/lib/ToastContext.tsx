@@ -10,7 +10,7 @@ export interface Toast {
   duration?: number; // ms, 0 = sticky
 }
 
-export type AddToastFn = (toast: Omit<Toast, "id">) => void;
+export type AddToastFn = (toast: Omit<Toast, "id">) => string;
 
 interface ToastContextValue {
   toasts: Toast[];
@@ -20,7 +20,7 @@ interface ToastContextValue {
 
 export const ToastContext = createContext<ToastContextValue>({
   toasts: [],
-  addToast: () => {},
+  addToast: () => "",
   removeToast: () => {},
 });
 
@@ -37,8 +37,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const addToast = useCallback(
-    (toast: Omit<Toast, "id">) => {
+  const addToast = useCallback<AddToastFn>(
+    (toast) => {
       const id = String(++toastCounter);
       const newToast: Toast = { ...toast, id };
       setToasts((prev) => [...prev, newToast]);
@@ -48,6 +48,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       if (duration > 0) {
         setTimeout(() => removeToast(id), duration);
       }
+
+      return id;
     },
     [removeToast],
   );

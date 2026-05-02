@@ -10,7 +10,7 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { readConfig, writeConfig } from "@/lib/tauri";
+import { readConfig, restartPerimeter, writeConfig } from "@/lib/tauri";
 import { classifyError } from "@/lib/errors";
 import { useToast } from "@/lib/ToastContext";
 import { useSettings } from "@/hooks/useSettings";
@@ -54,7 +54,7 @@ export default function Preferences() {
 // ─── Section 1: Keys ────────────────────────────────────────────────────────
 
 function KeysSection() {
-  const { addToast } = useToast();
+  const { addToast, removeToast } = useToast();
   const [anthropicMask, setAnthropicMask] = useState<string | null>(null);
   const [telegramMask, setTelegramMask] = useState<string | null>(null);
   const [editing, setEditing] = useState<"anthropic" | "telegram" | null>(null);
@@ -107,15 +107,44 @@ function KeysSection() {
       content = upsertEnvVar(content, envKey, trimmed);
       await writeConfig(VAULT_ENV.component, VAULT_ENV.path, content);
 
-      addToast({
-        type: "success",
-        title: "Key updated",
-        message: "Restart your assistant for the change to take effect.",
-      });
+      // Key write succeeded — drop edit UI immediately so the user sees
+      // their masked value while the restart runs.
       setEditing(null);
       setDraft("");
       setShowDraft(false);
       await refresh();
+
+      // Vault-agent only reads .env on boot, so a key change is dead
+      // weight until the perimeter restarts. Rather than asking Karen
+      // to manually relaunch, do it for her.
+      const restartingId = addToast({
+        type: "info",
+        title: "Restarting your assistant…",
+        message: "This usually takes about 10 seconds.",
+        duration: 0,
+      });
+
+      try {
+        await restartPerimeter();
+        removeToast(restartingId);
+        addToast({
+          type: "success",
+          title: "Your assistant is back online",
+          message: "Your new key is active.",
+        });
+      } catch (restartErr) {
+        removeToast(restartingId);
+        const classified = classifyError(restartErr);
+        addToast({
+          type: "error",
+          title:
+            classified.title === "Something went wrong"
+              ? "Couldn't restart your assistant"
+              : classified.title,
+          message: classified.userMessage,
+          duration: 0,
+        });
+      }
     } catch (err) {
       const classified = classifyError(err);
       addToast({

@@ -279,6 +279,20 @@ export async function getAssistantStatus(): Promise<AssistantStatusSnapshot> {
 }
 
 /**
+ * Cycle the perimeter (down + up). Awaited — resolves only when the
+ * perimeter is actually back online (typically ~10–20s). Used by
+ * Preferences after a key rotation so vault-agent picks up the new
+ * value without making the user manually relaunch.
+ *
+ * Rejects with a friendly Error message when bring-up fails (most
+ * likely a malformed key the user just saved). Caller should surface
+ * via `classifyError`.
+ */
+export async function restartPerimeter(): Promise<void> {
+  return invoke<void>("restart_perimeter");
+}
+
+/**
  * Resolved Telegram bot identity. Both fields come from a single `getMe`
  * call and are always populated together.
  */
